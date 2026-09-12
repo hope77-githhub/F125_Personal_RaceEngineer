@@ -1,4 +1,50 @@
 import React, { useState, useEffect } from 'react';
+
+const i18n = {
+  en: {
+    title: "F1 AI RACE ENGINEER",
+    sessionSetup: "Session Setup",
+    udpPort: "UDP Port (Local)",
+    udpDesc: "{t.udpDesc}",
+    updateRate: "Telemetry Update Rate",
+    updateDesc: "Determines the backend parsing and frontend transmission rate.",
+    units: "Measurement Units",
+    unitsDesc: "Select the measurement units to display.",
+    tts: "AI Engineer TTS (Voice)",
+    ttsDesc: "Enables real-time voice briefings from your engineer.",
+    persona: "Select Engineer Persona",
+    overlay: "Overlay Mode (HUD)",
+    overlayDesc: "Enables transparent overlay rendering over the game screen.",
+    language: "Language",
+    languageDesc: "Select the display language for the dashboard.",
+    connect: "CONNECT & START SESSION",
+    vsAhead: "vs Ahead",
+    vsLeader: "vs Leader",
+    whiteLine: "{t.whiteLine.replace('{compLabelEng}', compLabelEng)}"
+  },
+  ko: {
+    title: "F1 AI 레이스 엔지니어",
+    sessionSetup: "세션 셋업",
+    udpPort: "UDP 포트 (로컬)",
+    udpDesc: "* F1 26 게임 내 Telemetry 설정의 UDP Port 번호와 일치시켜 주세요. (기본값: 20777)",
+    updateRate: "데이터 갱신 주기",
+    updateDesc: "백엔드 파싱 및 프론트엔드 전송 주기를 결정합니다.",
+    units: "측정 단위",
+    unitsDesc: "표시할 측정 단위를 선택합니다. (Metric / Imperial)",
+    tts: "AI 엔지니어 음성 (TTS)",
+    ttsDesc: "엔지니어의 실시간 음성 브리핑을 활성화합니다.",
+    persona: "엔지니어 페르소나 선택",
+    overlay: "오버레이 모드 (HUD)",
+    overlayDesc: "게임 화면 위에 투명하게 표시되는 오버레이를 사용합니다.",
+    language: "언어 (Language)",
+    languageDesc: "대시보드 표시 언어를 선택합니다.",
+    connect: "세션 연결 및 시작",
+    vsAhead: "vs 앞차 (Ahead)",
+    vsLeader: "vs 선두 (Leader)",
+    whiteLine: "*흰색 선: 경쟁자 조작량"
+  }
+};
+
 import './styles/design-system.css';
 
 function Dashboard({ settings, setSettings, onExit }) {
@@ -210,11 +256,11 @@ function Dashboard({ settings, setSettings, onExit }) {
                     <button 
                        onClick={() => setComparisonMode('ahead')}
                        style={{ backgroundColor: comparisonMode === 'ahead' ? 'var(--color-primary)' : 'var(--color-surface-onyx)', color: comparisonMode === 'ahead' ? '#000' : '#fff', border: 'none', padding: '4px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
-                    >vs Ahead</button>
+                    >{t.vsAhead}</button>
                     <button 
                        onClick={() => setComparisonMode('leader')}
                        style={{ backgroundColor: comparisonMode === 'leader' ? 'var(--color-primary)' : 'var(--color-surface-onyx)', color: comparisonMode === 'leader' ? '#000' : '#fff', border: 'none', padding: '4px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
-                    >vs Leader</button>
+                    >{t.vsLeader}</button>
                  </div>
                </div>
                
@@ -272,7 +318,7 @@ function Dashboard({ settings, setSettings, onExit }) {
                       </div>
                       {compBrake !== undefined && (
                           <div style={{ fontSize: '10px', color: 'var(--color-ink)', textAlign: 'right', marginTop: '4px' }}>
-                            *White line: {compLabelEng}'s input 
+                            {t.whiteLine.replace('{compLabelEng}', compLabelEng)} 
                           </div>
                       )}
                     </div>
@@ -293,16 +339,17 @@ function SetupPage({ onStart }) {
   const [units, setUnits] = useState('metric');
   const [updateRate, setUpdateRate] = useState(60);
   const [voice, setVoice] = useState('gp');
-
+  const [language, setLanguage] = useState('ko');
+  const t = i18n[language];
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '20px', paddingBottom: '60px' }}>
-      <h1 className="hero-heading" style={{ marginBottom: '40px', fontSize: '36px' }}>F1 AI RACE ENGINEER</h1>
+      <h1 className="hero-heading" style={{ marginBottom: '40px', fontSize: '36px' }}>{t.title}</h1>
       
       <div className="card" style={{ width: '100%', maxWidth: '550px', marginBottom: '24px' }}>
-        <h2 className="card-header" style={{ fontSize: '20px', marginBottom: '24px' }}>Session Setup</h2>
+        <h2 className="card-header" style={{ fontSize: '20px', marginBottom: '24px' }}>{t.sessionSetup}</h2>
         
         <div style={{ marginBottom: '24px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', fontSize: '14px' }}>UDP Port (Local)</label>
+          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', fontSize: '14px' }}>{t.udpPort}</label>
           <input 
             type="number" 
             value={port} 
@@ -310,14 +357,14 @@ function SetupPage({ onStart }) {
             style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--color-surface-indigo)', backgroundColor: 'var(--color-surface-onyx)', color: '#fff', fontSize: '16px' }}
           />
           <div style={{ fontSize: '12px', color: 'var(--color-link)', marginTop: '8px' }}>
-            * Must match the UDP Port setting in F1 26 Telemetry settings (Default: 20777)
+            {t.udpDesc}
           </div>
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', padding: '16px', backgroundColor: 'var(--color-surface-onyx)', borderRadius: '8px' }}>
           <div>
-            <div style={{ fontWeight: 'bold', fontSize: '16px' }}>Telemetry Update Rate</div>
-            <div style={{ fontSize: '12px', color: 'var(--color-link)', marginTop: '4px' }}>Determines the backend parsing and frontend transmission rate.</div>
+            <div style={{ fontWeight: 'bold', fontSize: '16px' }}>{t.updateRate}</div>
+            <div style={{ fontSize: '12px', color: 'var(--color-link)', marginTop: '4px' }}>{t.updateDesc}</div>
           </div>
           <select 
              value={updateRate}
@@ -331,8 +378,8 @@ function SetupPage({ onStart }) {
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', padding: '16px', backgroundColor: 'var(--color-surface-onyx)', borderRadius: '8px' }}>
           <div>
-            <div style={{ fontWeight: 'bold', fontSize: '16px' }}>Measurement Units</div>
-            <div style={{ fontSize: '12px', color: 'var(--color-link)', marginTop: '4px' }}>Select the measurement units to display.</div>
+            <div style={{ fontWeight: 'bold', fontSize: '16px' }}>{t.units}</div>
+            <div style={{ fontSize: '12px', color: 'var(--color-link)', marginTop: '4px' }}>{t.unitsDesc}</div>
           </div>
           <select 
              value={units}
@@ -347,8 +394,8 @@ function SetupPage({ onStart }) {
         <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '16px', padding: '16px', backgroundColor: 'var(--color-surface-onyx)', borderRadius: '8px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div style={{ fontWeight: 'bold', fontSize: '16px' }}>AI Engineer TTS (Voice)</div>
-              <div style={{ fontSize: '12px', color: 'var(--color-link)', marginTop: '4px' }}>Enables real-time voice briefings from your engineer.</div>
+              <div style={{ fontWeight: 'bold', fontSize: '16px' }}>{t.tts}</div>
+              <div style={{ fontSize: '12px', color: 'var(--color-link)', marginTop: '4px' }}>{t.ttsDesc}</div>
             </div>
             <button 
                onClick={() => setTts(!tts)}
@@ -358,7 +405,7 @@ function SetupPage({ onStart }) {
           
           {tts && (
             <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--color-surface-indigo)' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', fontSize: '12px', color: 'var(--color-link)' }}>Select Engineer Persona</label>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', fontSize: '12px', color: 'var(--color-link)' }}>{t.persona}</label>
               <select 
                  value={voice}
                  onChange={(e) => setVoice(e.target.value)}
@@ -372,10 +419,26 @@ function SetupPage({ onStart }) {
           )}
         </div>
 
+        
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', padding: '16px', backgroundColor: 'var(--color-surface-onyx)', borderRadius: '8px' }}>
+          <div>
+            <div style={{ fontWeight: 'bold', fontSize: '16px' }}>{t.language}</div>
+            <div style={{ fontSize: '12px', color: 'var(--color-link)', marginTop: '4px' }}>{t.languageDesc}</div>
+          </div>
+          <select 
+             value={language}
+             onChange={(e) => setLanguage(e.target.value)}
+             style={{ backgroundColor: 'var(--color-surface-indigo)', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', outline: 'none' }}
+          >
+            <option value="ko">한국어 (KOR)</option>
+            <option value="en">English (ENG)</option>
+          </select>
+        </div>
+
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', backgroundColor: 'var(--color-surface-onyx)', borderRadius: '8px' }}>
           <div>
-            <div style={{ fontWeight: 'bold', fontSize: '16px' }}>Overlay Mode (HUD)</div>
-            <div style={{ fontSize: '12px', color: 'var(--color-link)', marginTop: '4px' }}>Enables transparent overlay rendering over the game screen.</div>
+            <div style={{ fontWeight: 'bold', fontSize: '16px' }}>{t.overlay}</div>
+            <div style={{ fontSize: '12px', color: 'var(--color-link)', marginTop: '4px' }}>{t.overlayDesc}</div>
           </div>
           <button 
              onClick={() => setOverlay(!overlay)}
@@ -385,17 +448,17 @@ function SetupPage({ onStart }) {
       </div>
 
       <button 
-        onClick={() => onStart({ port, tts, overlay, units, updateRate, voice })}
+        onClick={() => onStart({ port, tts, overlay, units, updateRate, voice, language })}
         className="badge"
         style={{ width: '100%', maxWidth: '550px', padding: '20px', backgroundColor: 'var(--color-primary)', color: '#000', border: 'none', borderRadius: '8px', fontSize: '18px', fontWeight: 'bold', cursor: 'pointer', textAlign: 'center' }}
-      >CONNECT & START SESSION</button>
+      >{t.connect}</button>
     </div>
   );
 }
 
 export default function App() {
   const [sessionActive, setSessionActive] = useState(false);
-  const [settings, setSettings] = useState({ port: 20777, tts: true, overlay: false, units: 'metric', updateRate: 60, voice: 'gp' });
+  const [settings, setSettings] = useState({ port: 20777, tts: true, overlay: false, units: 'metric', updateRate: 60, voice: 'gp', language: 'ko' });
 
   if (!sessionActive) {
     return <SetupPage onStart={(s) => { setSettings(s); setSessionActive(true); }} />;
