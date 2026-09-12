@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getDummyPayload } from './dummyData.js';
 
 const i18n = {
   en: {
@@ -54,18 +55,17 @@ function Dashboard({ settings, setSettings, onExit }) {
   const [selectedLapId, setSelectedLapId] = useState(null);
   const [comparisonMode, setComparisonMode] = useState('ahead');
 
+
   useEffect(() => {
-    const ws = new WebSocket(`ws://localhost:8080/ws?port=${settings.port}&units=${settings.units}&rate=${settings.updateRate}&tts=${settings.tts}&overlay=${settings.overlay}&voice=${settings.voice}`);
-
-    ws.onopen = () => setConnected(true);
-    ws.onmessage = (event) => {
-      const parsedData = JSON.parse(event.data);
+    setConnected(true);
+    const interval = setInterval(() => {
+      const parsedData = getDummyPayload(settings.units);
       setData(parsedData);
-    };
-    ws.onclose = () => setConnected(false);
+    }, 1000 / settings.updateRate);
 
-    return () => ws.close();
-  }, []);
+    return () => clearInterval(interval);
+  }, [settings.units, settings.updateRate]);
+
 
   if (!data) {
     return (
