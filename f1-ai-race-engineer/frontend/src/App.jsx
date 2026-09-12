@@ -49,6 +49,7 @@ const i18n = {
 import './styles/design-system.css';
 
 function Dashboard({ settings, setSettings, onExit }) {
+  const t = i18n[settings.language || 'ko'];
   const [data, setData] = useState(null);
   const [connected, setConnected] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState('p_1');
