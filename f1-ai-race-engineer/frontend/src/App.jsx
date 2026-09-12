@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './styles/design-system.css';
 
-export default function App() {
+function Dashboard({ settings, setSettings, onExit }) {
   const [data, setData] = useState(null);
   const [connected, setConnected] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState('p_1');
@@ -9,7 +9,7 @@ export default function App() {
   const [comparisonMode, setComparisonMode] = useState('ahead');
 
   useEffect(() => {
-    const ws = new WebSocket('ws://localhost:8080/ws');
+    const ws = new WebSocket(`ws://localhost:8080/ws?port=${settings.port}`);
 
     ws.onopen = () => setConnected(true);
     ws.onmessage = (event) => {
@@ -46,8 +46,19 @@ export default function App() {
              <span>🏁 Laps: {circuit_environment.total_laps}</span>
            </div>
         </div>
-        <div className="badge" style={{ backgroundColor: connected ? 'var(--color-green)' : '#ff3366', color: '#000', fontSize: '14px', padding: '8px 16px' }}>
-          {connected ? 'LIVE CONNECTION' : 'OFFLINE'}
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <button onClick={() => setSettings({...settings, tts: !settings.tts})} className="badge" style={{ cursor: 'pointer', border: 'none', backgroundColor: settings.tts ? 'var(--color-green)' : 'var(--color-surface-onyx)', color: settings.tts ? '#000' : '#fff', fontWeight: 'bold', fontSize: '14px', padding: '8px 16px' }}>
+             TTS: {settings.tts ? 'ON' : 'OFF'}
+          </button>
+          <button onClick={() => setSettings({...settings, overlay: !settings.overlay})} className="badge" style={{ cursor: 'pointer', border: 'none', backgroundColor: settings.overlay ? 'var(--color-green)' : 'var(--color-surface-onyx)', color: settings.overlay ? '#000' : '#fff', fontWeight: 'bold', fontSize: '14px', padding: '8px 16px' }}>
+             OVERLAY: {settings.overlay ? 'ON' : 'OFF'}
+          </button>
+          <button onClick={onExit} className="badge" style={{ cursor: 'pointer', border: 'none', backgroundColor: 'var(--color-surface-indigo)', color: '#fff', fontWeight: 'bold', fontSize: '14px', padding: '8px 16px' }}>
+             EXIT
+          </button>
+          <div className="badge" style={{ backgroundColor: connected ? 'var(--color-green)' : '#ff3366', color: '#000', fontSize: '14px', padding: '8px 16px' }}>
+            {connected ? `LIVE (UDP: ${settings.port})` : 'OFFLINE'}
+          </div>
         </div>
       </div>
 
@@ -273,4 +284,72 @@ export default function App() {
       </div>
     </div>
   );
+}
+
+function SetupPage({ onStart }) {
+  const [port, setPort] = useState(20777);
+  const [tts, setTts] = useState(true);
+  const [overlay, setOverlay] = useState(false);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', padding: '20px' }}>
+      <h1 className="hero-heading" style={{ marginBottom: '40px', fontSize: '36px' }}>F1 AI RACE ENGINEER</h1>
+      
+      <div className="card" style={{ width: '100%', maxWidth: '500px', marginBottom: '24px' }}>
+        <h2 className="card-header" style={{ fontSize: '20px', marginBottom: '24px' }}>Session Setup</h2>
+        
+        <div style={{ marginBottom: '24px' }}>
+          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', fontSize: '14px' }}>UDP Port (Local)</label>
+          <input 
+            type="number" 
+            value={port} 
+            onChange={(e) => setPort(Number(e.target.value))} 
+            style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--color-surface-indigo)', backgroundColor: 'var(--color-surface-onyx)', color: '#fff', fontSize: '16px' }}
+          />
+          <div style={{ fontSize: '12px', color: 'var(--color-link)', marginTop: '8px' }}>
+            * F1 26 게임 내 Telemetry 설정의 UDP Port 번호와 일치시켜 주세요. (기본값: 20777)
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', padding: '16px', backgroundColor: 'var(--color-surface-onyx)', borderRadius: '8px' }}>
+          <div>
+            <div style={{ fontWeight: 'bold', fontSize: '16px' }}>AI Engineer TTS (Voice)</div>
+            <div style={{ fontSize: '12px', color: 'var(--color-link)', marginTop: '4px' }}>엔지니어의 실시간 음성 브리핑을 활성화합니다.</div>
+          </div>
+          <button 
+             onClick={() => setTts(!tts)}
+             style={{ backgroundColor: tts ? 'var(--color-green)' : 'var(--color-surface-indigo)', color: tts ? '#000' : '#fff', border: 'none', padding: '8px 24px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+          >{tts ? 'ON' : 'OFF'}</button>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', backgroundColor: 'var(--color-surface-onyx)', borderRadius: '8px' }}>
+          <div>
+            <div style={{ fontWeight: 'bold', fontSize: '16px' }}>Overlay Mode (HUD)</div>
+            <div style={{ fontSize: '12px', color: 'var(--color-link)', marginTop: '4px' }}>게임 화면 위에 투명하게 표시되는 오버레이를 사용합니다.</div>
+          </div>
+          <button 
+             onClick={() => setOverlay(!overlay)}
+             style={{ backgroundColor: overlay ? 'var(--color-green)' : 'var(--color-surface-indigo)', color: overlay ? '#000' : '#fff', border: 'none', padding: '8px 24px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+          >{overlay ? 'ON' : 'OFF'}</button>
+        </div>
+      </div>
+
+      <button 
+        onClick={() => onStart({ port, tts, overlay })}
+        className="badge"
+        style={{ width: '100%', maxWidth: '500px', padding: '20px', backgroundColor: 'var(--color-primary)', color: '#000', border: 'none', borderRadius: '8px', fontSize: '18px', fontWeight: 'bold', cursor: 'pointer', textAlign: 'center' }}
+      >CONNECT & START SESSION</button>
+    </div>
+  );
+}
+
+export default function App() {
+  const [sessionActive, setSessionActive] = useState(false);
+  const [settings, setSettings] = useState({ port: 20777, tts: true, overlay: false });
+
+  if (!sessionActive) {
+    return <SetupPage onStart={(s) => { setSettings(s); setSessionActive(true); }} />;
+  }
+
+  return <Dashboard settings={settings} setSettings={setSettings} onExit={() => setSessionActive(false)} />;
 }
