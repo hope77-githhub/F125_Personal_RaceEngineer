@@ -20,7 +20,7 @@ const i18n = {
     connect: "CONNECT & START SESSION",
     vsAhead: "vs Ahead",
     vsLeader: "vs Leader",
-    whiteLine: "{t.whiteLine.replace('{compLabelEng}', compLabelEng)}"
+    whiteLine: "*White line: {compLabelEng}'s input"
   },
   ko: {
     title: "F1 AI 레이스 엔지니어",
@@ -51,7 +51,7 @@ function Dashboard({ settings, setSettings, onExit }) {
   const [data, setData] = useState(null);
   const [connected, setConnected] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState('p_1');
-  const [selectedLap, setSelectedLap] = useState(null);
+  const [selectedLapId, setSelectedLapId] = useState(null);
   const [comparisonMode, setComparisonMode] = useState('ahead');
 
   useEffect(() => {
@@ -148,7 +148,7 @@ function Dashboard({ settings, setSettings, onExit }) {
              <div 
                key={driver.id} 
                className={`leaderboard-row clickable-row ${selectedPlayerId === driver.id ? 'active' : ''}`}
-               onClick={() => { setSelectedPlayerId(driver.id); setSelectedLap(null); }}
+               onClick={() => { setSelectedPlayerId(driver.id); setSelectedLapId(null); }}
                style={{
                  backgroundColor: selectedPlayerId === driver.id ? 'var(--color-primary)' : 'var(--color-surface-onyx)'
                }}
@@ -239,8 +239,8 @@ function Dashboard({ settings, setSettings, onExit }) {
              <div 
                key={i} 
                className="leaderboard-row clickable-row" 
-               onClick={() => setSelectedLap(lap)}
-               style={{ backgroundColor: selectedLap?.lap === lap.lap ? 'var(--color-surface-indigo)' : 'var(--color-surface-onyx)', border: selectedLap?.lap === lap.lap ? '1px solid var(--color-primary)' : '1px solid transparent' }}
+               onClick={() => setSelectedLapId(lap.lap)}
+               style={{ backgroundColor: selectedLapId === lap.lap ? 'var(--color-surface-indigo)' : 'var(--color-surface-onyx)', border: selectedLapId === lap.lap ? '1px solid var(--color-primary)' : '1px solid transparent' }}
              >
                <span style={{ fontWeight: 'bold' }}>Lap {lap.lap}</span>
                <span>{lap.time}</span>
@@ -270,7 +270,7 @@ function Dashboard({ settings, setSettings, onExit }) {
                  </div>
                </div>
 
-               {selectedLap.telemetry_points.map((tp, idx) => {
+                              {(selectedLap.telemetry_points || []).length > 0 ? selectedLap.telemetry_points.map((tp, idx) => {
                   const compBrake = comparisonMode === 'ahead' ? tp.rival_brake : (tp.leader_brake || tp.rival_brake);
                   const compThrottle = comparisonMode === 'ahead' ? tp.rival_throttle : (tp.leader_throttle || tp.rival_throttle);
                   const compTimeDiff = comparisonMode === 'ahead' ? tp.time_diff_to_rival : (tp.time_diff_leader || tp.time_diff_to_rival);
@@ -323,7 +323,11 @@ function Dashboard({ settings, setSettings, onExit }) {
                       )}
                     </div>
                   );
-               })}
+               }) : (
+                  <div style={{ padding: '20px', textAlign: 'center', color: 'var(--color-link)' }}>
+                     No telemetry data available for this lap yet.
+                  </div>
+               )}
             </div>
           )}
         </div>
