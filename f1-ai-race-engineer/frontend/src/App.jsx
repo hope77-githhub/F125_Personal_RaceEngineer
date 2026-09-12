@@ -131,11 +131,11 @@ function Dashboard({ settings, setSettings, onExit }) {
 
       <div className="grid-3">
         {/* Live Telemetry for Selected Player */}
-        <div className="card-gradient" style={{ gridColumn: 'span 2' }}>
+                <div className="card-gradient" style={{ gridColumn: 'span 2' }}>
           <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span>{name} - LIVE TELEMETRY (LAP {current_lap})</span>
           </div>
-          <div className="grid-3" style={{ marginBottom: 0 }}>
+          <div className="grid-3" style={{ marginBottom: '16px' }}>
             <div>
               <div style={{ fontSize: '14px', opacity: 0.8 }}>SPEED</div>
               <div className="stat-value">{settings.units === 'metric' ? live_telemetry.speed : Math.round(live_telemetry.speed * 0.621371)} <span style={{fontSize:'20px'}}>{settings.units === 'metric' ? 'KM/H' : 'MPH'}</span></div>
@@ -150,15 +150,56 @@ function Dashboard({ settings, setSettings, onExit }) {
             </div>
           </div>
           
-          <div style={{ marginTop: 'var(--spacing-xl)' }} className="grid-2">
-             <div>
-                <div style={{ fontSize: '14px', opacity: 0.8 }}>THROTTLE: {live_telemetry.throttle}%</div>
-                <div className="progress-bar-bg"><div className="progress-bar-fill" style={{ width: `${live_telemetry.throttle}%` }}></div></div>
-             </div>
-             <div>
-                <div style={{ fontSize: '14px', opacity: 0.8 }}>BRAKE: {live_telemetry.brake}%</div>
-                <div className="progress-bar-bg"><div className="progress-bar-fill red" style={{ width: `${live_telemetry.brake}%` }}></div></div>
-             </div>
+          <div style={{ backgroundColor: 'var(--color-surface-onyx)', padding: '12px', borderRadius: '8px', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ fontSize: '14px', fontWeight: 'bold' }}>SPEED (vs Rivals)</span>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                   {players.map(p => {
+                       const isVisible = visibleSpeeds[p.id];
+                       const color = p.id === 'p_1' ? 'var(--color-primary)' : p.id === 'p_2' ? 'var(--color-ink)' : 'var(--color-link)';
+                       return (
+                          <button 
+                             key={p.id}
+                             onClick={() => toggleSpeed(p.id)}
+                             style={{ backgroundColor: isVisible ? color : 'transparent', color: isVisible ? '#000' : color, border: `1px solid ${color}`, fontSize: '10px', padding: '2px 6px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+                          >
+                             {p.name}
+                          </button>
+                       );
+                   })}
+                </div>
+            </div>
+            <svg viewBox="0 0 200 100" style={{ width: '100%', height: '100px', backgroundColor: 'var(--color-canvas)', borderRadius: '4px', display: 'block' }}>
+                <line x1="0" y1="25" x2="200" y2="25" stroke="#333" strokeDasharray="2" />
+                <line x1="0" y1="50" x2="200" y2="50" stroke="#333" strokeDasharray="2" />
+                <line x1="0" y1="75" x2="200" y2="75" stroke="#333" strokeDasharray="2" />
+                
+                {players.map(p => {
+                    if (!visibleSpeeds[p.id]) return null;
+                    const color = p.id === 'p_1' ? 'var(--color-primary)' : p.id === 'p_2' ? 'var(--color-ink)' : 'var(--color-link)';
+                    const maxSpeed = settings.units === 'imperial' ? 225 : 360;
+                    const pathData = history.map((pt, i) => {
+                        const y = 100 - (Math.min(maxSpeed, (pt[`speed_${p.id}`] || 0)) / maxSpeed) * 100;
+                        return `${i === 0 ? 'M' : 'L'} ${i} ${y}`;
+                    }).join(' ');
+                    return <path key={p.id} d={pathData} fill="none" stroke={color} strokeWidth="2" />;
+                })}
+            </svg>
+          </div>
+
+          <div style={{ backgroundColor: 'var(--color-surface-onyx)', padding: '12px', borderRadius: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ fontSize: '14px', fontWeight: 'bold' }}>THROTTLE & BRAKE ({name})</span>
+                <div style={{ display: 'flex', gap: '12px', fontSize: '12px' }}>
+                   <span style={{ color: 'var(--color-green)', fontWeight: 'bold' }}>■ Throttle</span>
+                   <span style={{ color: '#ff3366', fontWeight: 'bold' }}>■ Brake</span>
+                </div>
+            </div>
+            <svg viewBox="0 0 200 100" style={{ width: '100%', height: '100px', backgroundColor: 'var(--color-canvas)', borderRadius: '4px', display: 'block' }}>
+                <line x1="0" y1="50" x2="200" y2="50" stroke="#333" strokeDasharray="2" />
+                <path d={history.map((pt, i) => `${i === 0 ? 'M' : 'L'} ${i} ${100 - pt.throttle}`).join(' ')} fill="none" stroke="var(--color-green)" strokeWidth="2" />
+                <path d={history.map((pt, i) => `${i === 0 ? 'M' : 'L'} ${i} ${100 - pt.brake}`).join(' ')} fill="none" stroke="#ff3366" strokeWidth="2" />
+            </svg>
           </div>
         </div>
 
