@@ -9,7 +9,7 @@ function Dashboard({ settings, setSettings, onExit }) {
   const [comparisonMode, setComparisonMode] = useState('ahead');
 
   useEffect(() => {
-    const ws = new WebSocket(`ws://localhost:8080/ws?port=${settings.port}`);
+    const ws = new WebSocket(`ws://localhost:8080/ws?port=${settings.port}&units=${settings.units}&rate=${settings.updateRate}&tts=${settings.tts}&overlay=${settings.overlay}`);
 
     ws.onopen = () => setConnected(true);
     ws.onmessage = (event) => {
@@ -71,7 +71,7 @@ function Dashboard({ settings, setSettings, onExit }) {
           <div className="grid-3" style={{ marginBottom: 0 }}>
             <div>
               <div style={{ fontSize: '14px', opacity: 0.8 }}>SPEED</div>
-              <div className="stat-value">{live_telemetry.speed} <span style={{fontSize:'20px'}}>KM/H</span></div>
+              <div className="stat-value">{settings.units === 'metric' ? live_telemetry.speed : Math.round(live_telemetry.speed * 0.621371)} <span style={{fontSize:'20px'}}>{settings.units === 'metric' ? 'KM/H' : 'MPH'}</span></div>
             </div>
             <div>
               <div style={{ fontSize: '14px', opacity: 0.8 }}>GEAR</div>
@@ -290,12 +290,14 @@ function SetupPage({ onStart }) {
   const [port, setPort] = useState(20777);
   const [tts, setTts] = useState(true);
   const [overlay, setOverlay] = useState(false);
+  const [units, setUnits] = useState('metric');
+  const [updateRate, setUpdateRate] = useState(60);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', padding: '20px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '20px', paddingBottom: '60px' }}>
       <h1 className="hero-heading" style={{ marginBottom: '40px', fontSize: '36px' }}>F1 AI RACE ENGINEER</h1>
       
-      <div className="card" style={{ width: '100%', maxWidth: '500px', marginBottom: '24px' }}>
+      <div className="card" style={{ width: '100%', maxWidth: '550px', marginBottom: '24px' }}>
         <h2 className="card-header" style={{ fontSize: '20px', marginBottom: '24px' }}>Session Setup</h2>
         
         <div style={{ marginBottom: '24px' }}>
@@ -309,6 +311,36 @@ function SetupPage({ onStart }) {
           <div style={{ fontSize: '12px', color: 'var(--color-link)', marginTop: '8px' }}>
             * F1 26 게임 내 Telemetry 설정의 UDP Port 번호와 일치시켜 주세요. (기본값: 20777)
           </div>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', padding: '16px', backgroundColor: 'var(--color-surface-onyx)', borderRadius: '8px' }}>
+          <div>
+            <div style={{ fontWeight: 'bold', fontSize: '16px' }}>Telemetry Update Rate</div>
+            <div style={{ fontSize: '12px', color: 'var(--color-link)', marginTop: '4px' }}>백엔드 파싱 및 프론트엔드 전송 주기를 결정합니다.</div>
+          </div>
+          <select 
+             value={updateRate}
+             onChange={(e) => setUpdateRate(Number(e.target.value))}
+             style={{ backgroundColor: 'var(--color-surface-indigo)', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', outline: 'none' }}
+          >
+            <option value={30}>30 Hz</option>
+            <option value={60}>60 Hz</option>
+          </select>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', padding: '16px', backgroundColor: 'var(--color-surface-onyx)', borderRadius: '8px' }}>
+          <div>
+            <div style={{ fontWeight: 'bold', fontSize: '16px' }}>Measurement Units</div>
+            <div style={{ fontSize: '12px', color: 'var(--color-link)', marginTop: '4px' }}>표시할 측정 단위를 선택합니다. (Metric / Imperial)</div>
+          </div>
+          <select 
+             value={units}
+             onChange={(e) => setUnits(e.target.value)}
+             style={{ backgroundColor: 'var(--color-surface-indigo)', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', outline: 'none' }}
+          >
+            <option value="metric">Metric (km/h, °C, kg)</option>
+            <option value="imperial">Imperial (mph, °F, lbs)</option>
+          </select>
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', padding: '16px', backgroundColor: 'var(--color-surface-onyx)', borderRadius: '8px' }}>
@@ -335,9 +367,9 @@ function SetupPage({ onStart }) {
       </div>
 
       <button 
-        onClick={() => onStart({ port, tts, overlay })}
+        onClick={() => onStart({ port, tts, overlay, units, updateRate })}
         className="badge"
-        style={{ width: '100%', maxWidth: '500px', padding: '20px', backgroundColor: 'var(--color-primary)', color: '#000', border: 'none', borderRadius: '8px', fontSize: '18px', fontWeight: 'bold', cursor: 'pointer', textAlign: 'center' }}
+        style={{ width: '100%', maxWidth: '550px', padding: '20px', backgroundColor: 'var(--color-primary)', color: '#000', border: 'none', borderRadius: '8px', fontSize: '18px', fontWeight: 'bold', cursor: 'pointer', textAlign: 'center' }}
       >CONNECT & START SESSION</button>
     </div>
   );
@@ -345,7 +377,7 @@ function SetupPage({ onStart }) {
 
 export default function App() {
   const [sessionActive, setSessionActive] = useState(false);
-  const [settings, setSettings] = useState({ port: 20777, tts: true, overlay: false });
+  const [settings, setSettings] = useState({ port: 20777, tts: true, overlay: false, units: 'metric', updateRate: 60 });
 
   if (!sessionActive) {
     return <SetupPage onStart={(s) => { setSettings(s); setSessionActive(true); }} />;
