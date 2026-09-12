@@ -78,6 +78,7 @@ function Dashboard({ settings, setSettings, onExit }) {
   const { circuit_environment, players } = data;
   const selectedPlayer = players.find(p => p.id === selectedPlayerId) || players[0];
   const { live_telemetry, car_setup, lap_history, current_lap, name, tyre_compound, strategy } = selectedPlayer;
+  const selectedLap = lap_history.find(l => l.lap === selectedLapId);
 
   return (
     <div className="dashboard-container">
