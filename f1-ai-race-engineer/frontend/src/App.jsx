@@ -78,7 +78,7 @@ function Dashboard({ settings, setSettings, onExit }) {
   const { circuit_environment, players } = data;
   const selectedPlayer = players.find(p => p.id === selectedPlayerId) || players[0];
   const { live_telemetry, car_setup, lap_history, current_lap, name, tyre_compound, strategy } = selectedPlayer;
-  const selectedLap = lap_history.find(l => l.lap === selectedLapId);
+  const selectedLap = lap_history ? lap_history.find(l => String(l.lap) === String(selectedLapId)) : null;
 
   return (
     <div className="dashboard-container">
@@ -283,11 +283,11 @@ function Dashboard({ settings, setSettings, onExit }) {
                     <div key={idx} style={{ marginBottom: '16px', padding: '12px', backgroundColor: 'var(--color-surface-onyx)', borderRadius: '8px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                          <span style={{ fontSize: '14px', fontWeight: 'bold' }}>{tp.distance}</span>
-                         {compTimeDiff && (
-                             <span style={{ fontSize: '12px', fontWeight: 'bold', color: compTimeDiff.includes('Faster') ? 'var(--color-green)' : (compTimeDiff.includes('Equal') ? 'var(--color-ink)' : '#ff3366') }}>
-                               {compTimeDiff.replace('Faster', `Faster vs ${compLabelEng}`).replace('Slower', `Slower vs ${compLabelEng}`).replace('Equal', `Equal to ${compLabelEng}`)}
+                         {compTimeDiff ? (
+                             <span style={{ fontSize: '12px', fontWeight: 'bold', color: String(compTimeDiff).includes('Faster') ? 'var(--color-green)' : (String(compTimeDiff).includes('Equal') ? 'var(--color-ink)' : '#ff3366') }}>
+                               {String(compTimeDiff).replace('Faster', `Faster vs ${compLabelEng}`).replace('Slower', `Slower vs ${compLabelEng}`).replace('Equal', `Equal to ${compLabelEng}`)}
                              </span>
-                         )}
+                         ) : null}
                       </div>
                       
                       {compWearDiff && (
@@ -319,7 +319,7 @@ function Dashboard({ settings, setSettings, onExit }) {
                       </div>
                       {compBrake !== undefined && (
                           <div style={{ fontSize: '10px', color: 'var(--color-ink)', textAlign: 'right', marginTop: '4px' }}>
-                            {t.whiteLine.replace('{compLabelEng}', compLabelEng)} 
+                            {t.whiteLine ? t.whiteLine.replace('{compLabelEng}', compLabelEng) : ''} 
                           </div>
                       )}
                     </div>
@@ -461,6 +461,32 @@ function SetupPage({ onStart }) {
   );
 }
 
+
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+  componentDidCatch(error, errorInfo) {
+    this.setState({ hasError: true, error: error, errorInfo: errorInfo });
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '20px', color: 'red', backgroundColor: 'black', minHeight: '100vh' }}>
+          <h2>Something went wrong in React.</h2>
+          <details style={{ whiteSpace: 'pre-wrap' }}>
+            {this.state.error && this.state.error.toString()}
+            <br />
+            {this.state.errorInfo.componentStack}
+          </details>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function App() {
   const [sessionActive, setSessionActive] = useState(false);
   const [settings, setSettings] = useState({ port: 20777, tts: true, overlay: false, units: 'metric', updateRate: 60, voice: 'gp', language: 'ko' });
@@ -469,5 +495,5 @@ export default function App() {
     return <SetupPage onStart={(s) => { setSettings(s); setSessionActive(true); }} />;
   }
 
-  return <Dashboard settings={settings} setSettings={setSettings} onExit={() => setSessionActive(false)} />;
+  return <ErrorBoundary><Dashboard settings={settings} setSettings={setSettings} onExit={() => setSessionActive(false)} /></ErrorBoundary>;
 }
