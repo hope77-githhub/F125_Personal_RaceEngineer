@@ -5,11 +5,19 @@ from .car_setup import PacketCarSetupData
 from .car_telemetry import PacketCarTelemetryData
 from .lap_data import PacketLapData
 from .car_damage import PacketCarDamageData
+from .session import PacketSessionData
+from .participants import PacketParticipantsData
+from .car_status import PacketCarStatusData
+
 
 logger = logging.getLogger(__name__)
 
 # Map packet IDs to their corresponding ctypes structures
 PACKET_TYPES = {
+    1: PacketSessionData,
+    4: PacketParticipantsData,
+    7: PacketCarStatusData,
+
     2: PacketLapData,
     5: PacketCarSetupData,
     6: PacketCarTelemetryData,
