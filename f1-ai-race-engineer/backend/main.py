@@ -1,9 +1,10 @@
 import asyncio
-import json
 import logging
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from telemetry.listener import F1UDPListener
+from telemetry.f1_types.router import parse_packet
+from state_mgmt.manager import StateManager
 from state_mgmt.dummy_provider import get_dummy_payload
 
 app = FastAPI()
@@ -20,6 +21,15 @@ logger = logging.getLogger(__name__)
 
 # Global instances (will be managed per session eventually)
 udp_listener = None
+state_manager = StateManager()
+
+def on_udp_packet_received(data: bytes):
+    """Callback function when UDP listener receives a packet."""
+    packet_id, parsed_packet = parse_packet(data)
+    if parsed_packet:
+        # Update the centralized state manager with the new packet
+        state_manager.update(packet_id, parsed_packet)
+        # logger.debug(f"Successfully parsed and updated packet ID: {packet_id}")
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
@@ -40,14 +50,17 @@ async def websocket_endpoint(websocket: WebSocket):
         if udp_listener:
             udp_listener.stop()
         udp_listener = F1UDPListener(port=port, update_rate=update_rate)
-        # We start the listener in the background, though we don't process its packets yet
-        # asyncio.create_task(udp_listener.listen(lambda data: print(f"Received {len(data)} bytes")))
+        
+        # We start the listener in the background, feeding packets into our StateManager
+        asyncio.create_task(udp_listener.listen(on_udp_packet_received))
         udp_listener.start()
         
     try:
         while True:
-            # 2. Get Dummy Data (Simulating Phase 1)
-            # In Phase 2, this will be replaced by: payload = state_manager.get_latest_payload()
+            # 2. Get Data Payload
+            # 🚨 CURRENTLY USING DUMMY DATA FOR FRONTEND DEVELOPMENT AS REQUESTED 🚨
+            # Once ready for Phase 2 integration, uncomment the real payload line:
+            # payload = state_manager.get_frontend_payload(units=units)
             payload = get_dummy_payload(units=units)
             
             await websocket.send_json(payload)
@@ -60,7 +73,7 @@ async def websocket_endpoint(websocket: WebSocket):
     except Exception as e:
         logger.error(f"WebSocket error: {e}")
     finally:
-        # For now, we stop the listener if the client disconnects
+        # Stop the listener if the client disconnects
         if udp_listener:
             udp_listener.stop()
             udp_listener = None
