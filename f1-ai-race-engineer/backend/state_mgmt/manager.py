@@ -30,6 +30,8 @@ class StateManager:
         # In-memory track of lap history per car
         self.lap_history = {i: [] for i in range(24)}
         self.telemetry_buffer = {i: [] for i in range(24)}
+        self.current_laps = {i: 0 for i in range(24)}
+        self.last_recorded_distance = {i: -1 for i in range(24)}
 
     def update(self, packet_id, packet):
         """
@@ -58,15 +60,77 @@ class StateManager:
         elif packet_id == 10:
             self.car_damage = packet
 
+    def _format_ms(self, ms):
+        if ms == 0: return "0:00.000"
+        minutes = int(ms / 60000)
+        seconds = (ms % 60000) / 1000.0
+        return f"{minutes}:{seconds:06.3f}"
+
     def _process_lap_transitions(self):
-        # Logic to detect when a car crosses the finish line 
-        # and store its previous lap data into self.lap_history.
-        # This will be fully implemented in a later iteration.
-        pass
+        if not self.lap_data: return
+        
+        for i in range(24):
+            lap = self.lap_data.m_lapData[i]
+            prev_lap = self.current_laps.get(i, 0)
+            
+            # Car has crossed the finish line and started a new lap
+            if lap.m_currentLapNum > prev_lap and prev_lap > 0:
+                last_lap_time = self._format_ms(lap.m_lastLapTimeInMS)
+                
+                # Clone buffer and reset it
+                telemetry_points = self.telemetry_buffer.get(i, []).copy()
+                self.telemetry_buffer[i] = []
+                self.last_recorded_distance[i] = -1
+                
+                self.lap_history[i].append({
+                    "lap": prev_lap,
+                    "time": last_lap_time,
+                    "delta": "---", # Will be calculated by frontend or AI
+                    "telemetry_points": telemetry_points
+                })
+                
+                # Limit history to last 10 laps to save memory and network bandwidth
+                if len(self.lap_history[i]) > 10:
+                    self.lap_history[i].pop(0)
+                    
+            self.current_laps[i] = lap.m_currentLapNum
 
     def _buffer_telemetry(self):
-        # Logic to store telemetry points at specific corners for analysis.
-        pass
+        if not self.lap_data or not self.session or not self.car_telemetry: 
+            return
+            
+        track_len = self.session.m_trackLength
+        if track_len == 0: 
+            track_len = 5000 # Fallback
+            
+        # Sample telemetry every 5% of the track (approx 20 points per lap = "corners")
+        interval = track_len / 20.0
+        
+        for i in range(24):
+            lap = self.lap_data.m_lapData[i]
+            tele = self.car_telemetry.m_carTelemetryData[i]
+            
+            # Skip invalid cars
+            if lap.m_resultStatus == 0: continue
+            
+            last_dist = self.last_recorded_distance.get(i, -1)
+            curr_dist = lap.m_lapDistance
+            
+            # If crossed finish line, reset last_dist
+            if curr_dist < last_dist:
+                last_dist = -1
+                
+            if curr_dist - last_dist >= interval or last_dist == -1:
+                point = {
+                    "distance": f"Sector {int((curr_dist/track_len)*20)+1}", # Fake corner naming based on sector chunks
+                    "brake": int(tele.m_brake * 100),
+                    "throttle": int(tele.m_throttle * 100),
+                    # In real app, we also cross-reference rival's telemetry here
+                    "rival_brake": int(tele.m_brake * 100), # Placeholder
+                    "rival_throttle": int(tele.m_throttle * 100), # Placeholder
+                }
+                self.telemetry_buffer[i].append(point)
+                self.last_recorded_distance[i] = curr_dist
 
     def get_frontend_payload(self, units="metric"):
         """
