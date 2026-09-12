@@ -1,48 +1,38 @@
-import struct
+import ctypes
+from .header import PacketHeader
 
-# CarSetupData:
-# uint8 m_frontWing; uint8 m_rearWing; uint8 m_onThrottle; uint8 m_offThrottle;
-# float m_frontCamber; float m_rearCamber; float m_frontToe; float m_rearToe;
-# uint8 m_frontSuspension; uint8 m_rearSuspension; uint8 m_frontAntiRollBar; uint8 m_rearAntiRollBar;
-# uint8 m_frontSuspensionHeight; uint8 m_rearSuspensionHeight; uint8 m_brakePressure; uint8 m_brakeBias;
-# uint8 m_engineBraking;
-# float m_rearLeftTyrePressure; float m_rearRightTyrePressure; float m_frontLeftTyrePressure; float m_frontRightTyrePressure;
-# uint8 m_ballast; float m_fuelLoad;
-CAR_SETUP_FORMAT = "<BBBBffffBBBBBBBBBffffBf"
-CAR_SETUP_SIZE = struct.calcsize(CAR_SETUP_FORMAT) # 49 bytes per car
+class CarSetupData(ctypes.LittleEndianStructure):
+    _pack_ = 1
+    _fields_ = [
+        ("m_frontWing", ctypes.c_uint8),
+        ("m_rearWing", ctypes.c_uint8),
+        ("m_onThrottle", ctypes.c_uint8),
+        ("m_offThrottle", ctypes.c_uint8),
+        ("m_frontCamber", ctypes.c_float),
+        ("m_rearCamber", ctypes.c_float),
+        ("m_frontToe", ctypes.c_float),
+        ("m_rearToe", ctypes.c_float),
+        ("m_frontSuspension", ctypes.c_uint8),
+        ("m_rearSuspension", ctypes.c_uint8),
+        ("m_frontAntiRollBar", ctypes.c_uint8),
+        ("m_rearAntiRollBar", ctypes.c_uint8),
+        ("m_frontSuspensionHeight", ctypes.c_uint8),
+        ("m_rearSuspensionHeight", ctypes.c_uint8),
+        ("m_brakePressure", ctypes.c_uint8),
+        ("m_brakeBias", ctypes.c_uint8),
+        ("m_engineBraking", ctypes.c_uint8),
+        ("m_rearLeftTyrePressure", ctypes.c_float),
+        ("m_rearRightTyrePressure", ctypes.c_float),
+        ("m_frontLeftTyrePressure", ctypes.c_float),
+        ("m_frontRightTyrePressure", ctypes.c_float),
+        ("m_ballast", ctypes.c_uint8),
+        ("m_fuelLoad", ctypes.c_float),
+    ]
 
-# PacketCarSetupData: Header (29) + 24 * CarSetup (1176) + float m_nextFrontWingValue (4)
-def unpack_car_setups(data: bytes, header_size: int = 29):
-    setups = []
-    offset = header_size
-    for _ in range(24):
-        unpacked = struct.unpack(CAR_SETUP_FORMAT, data[offset:offset+CAR_SETUP_SIZE])
-        setups.append({
-            "m_frontWing": unpacked[0],
-            "m_rearWing": unpacked[1],
-            "m_onThrottle": unpacked[2],
-            "m_offThrottle": unpacked[3],
-            "m_frontCamber": unpacked[4],
-            "m_rearCamber": unpacked[5],
-            "m_frontToe": unpacked[6],
-            "m_rearToe": unpacked[7],
-            "m_frontSuspension": unpacked[8],
-            "m_rearSuspension": unpacked[9],
-            "m_frontAntiRollBar": unpacked[10],
-            "m_rearAntiRollBar": unpacked[11],
-            "m_frontSuspensionHeight": unpacked[12],
-            "m_rearSuspensionHeight": unpacked[13],
-            "m_brakePressure": unpacked[14],
-            "m_brakeBias": unpacked[15],
-            "m_engineBraking": unpacked[16],
-            "m_rearLeftTyrePressure": unpacked[17],
-            "m_rearRightTyrePressure": unpacked[18],
-            "m_frontLeftTyrePressure": unpacked[19],
-            "m_frontRightTyrePressure": unpacked[20],
-            "m_ballast": unpacked[21],
-            "m_fuelLoad": unpacked[22]
-        })
-        offset += CAR_SETUP_SIZE
-        
-    next_front_wing = struct.unpack("<f", data[offset:offset+4])[0]
-    return setups, next_front_wing
+class PacketCarSetupData(ctypes.LittleEndianStructure):
+    _pack_ = 1
+    _fields_ = [
+        ("m_header", PacketHeader),
+        ("m_carSetups", CarSetupData * 24),
+        ("m_nextFrontWingValue", ctypes.c_float),
+    ]

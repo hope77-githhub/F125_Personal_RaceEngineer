@@ -1,42 +1,33 @@
-import struct
+import ctypes
+from .header import PacketHeader
 
-# CarTelemetryData:
-# uint16 m_speed; float m_throttle; float m_steer; float m_brake; uint8 m_clutch; int8 m_gear; uint16 m_engineRPM;
-# uint8 m_drs; uint8 m_revLightsPercent; uint16 m_revLightsBitValue;
-# uint16 m_brakesTemperature[4]; uint8 m_tyresSurfaceTemperature[4]; uint8 m_tyresInnerTemperature[4];
-# uint8 m_engineTemperature; float m_tyresPressure[4]; uint8 m_surfaceType[4];
-CAR_TELEMETRY_FORMAT = "<HfffBbHBBH HHHH BBBB BBBB B ffff BBBB"
-CAR_TELEMETRY_SIZE = struct.calcsize(CAR_TELEMETRY_FORMAT) # 59 bytes per car
+class CarTelemetryData(ctypes.LittleEndianStructure):
+    _pack_ = 1
+    _fields_ = [
+        ("m_speed", ctypes.c_uint16),
+        ("m_throttle", ctypes.c_float),
+        ("m_steer", ctypes.c_float),
+        ("m_brake", ctypes.c_float),
+        ("m_clutch", ctypes.c_uint8),
+        ("m_gear", ctypes.c_int8),
+        ("m_engineRPM", ctypes.c_uint16),
+        ("m_drs", ctypes.c_uint8),
+        ("m_revLightsPercent", ctypes.c_uint8),
+        ("m_revLightsBitValue", ctypes.c_uint16),
+        ("m_brakesTemperature", ctypes.c_uint16 * 4),
+        ("m_tyresSurfaceTemperature", ctypes.c_uint8 * 4),
+        ("m_tyresInnerTemperature", ctypes.c_uint8 * 4),
+        ("m_engineTemperature", ctypes.c_uint16),
+        ("m_tyresPressure", ctypes.c_float * 4),
+        ("m_surfaceType", ctypes.c_uint8 * 4),
+    ]
 
-# PacketCarTelemetryData: Header (29) + 24 * CarTelemetryData (1416) + 3 bytes (m_mfdPanelIndex, m_mfdPanelIndexSecondaryPlayer, m_suggestedGear)
-def unpack_car_telemetry(data: bytes, header_size: int = 29):
-    telemetry = []
-    offset = header_size
-    for _ in range(24):
-        unpacked = struct.unpack(CAR_TELEMETRY_FORMAT, data[offset:offset+CAR_TELEMETRY_SIZE])
-        telemetry.append({
-            "m_speed": unpacked[0],
-            "m_throttle": unpacked[1],
-            "m_steer": unpacked[2],
-            "m_brake": unpacked[3],
-            "m_clutch": unpacked[4],
-            "m_gear": unpacked[5],
-            "m_engineRPM": unpacked[6],
-            "m_drs": unpacked[7],
-            "m_revLightsPercent": unpacked[8],
-            "m_revLightsBitValue": unpacked[9],
-            "m_brakesTemperature": list(unpacked[10:14]),
-            "m_tyresSurfaceTemperature": list(unpacked[14:18]),
-            "m_tyresInnerTemperature": list(unpacked[18:22]),
-            "m_engineTemperature": unpacked[22],
-            "m_tyresPressure": list(unpacked[23:27]),
-            "m_surfaceType": list(unpacked[27:31])
-        })
-        offset += CAR_TELEMETRY_SIZE
-        
-    panels_and_gear = struct.unpack("<BBb", data[offset:offset+3])
-    return telemetry, {
-        "m_mfdPanelIndex": panels_and_gear[0],
-        "m_mfdPanelIndexSecondaryPlayer": panels_and_gear[1],
-        "m_suggestedGear": panels_and_gear[2]
-    }
+class PacketCarTelemetryData(ctypes.LittleEndianStructure):
+    _pack_ = 1
+    _fields_ = [
+        ("m_header", PacketHeader),
+        ("m_carTelemetryData", CarTelemetryData * 24),
+        ("m_mfdPanelIndex", ctypes.c_uint8),
+        ("m_mfdPanelIndexSecondaryPlayer", ctypes.c_uint8),
+        ("m_suggestedGear", ctypes.c_int8),
+    ]

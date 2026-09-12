@@ -1,25 +1,18 @@
-import struct
+import ctypes
 
-# Size: 29 bytes
-HEADER_FORMAT = "<HBBBBBQfIIBB"
-HEADER_SIZE = struct.calcsize(HEADER_FORMAT)
-
-def unpack_header(data: bytes):
-    if len(data) < HEADER_SIZE:
-        return None
-    
-    unpacked = struct.unpack(HEADER_FORMAT, data[:HEADER_SIZE])
-    return {
-        "m_packetFormat": unpacked[0],
-        "m_gameYear": unpacked[1],
-        "m_gameMajorVersion": unpacked[2],
-        "m_gameMinorVersion": unpacked[3],
-        "m_packetVersion": unpacked[4],
-        "m_packetId": unpacked[5],
-        "m_sessionUID": unpacked[6],
-        "m_sessionTime": unpacked[7],
-        "m_frameIdentifier": unpacked[8],
-        "m_overallFrameIdentifier": unpacked[9],
-        "m_playerCarIndex": unpacked[10],
-        "m_secondaryPlayerCarIndex": unpacked[11]
-    }
+class PacketHeader(ctypes.LittleEndianStructure):
+    _pack_ = 1
+    _fields_ = [
+        ("m_packetFormat", ctypes.c_uint16),
+        ("m_gameYear", ctypes.c_uint8),
+        ("m_gameMajorVersion", ctypes.c_uint8),
+        ("m_gameMinorVersion", ctypes.c_uint8),
+        ("m_packetVersion", ctypes.c_uint8),
+        ("m_packetId", ctypes.c_uint8),
+        ("m_sessionUID", ctypes.c_uint64),
+        ("m_sessionTime", ctypes.c_float),
+        ("m_frameIdentifier", ctypes.c_uint32),
+        ("m_overallFrameIdentifier", ctypes.c_uint32),
+        ("m_playerCarIndex", ctypes.c_uint8),
+        ("m_secondaryPlayerCarIndex", ctypes.c_uint8),
+    ]
