@@ -78,6 +78,11 @@ p3_lap_hist = [
     { "lap": 13, "time": "1:24.600", "delta": "+0.300", "avg_tyre_wear_lap": 1.4, "telemetry_points": generate_telemetry(corners, 90, 10, 0.1) }
 ]
 
+
+p1_setup = get_setup(20, 15, "58%")
+p2_setup = get_setup(18, 12, "56%")
+p3_setup = get_setup(22, 18, "59%")
+
 def get_dummy_payload(units="metric"):
     t = time.time()
     speed_p1 = 280 + 30 * __import__('math').sin(t)
@@ -105,7 +110,7 @@ def get_dummy_payload(units="metric"):
                 "current_lap": 14,
                 "tyre_compound": "Soft (C3)",
                 "strategy": "Plan A: Box Lap 18 for Hards. Current tyre degradation is slightly higher than expected in Sector 1. Suggest shifting brake bias forward to save rears.",
-                "car_setup": get_setup(20, 15, "58%"),
+                "car_setup": p1_setup,
                 "live_telemetry": { "speed": int(speed_p1), "gear": gear_p1, "rpm": int(rpm_p1), "throttle": throttle, "brake": brake, "tyre_wear": [15.2, 15.0, 16.5, 16.1] },
                 "lap_history": p1_lap_hist
             },
@@ -117,7 +122,7 @@ def get_dummy_payload(units="metric"):
                 "current_lap": 14,
                 "tyre_compound": "Medium (C2)",
                 "strategy": "Plan B: Going long. Expected Box Lap 25. He is braking earlier and smoother, saving 0.1% more tyre wear per lap at Turn 4.",
-                "car_setup": get_setup(18, 12, "56%"),
+                "car_setup": p2_setup,
                 "live_telemetry": { "speed": 315, "gear": 8, "rpm": 11800, "throttle": 100, "brake": 0, "tyre_wear": [12.1, 12.0, 13.5, 13.5] },
                 "lap_history": p2_lap_hist
             },
@@ -129,7 +134,7 @@ def get_dummy_payload(units="metric"):
                 "current_lap": 14,
                 "tyre_compound": "Soft (C3)",
                 "strategy": "Aggressive 2-stop. High tyre wear detected. Might undercut on Lap 16.",
-                "car_setup": get_setup(22, 18, "59%"),
+                "car_setup": p3_setup,
                 "live_telemetry": { "speed": 305, "gear": 8, "rpm": 11200, "throttle": 100, "brake": 0, "tyre_wear": [18.2, 18.0, 19.5, 19.2] },
                 "lap_history": p3_lap_hist
             }
