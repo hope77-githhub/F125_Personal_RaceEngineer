@@ -210,11 +210,11 @@ function Dashboard({ settings, setSettings, onExit }) {
                     <button 
                        onClick={() => setComparisonMode('ahead')}
                        style={{ backgroundColor: comparisonMode === 'ahead' ? 'var(--color-primary)' : 'var(--color-surface-onyx)', color: comparisonMode === 'ahead' ? '#000' : '#fff', border: 'none', padding: '4px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
-                    >vs Ahead (앞차)</button>
+                    >vs Ahead</button>
                     <button 
                        onClick={() => setComparisonMode('leader')}
                        style={{ backgroundColor: comparisonMode === 'leader' ? 'var(--color-primary)' : 'var(--color-surface-onyx)', color: comparisonMode === 'leader' ? '#000' : '#fff', border: 'none', padding: '4px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
-                    >vs Leader (선두)</button>
+                    >vs Leader</button>
                  </div>
                </div>
                
@@ -229,7 +229,7 @@ function Dashboard({ settings, setSettings, onExit }) {
                   const compThrottle = comparisonMode === 'ahead' ? tp.rival_throttle : (tp.leader_throttle || tp.rival_throttle);
                   const compTimeDiff = comparisonMode === 'ahead' ? tp.time_diff_to_rival : (tp.time_diff_leader || tp.time_diff_to_rival);
                   const compWearDiff = comparisonMode === 'ahead' ? tp.wear_diff : (tp.wear_diff_leader || tp.wear_diff);
-                  const compLabelKor = comparisonMode === 'ahead' ? '앞차' : '선두';
+                  
                   const compLabelEng = comparisonMode === 'ahead' ? 'Ahead' : 'Leader';
 
                   return (
@@ -272,7 +272,7 @@ function Dashboard({ settings, setSettings, onExit }) {
                       </div>
                       {compBrake !== undefined && (
                           <div style={{ fontSize: '10px', color: 'var(--color-ink)', textAlign: 'right', marginTop: '4px' }}>
-                            *White line: {compLabelEng}'s input ({compLabelKor} 조작량)
+                            *White line: {compLabelEng}'s input 
                           </div>
                       )}
                     </div>
@@ -310,14 +310,14 @@ function SetupPage({ onStart }) {
             style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--color-surface-indigo)', backgroundColor: 'var(--color-surface-onyx)', color: '#fff', fontSize: '16px' }}
           />
           <div style={{ fontSize: '12px', color: 'var(--color-link)', marginTop: '8px' }}>
-            * F1 26 게임 내 Telemetry 설정의 UDP Port 번호와 일치시켜 주세요. (기본값: 20777)
+            * Must match the UDP Port setting in F1 26 Telemetry settings (Default: 20777)
           </div>
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', padding: '16px', backgroundColor: 'var(--color-surface-onyx)', borderRadius: '8px' }}>
           <div>
             <div style={{ fontWeight: 'bold', fontSize: '16px' }}>Telemetry Update Rate</div>
-            <div style={{ fontSize: '12px', color: 'var(--color-link)', marginTop: '4px' }}>백엔드 파싱 및 프론트엔드 전송 주기를 결정합니다.</div>
+            <div style={{ fontSize: '12px', color: 'var(--color-link)', marginTop: '4px' }}>Determines the backend parsing and frontend transmission rate.</div>
           </div>
           <select 
              value={updateRate}
@@ -332,7 +332,7 @@ function SetupPage({ onStart }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', padding: '16px', backgroundColor: 'var(--color-surface-onyx)', borderRadius: '8px' }}>
           <div>
             <div style={{ fontWeight: 'bold', fontSize: '16px' }}>Measurement Units</div>
-            <div style={{ fontSize: '12px', color: 'var(--color-link)', marginTop: '4px' }}>표시할 측정 단위를 선택합니다. (Metric / Imperial)</div>
+            <div style={{ fontSize: '12px', color: 'var(--color-link)', marginTop: '4px' }}>Select the measurement units to display.</div>
           </div>
           <select 
              value={units}
@@ -348,7 +348,7 @@ function SetupPage({ onStart }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <div style={{ fontWeight: 'bold', fontSize: '16px' }}>AI Engineer TTS (Voice)</div>
-              <div style={{ fontSize: '12px', color: 'var(--color-link)', marginTop: '4px' }}>엔지니어의 실시간 음성 브리핑을 활성화합니다.</div>
+              <div style={{ fontSize: '12px', color: 'var(--color-link)', marginTop: '4px' }}>Enables real-time voice briefings from your engineer.</div>
             </div>
             <button 
                onClick={() => setTts(!tts)}
@@ -358,7 +358,7 @@ function SetupPage({ onStart }) {
           
           {tts && (
             <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--color-surface-indigo)' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', fontSize: '12px', color: 'var(--color-link)' }}>엔지니어 페르소나 선택 (Engineer Persona)</label>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', fontSize: '12px', color: 'var(--color-link)' }}>Select Engineer Persona</label>
               <select 
                  value={voice}
                  onChange={(e) => setVoice(e.target.value)}
@@ -375,7 +375,7 @@ function SetupPage({ onStart }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', backgroundColor: 'var(--color-surface-onyx)', borderRadius: '8px' }}>
           <div>
             <div style={{ fontWeight: 'bold', fontSize: '16px' }}>Overlay Mode (HUD)</div>
-            <div style={{ fontSize: '12px', color: 'var(--color-link)', marginTop: '4px' }}>게임 화면 위에 투명하게 표시되는 오버레이를 사용합니다.</div>
+            <div style={{ fontSize: '12px', color: 'var(--color-link)', marginTop: '4px' }}>Enables transparent overlay rendering over the game screen.</div>
           </div>
           <button 
              onClick={() => setOverlay(!overlay)}
