@@ -9,7 +9,7 @@ function Dashboard({ settings, setSettings, onExit }) {
   const [comparisonMode, setComparisonMode] = useState('ahead');
 
   useEffect(() => {
-    const ws = new WebSocket(`ws://localhost:8080/ws?port=${settings.port}&units=${settings.units}&rate=${settings.updateRate}&tts=${settings.tts}&overlay=${settings.overlay}`);
+    const ws = new WebSocket(`ws://localhost:8080/ws?port=${settings.port}&units=${settings.units}&rate=${settings.updateRate}&tts=${settings.tts}&overlay=${settings.overlay}&voice=${settings.voice}`);
 
     ws.onopen = () => setConnected(true);
     ws.onmessage = (event) => {
@@ -48,7 +48,7 @@ function Dashboard({ settings, setSettings, onExit }) {
         </div>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <button onClick={() => setSettings({...settings, tts: !settings.tts})} className="badge" style={{ cursor: 'pointer', border: 'none', backgroundColor: settings.tts ? 'var(--color-green)' : 'var(--color-surface-onyx)', color: settings.tts ? '#000' : '#fff', fontWeight: 'bold', fontSize: '14px', padding: '8px 16px' }}>
-             TTS: {settings.tts ? 'ON' : 'OFF'}
+             TTS: {settings.tts ? `ON (${settings.voice.toUpperCase()})` : 'OFF'}
           </button>
           <button onClick={() => setSettings({...settings, overlay: !settings.overlay})} className="badge" style={{ cursor: 'pointer', border: 'none', backgroundColor: settings.overlay ? 'var(--color-green)' : 'var(--color-surface-onyx)', color: settings.overlay ? '#000' : '#fff', fontWeight: 'bold', fontSize: '14px', padding: '8px 16px' }}>
              OVERLAY: {settings.overlay ? 'ON' : 'OFF'}
@@ -292,6 +292,7 @@ function SetupPage({ onStart }) {
   const [overlay, setOverlay] = useState(false);
   const [units, setUnits] = useState('metric');
   const [updateRate, setUpdateRate] = useState(60);
+  const [voice, setVoice] = useState('gp');
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '20px', paddingBottom: '60px' }}>
@@ -343,15 +344,32 @@ function SetupPage({ onStart }) {
           </select>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', padding: '16px', backgroundColor: 'var(--color-surface-onyx)', borderRadius: '8px' }}>
-          <div>
-            <div style={{ fontWeight: 'bold', fontSize: '16px' }}>AI Engineer TTS (Voice)</div>
-            <div style={{ fontSize: '12px', color: 'var(--color-link)', marginTop: '4px' }}>엔지니어의 실시간 음성 브리핑을 활성화합니다.</div>
+        <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '16px', padding: '16px', backgroundColor: 'var(--color-surface-onyx)', borderRadius: '8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <div style={{ fontWeight: 'bold', fontSize: '16px' }}>AI Engineer TTS (Voice)</div>
+              <div style={{ fontSize: '12px', color: 'var(--color-link)', marginTop: '4px' }}>엔지니어의 실시간 음성 브리핑을 활성화합니다.</div>
+            </div>
+            <button 
+               onClick={() => setTts(!tts)}
+               style={{ backgroundColor: tts ? 'var(--color-green)' : 'var(--color-surface-indigo)', color: tts ? '#000' : '#fff', border: 'none', padding: '8px 24px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+            >{tts ? 'ON' : 'OFF'}</button>
           </div>
-          <button 
-             onClick={() => setTts(!tts)}
-             style={{ backgroundColor: tts ? 'var(--color-green)' : 'var(--color-surface-indigo)', color: tts ? '#000' : '#fff', border: 'none', padding: '8px 24px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
-          >{tts ? 'ON' : 'OFF'}</button>
+          
+          {tts && (
+            <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--color-surface-indigo)' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', fontSize: '12px', color: 'var(--color-link)' }}>엔지니어 페르소나 선택 (Engineer Persona)</label>
+              <select 
+                 value={voice}
+                 onChange={(e) => setVoice(e.target.value)}
+                 style={{ width: '100%', backgroundColor: 'var(--color-canvas)', color: '#fff', border: '1px solid var(--color-surface-indigo)', padding: '12px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', outline: 'none' }}
+              >
+                <option value="gp">GP (Gianpiero Lambiase) - Max Verstappen's Eng.</option>
+                <option value="bono">Bono (Peter Bonnington) - Lewis Hamilton's Eng.</option>
+                <option value="adami">Ricky (Riccardo Adami) - Carlos Sainz's Eng.</option>
+              </select>
+            </div>
+          )}
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', backgroundColor: 'var(--color-surface-onyx)', borderRadius: '8px' }}>
@@ -367,7 +385,7 @@ function SetupPage({ onStart }) {
       </div>
 
       <button 
-        onClick={() => onStart({ port, tts, overlay, units, updateRate })}
+        onClick={() => onStart({ port, tts, overlay, units, updateRate, voice })}
         className="badge"
         style={{ width: '100%', maxWidth: '550px', padding: '20px', backgroundColor: 'var(--color-primary)', color: '#000', border: 'none', borderRadius: '8px', fontSize: '18px', fontWeight: 'bold', cursor: 'pointer', textAlign: 'center' }}
       >CONNECT & START SESSION</button>
@@ -377,7 +395,7 @@ function SetupPage({ onStart }) {
 
 export default function App() {
   const [sessionActive, setSessionActive] = useState(false);
-  const [settings, setSettings] = useState({ port: 20777, tts: true, overlay: false, units: 'metric', updateRate: 60 });
+  const [settings, setSettings] = useState({ port: 20777, tts: true, overlay: false, units: 'metric', updateRate: 60, voice: 'gp' });
 
   if (!sessionActive) {
     return <SetupPage onStart={(s) => { setSettings(s); setSessionActive(true); }} />;
