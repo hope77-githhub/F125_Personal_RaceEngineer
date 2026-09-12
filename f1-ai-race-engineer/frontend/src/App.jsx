@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { getDummyPayload } from './dummyData.js';
 
 const i18n = {
@@ -55,6 +55,25 @@ function Dashboard({ settings, setSettings, onExit }) {
   const [selectedPlayerId, setSelectedPlayerId] = useState('p_1');
   const [selectedLapId, setSelectedLapId] = useState(null);
   const [comparisonMode, setComparisonMode] = useState('ahead');
+
+  const [visibleSpeeds, setVisibleSpeeds] = useState({ p_1: true, p_2: true, p_3: true });
+  const toggleSpeed = (id) => setVisibleSpeeds(prev => ({ ...prev, [id]: !prev[id] }));
+  const historyRef = useRef([]);
+
+  if (data) {
+     const newPoint = { time: Date.now() };
+     data.players.forEach(p => {
+        newPoint[`speed_${p.id}`] = p.live_telemetry.speed;
+        if (p.id === selectedPlayerId) {
+           newPoint.throttle = p.live_telemetry.throttle;
+           newPoint.brake = p.live_telemetry.brake;
+        }
+     });
+     historyRef.current.push(newPoint);
+     if (historyRef.current.length > 200) historyRef.current.shift();
+  }
+  const history = historyRef.current;
+
 
 
   useEffect(() => {
