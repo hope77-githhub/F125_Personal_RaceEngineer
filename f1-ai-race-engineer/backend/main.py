@@ -29,7 +29,14 @@ def on_udp_packet_received(data: bytes):
     if parsed_packet:
         # Update the centralized state manager with the new packet
         state_manager.update(packet_id, parsed_packet)
-        # logger.debug(f"Successfully parsed and updated packet ID: {packet_id}")
+        
+        # Keep a basic track of what packets are received for debugging
+        if not hasattr(state_manager, '_debug_packets_received'):
+            state_manager._debug_packets_received = set()
+            
+        if packet_id not in state_manager._debug_packets_received:
+            state_manager._debug_packets_received.add(packet_id)
+            logger.info(f"First time successfully parsed packet ID: {packet_id}")
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
@@ -58,11 +65,28 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         while True:
             # 2. Get Data Payload
-            # 🚨 CURRENTLY USING DUMMY DATA FOR FRONTEND DEVELOPMENT AS REQUESTED 🚨
-            # Once ready for Phase 2 integration, uncomment the real payload line:
-            # payload = state_manager.get_frontend_payload(units=units)
-            payload = get_dummy_payload(units=units)
+            # 🚨 Switched to REAL DATA for testing 🚨
+            payload = state_manager.get_frontend_payload(units=units)
+            # payload = get_dummy_payload(units=units)
             
+            # --- DEBUG DATA DUMP ---
+            # Save the payload to a json file periodically to debug lap_history
+            import json
+            import time
+            if getattr(state_manager, '_last_dump_time', 0) < time.time() - 5: # Dump every 5 seconds
+                debug_dump = {
+                    "payload": payload,
+                    "internal_state": {
+                        "current_laps": state_manager.current_laps,
+                        "last_recorded_distance": state_manager.last_recorded_distance,
+                        "lap_history_lens": {k: len(v) for k, v in state_manager.lap_history.items()}
+                    }
+                }
+                with open("debug_payload.json", "w", encoding="utf-8") as f:
+                    json.dump(debug_dump, f, ensure_ascii=False, indent=2)
+                state_manager._last_dump_time = time.time()
+            # -----------------------
+
             await websocket.send_json(payload)
             
             # Control loop rate based on user preference

@@ -47,5 +47,15 @@ def parse_packet(data: bytes):
             except Exception as e:
                 logger.error(f"Failed to parse packet ID {packet_id}: {e}")
                 return packet_id, None
+        else:
+            # Pad the data if it's smaller (e.g., from an older F1 game version)
+            # F1 packet sizes often change slightly between years
+            padded_data = data.ljust(ctypes.sizeof(packet_class), b'\x00')
+            try:
+                packet = packet_class.from_buffer_copy(padded_data)
+                return packet_id, packet
+            except Exception as e:
+                logger.error(f"Failed to parse padded packet ID {packet_id}: {e}")
+                return packet_id, None
     
     return packet_id, None

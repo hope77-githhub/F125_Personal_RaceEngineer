@@ -16,7 +16,8 @@ class F1UDPListener:
     def start(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.bind((self.host, self.port))
-        self.sock.setblocking(False)
+        # Use a small timeout instead of non-blocking to work well with run_in_executor
+        self.sock.settimeout(0.1)
         self.is_listening = True
         logger.info(f"F1 UDP Listener started on {self.host}:{self.port} at {self.update_rate}Hz")
 
@@ -30,16 +31,20 @@ class F1UDPListener:
         loop = asyncio.get_event_loop()
         while self.is_listening:
             try:
-                # Receive up to 2048 bytes (F1 packets are max ~1500 bytes)
-                data, addr = await loop.sock_recv(self.sock, 2048)
+                # run_in_executor avoids ProactorEventLoop UDP issues on Windows
+                data, addr = await loop.run_in_executor(None, self.sock.recvfrom, 2048)
                 if data:
                     # Pass the raw binary data to the callback
                     callback(data)
+            except socket.timeout:
+                pass
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"Error receiving UDP packet: {e}")
+                # Ignore closed socket errors when stopping
+                if self.is_listening:
+                    logger.error(f"Error receiving UDP packet: {e}")
             
-            # Simple rate limiting depending on update_rate setting (approximate)
-            await asyncio.sleep(1.0 / self.update_rate)
+            # Yield control back to event loop
+            await asyncio.sleep(0)
 

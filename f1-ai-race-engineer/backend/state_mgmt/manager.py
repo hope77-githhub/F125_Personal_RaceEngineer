@@ -13,6 +13,14 @@ TYRE_VISUAL_MAP = {
     16: "Soft", 17: "Medium", 18: "Hard", 7: "Inter", 8: "Wet"
 }
 
+def safe_int(val, default=0):
+    try:
+        if math.isnan(val):
+            return default
+        return int(val)
+    except (ValueError, TypeError):
+        return default
+
 class StateManager:
     def __init__(self):
         # We store the latest packet data for each type
@@ -122,12 +130,12 @@ class StateManager:
                 
             if curr_dist - last_dist >= interval or last_dist == -1:
                 point = {
-                    "distance": f"Sector {int((curr_dist/track_len)*20)+1}", # Fake corner naming based on sector chunks
-                    "brake": int(tele.m_brake * 100),
-                    "throttle": int(tele.m_throttle * 100),
+                    "distance": f"Sector {safe_int((curr_dist/track_len)*20)+1}", # Fake corner naming based on sector chunks
+                    "brake": safe_int(tele.m_brake * 100),
+                    "throttle": safe_int(tele.m_throttle * 100),
                     # In real app, we also cross-reference rival's telemetry here
-                    "rival_brake": int(tele.m_brake * 100), # Placeholder
-                    "rival_throttle": int(tele.m_throttle * 100), # Placeholder
+                    "rival_brake": safe_int(tele.m_brake * 100), # Placeholder
+                    "rival_throttle": safe_int(tele.m_throttle * 100), # Placeholder
                 }
                 self.telemetry_buffer[i].append(point)
                 self.last_recorded_distance[i] = curr_dist
@@ -147,8 +155,11 @@ class StateManager:
         air_temp = self.session.m_airTemperature
         
         if units == "imperial":
-            track_temp = int(track_temp * 9/5 + 32)
-            air_temp = int(air_temp * 9/5 + 32)
+            track_temp = safe_int(track_temp * 9/5 + 32)
+            air_temp = safe_int(air_temp * 9/5 + 32)
+        else:
+            track_temp = safe_int(track_temp)
+            air_temp = safe_int(air_temp)
             
         circuit_env = {
             "track_name": f"Track ID {self.session.m_trackId}", # We can map this to names later
@@ -222,7 +233,9 @@ class StateManager:
 
             speed = tele.m_speed
             if units == "imperial":
-                speed = int(speed * 0.621371)
+                speed = safe_int(speed * 0.621371)
+            else:
+                speed = safe_int(speed)
 
             players.append({
                 "id": f"p_{i}",
@@ -237,8 +250,8 @@ class StateManager:
                     "speed": speed,
                     "gear": tele.m_gear,
                     "rpm": tele.m_engineRPM,
-                    "throttle": int(tele.m_throttle * 100),
-                    "brake": int(tele.m_brake * 100),
+                    "throttle": safe_int(tele.m_throttle * 100),
+                    "brake": safe_int(tele.m_brake * 100),
                     "tyre_wear": wear
                 },
                 "lap_history": self.lap_history[i]

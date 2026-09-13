@@ -1,0 +1,2360 @@
+{
+  "payload": {
+    "status": "live",
+    "circuit_environment": {
+      "track_name": "Track ID 5",
+      "weather": "Light Cloud",
+      "track_temp": 28,
+      "air_temp": 20,
+      "track_length": 3323,
+      "total_laps": 2
+    },
+    "players": [
+      {
+        "id": "p_3",
+        "name": "ANTONELLI (You)",
+        "position": 1,
+        "gap": "Leader",
+        "current_lap": 2,
+        "tyre_compound": "Medium",
+        "strategy": "AI Analysis Pending...",
+        "car_setup": {
+          "front_wing": 48,
+          "rear_wing": 50,
+          "on_throttle_diff": "60%",
+          "off_throttle_diff": "30%",
+          "front_camber": "-3.50°",
+          "rear_camber": "-2.00°",
+          "front_toe": "0.03°",
+          "rear_toe": "0.15°",
+          "front_suspension": 31,
+          "rear_suspension": 9,
+          "front_anti_roll_bar": 11,
+          "rear_anti_roll_bar": 3,
+          "front_suspension_height": 28,
+          "rear_suspension_height": 56,
+          "brake_pressure": "97%",
+          "brake_bias": "57%",
+          "engine_braking": "50%",
+          "tyre_pressures": [
+            20.5,
+            20.5,
+            22.7,
+            22.7
+          ],
+          "ballast": 6,
+          "fuel_load": 20.0
+        },
+        "live_telemetry": {
+          "speed": 0,
+          "gear": 0,
+          "rpm": 0,
+          "throttle": 0,
+          "brake": 858993459200,
+          "tyre_wear": [
+            10.1,
+            10.0,
+            10.6,
+            9.5
+          ]
+        },
+        "lap_history": [
+          {
+            "lap": 1,
+            "time": "1:16.845",
+            "delta": "---",
+            "telemetry_points": [
+              {
+                "distance": "Sector 3",
+                "brake": 3543348019200,
+                "throttle": 0,
+                "rival_brake": 3543348019200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 4",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 5",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 19",
+                "brake": 858993459200,
+                "throttle": 0,
+                "rival_brake": 858993459200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -20",
+                "brake": 858993459200,
+                "throttle": 0,
+                "rival_brake": 858993459200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -5",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -4",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -3",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -2",
+                "brake": 17412886744782397935039872489672513945600,
+                "throttle": -205819891200,
+                "rival_brake": 17412886744782397935039872489672513945600,
+                "rival_throttle": -205819891200
+              },
+              {
+                "distance": "Sector -1",
+                "brake": -57174604644352000,
+                "throttle": 586087237349172223897554124800000,
+                "rival_brake": -57174604644352000,
+                "rival_throttle": 586087237349172223897554124800000
+              },
+              {
+                "distance": "Sector 19",
+                "brake": 858993459200,
+                "throttle": 0,
+                "rival_brake": 858993459200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -20",
+                "brake": 858993459200,
+                "throttle": 0,
+                "rival_brake": 858993459200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -20",
+                "brake": 858993459200,
+                "throttle": 0,
+                "rival_brake": 858993459200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -5",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -4",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -3",
+                "brake": 217907200,
+                "throttle": 2356661767372800,
+                "rival_brake": 217907200,
+                "rival_throttle": 2356661767372800
+              },
+              {
+                "distance": "Sector -2",
+                "brake": 858521600,
+                "throttle": 0,
+                "rival_brake": 858521600,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -1",
+                "brake": 0,
+                "throttle": -65,
+                "rival_brake": 0,
+                "rival_throttle": -65
+              },
+              {
+                "distance": "Sector 0",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 1",
+                "brake": -54886400,
+                "throttle": 0,
+                "rival_brake": -54886400,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 1",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 19",
+                "brake": 858993459200,
+                "throttle": 0,
+                "rival_brake": 858993459200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -20",
+                "brake": 858993459200,
+                "throttle": 0,
+                "rival_brake": 858993459200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -5",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -4",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -3",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -2",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -1",
+                "brake": 15716035654990179271180288000,
+                "throttle": 0,
+                "rival_brake": 15716035654990179271180288000,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 0",
+                "brake": -3300,
+                "throttle": 0,
+                "rival_brake": -3300,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 1",
+                "brake": 14050918400,
+                "throttle": -3738469710542638768232416215498856857600,
+                "rival_brake": 14050918400,
+                "rival_throttle": -3738469710542638768232416215498856857600
+              },
+              {
+                "distance": "Sector 1",
+                "brake": -59373627899904000,
+                "throttle": 0,
+                "rival_brake": -59373627899904000,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 2",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 3",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 4",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 5",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 6",
+                "brake": -989808014809477636790681600,
+                "throttle": -542469133331185422542696559411200,
+                "rival_brake": -989808014809477636790681600,
+                "rival_throttle": -542469133331185422542696559411200
+              },
+              {
+                "distance": "Sector 7",
+                "brake": 0,
+                "throttle": -965000,
+                "rival_brake": 0,
+                "rival_throttle": -965000
+              },
+              {
+                "distance": "Sector 8",
+                "brake": -66980629475099276408043402646939238400,
+                "throttle": 0,
+                "rival_brake": -66980629475099276408043402646939238400,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 9",
+                "brake": 13000,
+                "throttle": -1092,
+                "rival_brake": 13000,
+                "rival_throttle": -1092
+              },
+              {
+                "distance": "Sector 10",
+                "brake": -228492260147200,
+                "throttle": 0,
+                "rival_brake": -228492260147200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 11",
+                "brake": 0,
+                "throttle": -2676936773416033450769467519795200,
+                "rival_brake": 0,
+                "rival_throttle": -2676936773416033450769467519795200
+              },
+              {
+                "distance": "Sector 12",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 13",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 14",
+                "brake": -3655876162355200,
+                "throttle": 0,
+                "rival_brake": -3655876162355200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 15",
+                "brake": -844800,
+                "throttle": -8011826400,
+                "rival_brake": -844800,
+                "rival_throttle": -8011826400
+              },
+              {
+                "distance": "Sector 16",
+                "brake": 214400,
+                "throttle": 0,
+                "rival_brake": 214400,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 17",
+                "brake": 244217597713345360691200,
+                "throttle": 85562189741176037320530329600,
+                "rival_brake": 244217597713345360691200,
+                "rival_throttle": 85562189741176037320530329600
+              },
+              {
+                "distance": "Sector 18",
+                "brake": 16479457802966982219457141669888000,
+                "throttle": -39753,
+                "rival_brake": 16479457802966982219457141669888000,
+                "rival_throttle": -39753
+              },
+              {
+                "distance": "Sector 19",
+                "brake": -15583809393469829205196800,
+                "throttle": 0,
+                "rival_brake": -15583809393469829205196800,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 20",
+                "brake": 0,
+                "throttle": -2809,
+                "rival_brake": 0,
+                "rival_throttle": -2809
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "p_20",
+        "name": "PÉREZ",
+        "position": 2,
+        "gap": "+19.300s",
+        "current_lap": 3,
+        "tyre_compound": "Soft",
+        "strategy": "AI Analysis Pending...",
+        "car_setup": {
+          "front_wing": 48,
+          "rear_wing": 45,
+          "on_throttle_diff": "90%",
+          "off_throttle_diff": "35%",
+          "front_camber": "-3.50°",
+          "rear_camber": "-2.00°",
+          "front_toe": "0.02°",
+          "rear_toe": "0.12°",
+          "front_suspension": 39,
+          "rear_suspension": 3,
+          "front_anti_roll_bar": 10,
+          "rear_anti_roll_bar": 17,
+          "front_suspension_height": 23,
+          "rear_suspension_height": 49,
+          "brake_pressure": "100%",
+          "brake_bias": "58%",
+          "engine_braking": "50%",
+          "tyre_pressures": [
+            21.8,
+            21.8,
+            23.3,
+            23.3
+          ],
+          "ballast": 6,
+          "fuel_load": 10.0
+        },
+        "live_telemetry": {
+          "speed": 0,
+          "gear": 80,
+          "rpm": 20560,
+          "throttle": 0,
+          "brake": 1397969715200,
+          "tyre_wear": [
+            15.2,
+            15.5,
+            13.3,
+            13.4
+          ]
+        },
+        "lap_history": [
+          {
+            "lap": 2,
+            "time": "1:20.113",
+            "delta": "---",
+            "telemetry_points": [
+              {
+                "distance": "Sector 19",
+                "brake": 1466015468748800,
+                "throttle": 0,
+                "rival_brake": 1466015468748800,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 20",
+                "brake": 1466015468748800,
+                "throttle": 0,
+                "rival_brake": 1466015468748800,
+                "rival_throttle": 0
+              }
+            ]
+          },
+          {
+            "lap": 1,
+            "time": "1:17.557",
+            "delta": "---",
+            "telemetry_points": [
+              {
+                "distance": "Sector 1",
+                "brake": 1466015468748800,
+                "throttle": 0,
+                "rival_brake": 1466015468748800,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 20",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -19",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 20",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -19",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 20",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -19",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -18",
+                "brake": 1268956,
+                "throttle": 0,
+                "rival_brake": 1268956,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -17",
+                "brake": 1268956,
+                "throttle": 0,
+                "rival_brake": 1268956,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -15",
+                "brake": 1268956,
+                "throttle": 0,
+                "rival_brake": 1268956,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -14",
+                "brake": 1268956,
+                "throttle": 0,
+                "rival_brake": 1268956,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -13",
+                "brake": 1268956,
+                "throttle": 0,
+                "rival_brake": 1268956,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -12",
+                "brake": 5101427,
+                "throttle": 0,
+                "rival_brake": 5101427,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -11",
+                "brake": 5101427,
+                "throttle": 0,
+                "rival_brake": 5101427,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -10",
+                "brake": 20610509,
+                "throttle": 0,
+                "rival_brake": 20610509,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -9",
+                "brake": 83670843,
+                "throttle": 0,
+                "rival_brake": 83670843,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -8",
+                "brake": 83670843,
+                "throttle": 0,
+                "rival_brake": 83670843,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -7",
+                "brake": 83670843,
+                "throttle": 0,
+                "rival_brake": 83670843,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -6",
+                "brake": 84080443,
+                "throttle": 0,
+                "rival_brake": 84080443,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -5",
+                "brake": 341243375,
+                "throttle": 0,
+                "rival_brake": 341243375,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -4",
+                "brake": 1397837824000,
+                "throttle": 0,
+                "rival_brake": 1397837824000,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -3",
+                "brake": 1397968998400,
+                "throttle": 0,
+                "rival_brake": 1397968998400,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -2",
+                "brake": 1397969203200,
+                "throttle": 0,
+                "rival_brake": 1397969203200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -1",
+                "brake": 1397969305600,
+                "throttle": 0,
+                "rival_brake": 1397969305600,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 0",
+                "brake": 1397969510400,
+                "throttle": 0,
+                "rival_brake": 1397969510400,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 1",
+                "brake": 1397969510400,
+                "throttle": 0,
+                "rival_brake": 1397969510400,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 1",
+                "brake": 1397969510400,
+                "throttle": 0,
+                "rival_brake": 1397969510400,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 2",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 3",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 4",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 5",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 6",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 7",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 8",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 9",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 10",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 11",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 12",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 13",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 14",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 15",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 16",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 17",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 18",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 19",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              }
+            ]
+          },
+          {
+            "lap": 2,
+            "time": "1:18.096",
+            "delta": "---",
+            "telemetry_points": [
+              {
+                "distance": "Sector 1",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 2",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 3",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 4",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 5",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 6",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 7",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 9",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 10",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 11",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 12",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 13",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 14",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 15",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 16",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 18",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 19",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 20",
+                "brake": 1397969715200,
+                "throttle": 0,
+                "rival_brake": 1397969715200,
+                "rival_throttle": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "p_10",
+        "name": "LAWSON",
+        "position": 3,
+        "gap": "+23.066s",
+        "current_lap": 2,
+        "tyre_compound": "Hard",
+        "strategy": "AI Analysis Pending...",
+        "car_setup": {
+          "front_wing": 48,
+          "rear_wing": 45,
+          "on_throttle_diff": "90%",
+          "off_throttle_diff": "35%",
+          "front_camber": "-3.50°",
+          "rear_camber": "-2.00°",
+          "front_toe": "0.02°",
+          "rear_toe": "0.12°",
+          "front_suspension": 39,
+          "rear_suspension": 3,
+          "front_anti_roll_bar": 10,
+          "rear_anti_roll_bar": 17,
+          "front_suspension_height": 23,
+          "rear_suspension_height": 49,
+          "brake_pressure": "100%",
+          "brake_bias": "58%",
+          "engine_braking": "50%",
+          "tyre_pressures": [
+            21.8,
+            21.8,
+            23.3,
+            23.3
+          ],
+          "ballast": 6,
+          "fuel_load": 10.0
+        },
+        "live_telemetry": {
+          "speed": 0,
+          "gear": 4,
+          "rpm": 1107,
+          "throttle": 0,
+          "brake": 0,
+          "tyre_wear": [
+            7.2,
+            7.2,
+            6.4,
+            6.4
+          ]
+        },
+        "lap_history": [
+          {
+            "lap": 1,
+            "time": "1:19.193",
+            "delta": "---",
+            "telemetry_points": [
+              {
+                "distance": "Sector -19",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 20",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -19",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 20",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -19",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 20",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -19",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -18",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -17",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -16",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -15",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -14",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -13",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -12",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -11",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -10",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -9",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -8",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -7",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -6",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -5",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -4",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -3",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector -1",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 0",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 1",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 1",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 2",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 3",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 4",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 5",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 6",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 7",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 8",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 9",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 10",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 11",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 12",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 13",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 14",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 15",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 16",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 17",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 18",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 19",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              },
+              {
+                "distance": "Sector 20",
+                "brake": 0,
+                "throttle": 0,
+                "rival_brake": 0,
+                "rival_throttle": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "p_0",
+        "name": "NORRIS",
+        "position": 4,
+        "gap": "+0.000s",
+        "current_lap": 1,
+        "tyre_compound": "Hard",
+        "strategy": "AI Analysis Pending...",
+        "car_setup": {
+          "front_wing": 48,
+          "rear_wing": 45,
+          "on_throttle_diff": "90%",
+          "off_throttle_diff": "35%",
+          "front_camber": "-3.50°",
+          "rear_camber": "-2.00°",
+          "front_toe": "0.02°",
+          "rear_toe": "0.12°",
+          "front_suspension": 39,
+          "rear_suspension": 3,
+          "front_anti_roll_bar": 10,
+          "rear_anti_roll_bar": 17,
+          "front_suspension_height": 23,
+          "rear_suspension_height": 49,
+          "brake_pressure": "100%",
+          "brake_bias": "58%",
+          "engine_braking": "50%",
+          "tyre_pressures": [
+            21.8,
+            21.8,
+            23.3,
+            23.3
+          ],
+          "ballast": 6,
+          "fuel_load": 10.0
+        },
+        "live_telemetry": {
+          "speed": 0,
+          "gear": 0,
+          "rpm": 3920,
+          "throttle": 0,
+          "brake": 0,
+          "tyre_wear": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "lap_history": []
+      },
+      {
+        "id": "p_4",
+        "name": "VERSTAPPEN",
+        "position": 5,
+        "gap": "+0.000s",
+        "current_lap": 1,
+        "tyre_compound": "Medium",
+        "strategy": "AI Analysis Pending...",
+        "car_setup": {
+          "front_wing": 48,
+          "rear_wing": 45,
+          "on_throttle_diff": "90%",
+          "off_throttle_diff": "35%",
+          "front_camber": "-3.50°",
+          "rear_camber": "-2.00°",
+          "front_toe": "0.02°",
+          "rear_toe": "0.12°",
+          "front_suspension": 39,
+          "rear_suspension": 3,
+          "front_anti_roll_bar": 10,
+          "rear_anti_roll_bar": 17,
+          "front_suspension_height": 23,
+          "rear_suspension_height": 49,
+          "brake_pressure": "100%",
+          "brake_bias": "58%",
+          "engine_braking": "50%",
+          "tyre_pressures": [
+            21.8,
+            21.8,
+            23.3,
+            23.3
+          ],
+          "ballast": 6,
+          "fuel_load": 10.0
+        },
+        "live_telemetry": {
+          "speed": 0,
+          "gear": 0,
+          "rpm": 0,
+          "throttle": 0,
+          "brake": 0,
+          "tyre_wear": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "lap_history": []
+      },
+      {
+        "id": "p_17",
+        "name": "BORTOLETO",
+        "position": 6,
+        "gap": "+0.000s",
+        "current_lap": 1,
+        "tyre_compound": "Medium",
+        "strategy": "AI Analysis Pending...",
+        "car_setup": {
+          "front_wing": 48,
+          "rear_wing": 45,
+          "on_throttle_diff": "90%",
+          "off_throttle_diff": "35%",
+          "front_camber": "-3.50°",
+          "rear_camber": "-2.00°",
+          "front_toe": "0.02°",
+          "rear_toe": "0.12°",
+          "front_suspension": 39,
+          "rear_suspension": 3,
+          "front_anti_roll_bar": 10,
+          "rear_anti_roll_bar": 17,
+          "front_suspension_height": 23,
+          "rear_suspension_height": 49,
+          "brake_pressure": "100%",
+          "brake_bias": "58%",
+          "engine_braking": "50%",
+          "tyre_pressures": [
+            21.8,
+            21.8,
+            23.3,
+            23.3
+          ],
+          "ballast": 6,
+          "fuel_load": 10.0
+        },
+        "live_telemetry": {
+          "speed": 15,
+          "gear": 70,
+          "rpm": 17734,
+          "throttle": 0,
+          "brake": 819700,
+          "tyre_wear": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "lap_history": []
+      },
+      {
+        "id": "p_5",
+        "name": "HADJAR",
+        "position": 7,
+        "gap": "+0.000s",
+        "current_lap": 1,
+        "tyre_compound": "Medium",
+        "strategy": "AI Analysis Pending...",
+        "car_setup": {
+          "front_wing": 48,
+          "rear_wing": 45,
+          "on_throttle_diff": "90%",
+          "off_throttle_diff": "35%",
+          "front_camber": "-3.50°",
+          "rear_camber": "-2.00°",
+          "front_toe": "0.02°",
+          "rear_toe": "0.12°",
+          "front_suspension": 39,
+          "rear_suspension": 3,
+          "front_anti_roll_bar": 10,
+          "rear_anti_roll_bar": 17,
+          "front_suspension_height": 23,
+          "rear_suspension_height": 49,
+          "brake_pressure": "100%",
+          "brake_bias": "58%",
+          "engine_braking": "50%",
+          "tyre_pressures": [
+            21.8,
+            21.8,
+            23.3,
+            23.3
+          ],
+          "ballast": 6,
+          "fuel_load": 10.0
+        },
+        "live_telemetry": {
+          "speed": 768,
+          "gear": 0,
+          "rpm": 5120,
+          "throttle": 0,
+          "brake": 0,
+          "tyre_wear": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "lap_history": []
+      },
+      {
+        "id": "p_18",
+        "name": "GASLY",
+        "position": 8,
+        "gap": "+0.000s",
+        "current_lap": 1,
+        "tyre_compound": "Hard",
+        "strategy": "AI Analysis Pending...",
+        "car_setup": {
+          "front_wing": 48,
+          "rear_wing": 45,
+          "on_throttle_diff": "90%",
+          "off_throttle_diff": "35%",
+          "front_camber": "-3.50°",
+          "rear_camber": "-2.00°",
+          "front_toe": "0.02°",
+          "rear_toe": "0.12°",
+          "front_suspension": 39,
+          "rear_suspension": 3,
+          "front_anti_roll_bar": 10,
+          "rear_anti_roll_bar": 17,
+          "front_suspension_height": 23,
+          "rear_suspension_height": 49,
+          "brake_pressure": "100%",
+          "brake_bias": "58%",
+          "engine_braking": "50%",
+          "tyre_pressures": [
+            21.8,
+            21.8,
+            23.3,
+            23.3
+          ],
+          "ballast": 6,
+          "fuel_load": 10.0
+        },
+        "live_telemetry": {
+          "speed": 0,
+          "gear": 70,
+          "rpm": 14135,
+          "throttle": 0,
+          "brake": 0,
+          "tyre_wear": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "lap_history": []
+      },
+      {
+        "id": "p_12",
+        "name": "ALONSO",
+        "position": 9,
+        "gap": "+0.000s",
+        "current_lap": 1,
+        "tyre_compound": "Hard",
+        "strategy": "AI Analysis Pending...",
+        "car_setup": {
+          "front_wing": 48,
+          "rear_wing": 45,
+          "on_throttle_diff": "90%",
+          "off_throttle_diff": "35%",
+          "front_camber": "-3.50°",
+          "rear_camber": "-2.00°",
+          "front_toe": "0.02°",
+          "rear_toe": "0.12°",
+          "front_suspension": 39,
+          "rear_suspension": 3,
+          "front_anti_roll_bar": 10,
+          "rear_anti_roll_bar": 17,
+          "front_suspension_height": 23,
+          "rear_suspension_height": 49,
+          "brake_pressure": "100%",
+          "brake_bias": "58%",
+          "engine_braking": "50%",
+          "tyre_pressures": [
+            21.8,
+            21.8,
+            23.3,
+            23.3
+          ],
+          "ballast": 6,
+          "fuel_load": 10.0
+        },
+        "live_telemetry": {
+          "speed": 0,
+          "gear": 0,
+          "rpm": 20,
+          "throttle": 0,
+          "brake": 0,
+          "tyre_wear": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "lap_history": []
+      },
+      {
+        "id": "p_6",
+        "name": "LECLERC",
+        "position": 10,
+        "gap": "+0.000s",
+        "current_lap": 1,
+        "tyre_compound": "Hard",
+        "strategy": "AI Analysis Pending...",
+        "car_setup": {
+          "front_wing": 48,
+          "rear_wing": 45,
+          "on_throttle_diff": "90%",
+          "off_throttle_diff": "35%",
+          "front_camber": "-3.50°",
+          "rear_camber": "-2.00°",
+          "front_toe": "0.02°",
+          "rear_toe": "0.12°",
+          "front_suspension": 39,
+          "rear_suspension": 3,
+          "front_anti_roll_bar": 10,
+          "rear_anti_roll_bar": 17,
+          "front_suspension_height": 23,
+          "rear_suspension_height": 49,
+          "brake_pressure": "100%",
+          "brake_bias": "58%",
+          "engine_braking": "50%",
+          "tyre_pressures": [
+            21.8,
+            21.8,
+            23.3,
+            23.3
+          ],
+          "ballast": 6,
+          "fuel_load": 10.0
+        },
+        "live_telemetry": {
+          "speed": 3,
+          "gear": 0,
+          "rpm": 20,
+          "throttle": 0,
+          "brake": 0,
+          "tyre_wear": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "lap_history": []
+      },
+      {
+        "id": "p_13",
+        "name": "STROLL",
+        "position": 11,
+        "gap": "+0.000s",
+        "current_lap": 1,
+        "tyre_compound": "Medium",
+        "strategy": "AI Analysis Pending...",
+        "car_setup": {
+          "front_wing": 48,
+          "rear_wing": 45,
+          "on_throttle_diff": "90%",
+          "off_throttle_diff": "35%",
+          "front_camber": "-3.50°",
+          "rear_camber": "-2.00°",
+          "front_toe": "0.02°",
+          "rear_toe": "0.12°",
+          "front_suspension": 39,
+          "rear_suspension": 3,
+          "front_anti_roll_bar": 10,
+          "rear_anti_roll_bar": 17,
+          "front_suspension_height": 23,
+          "rear_suspension_height": 49,
+          "brake_pressure": "100%",
+          "brake_bias": "58%",
+          "engine_braking": "50%",
+          "tyre_pressures": [
+            21.8,
+            21.8,
+            23.3,
+            23.3
+          ],
+          "ballast": 6,
+          "fuel_load": 10.0
+        },
+        "live_telemetry": {
+          "speed": 0,
+          "gear": 20,
+          "rpm": 11520,
+          "throttle": 0,
+          "brake": 0,
+          "tyre_wear": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "lap_history": []
+      },
+      {
+        "id": "p_8",
+        "name": "ALBON",
+        "position": 12,
+        "gap": "+0.000s",
+        "current_lap": 1,
+        "tyre_compound": "Hard",
+        "strategy": "AI Analysis Pending...",
+        "car_setup": {
+          "front_wing": 48,
+          "rear_wing": 45,
+          "on_throttle_diff": "90%",
+          "off_throttle_diff": "35%",
+          "front_camber": "-3.50°",
+          "rear_camber": "-2.00°",
+          "front_toe": "0.02°",
+          "rear_toe": "0.12°",
+          "front_suspension": 39,
+          "rear_suspension": 3,
+          "front_anti_roll_bar": 10,
+          "rear_anti_roll_bar": 17,
+          "front_suspension_height": 23,
+          "rear_suspension_height": 49,
+          "brake_pressure": "100%",
+          "brake_bias": "58%",
+          "engine_braking": "50%",
+          "tyre_pressures": [
+            21.8,
+            21.8,
+            23.3,
+            23.3
+          ],
+          "ballast": 6,
+          "fuel_load": 10.0
+        },
+        "live_telemetry": {
+          "speed": 48913,
+          "gear": 2,
+          "rpm": 522,
+          "throttle": 43,
+          "brake": 0,
+          "tyre_wear": [
+            0.6,
+            0.6,
+            0.6,
+            0.6
+          ]
+        },
+        "lap_history": []
+      },
+      {
+        "id": "p_16",
+        "name": "HULKENBERG",
+        "position": 13,
+        "gap": "+0.000s",
+        "current_lap": 1,
+        "tyre_compound": "Hard",
+        "strategy": "AI Analysis Pending...",
+        "car_setup": {
+          "front_wing": 48,
+          "rear_wing": 45,
+          "on_throttle_diff": "90%",
+          "off_throttle_diff": "35%",
+          "front_camber": "-3.50°",
+          "rear_camber": "-2.00°",
+          "front_toe": "0.02°",
+          "rear_toe": "0.12°",
+          "front_suspension": 39,
+          "rear_suspension": 3,
+          "front_anti_roll_bar": 10,
+          "rear_anti_roll_bar": 17,
+          "front_suspension_height": 23,
+          "rear_suspension_height": 49,
+          "brake_pressure": "100%",
+          "brake_bias": "58%",
+          "engine_braking": "50%",
+          "tyre_pressures": [
+            21.8,
+            21.8,
+            23.3,
+            23.3
+          ],
+          "ballast": 6,
+          "fuel_load": 10.0
+        },
+        "live_telemetry": {
+          "speed": 3920,
+          "gear": 69,
+          "rpm": 17990,
+          "throttle": 0,
+          "brake": 0,
+          "tyre_wear": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "lap_history": []
+      },
+      {
+        "id": "p_15",
+        "name": "OCON",
+        "position": 14,
+        "gap": "+0.000s",
+        "current_lap": 1,
+        "tyre_compound": "Medium",
+        "strategy": "AI Analysis Pending...",
+        "car_setup": {
+          "front_wing": 48,
+          "rear_wing": 45,
+          "on_throttle_diff": "90%",
+          "off_throttle_diff": "35%",
+          "front_camber": "-3.50°",
+          "rear_camber": "-2.00°",
+          "front_toe": "0.02°",
+          "rear_toe": "0.12°",
+          "front_suspension": 39,
+          "rear_suspension": 3,
+          "front_anti_roll_bar": 10,
+          "rear_anti_roll_bar": 17,
+          "front_suspension_height": 23,
+          "rear_suspension_height": 49,
+          "brake_pressure": "100%",
+          "brake_bias": "58%",
+          "engine_braking": "50%",
+          "tyre_pressures": [
+            21.8,
+            21.8,
+            23.3,
+            23.3
+          ],
+          "ballast": 6,
+          "fuel_load": 10.0
+        },
+        "live_telemetry": {
+          "speed": 20480,
+          "gear": 70,
+          "rpm": 17990,
+          "throttle": 0,
+          "brake": 0,
+          "tyre_wear": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "lap_history": []
+      },
+      {
+        "id": "p_11",
+        "name": "LINDBLAD",
+        "position": 15,
+        "gap": "+0.000s",
+        "current_lap": 1,
+        "tyre_compound": "Medium",
+        "strategy": "AI Analysis Pending...",
+        "car_setup": {
+          "front_wing": 48,
+          "rear_wing": 45,
+          "on_throttle_diff": "90%",
+          "off_throttle_diff": "35%",
+          "front_camber": "-3.50°",
+          "rear_camber": "-2.00°",
+          "front_toe": "0.02°",
+          "rear_toe": "0.12°",
+          "front_suspension": 39,
+          "rear_suspension": 3,
+          "front_anti_roll_bar": 10,
+          "rear_anti_roll_bar": 17,
+          "front_suspension_height": 23,
+          "rear_suspension_height": 49,
+          "brake_pressure": "100%",
+          "brake_bias": "58%",
+          "engine_braking": "50%",
+          "tyre_pressures": [
+            21.8,
+            21.8,
+            23.3,
+            23.3
+          ],
+          "ballast": 6,
+          "fuel_load": 10.0
+        },
+        "live_telemetry": {
+          "speed": 0,
+          "gear": 20,
+          "rpm": 5120,
+          "throttle": 858993459200,
+          "brake": 0,
+          "tyre_wear": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "lap_history": []
+      },
+      {
+        "id": "p_19",
+        "name": "COLAPINTO",
+        "position": 16,
+        "gap": "+0.000s",
+        "current_lap": 1,
+        "tyre_compound": "Hard",
+        "strategy": "AI Analysis Pending...",
+        "car_setup": {
+          "front_wing": 48,
+          "rear_wing": 45,
+          "on_throttle_diff": "90%",
+          "off_throttle_diff": "35%",
+          "front_camber": "-3.50°",
+          "rear_camber": "-2.00°",
+          "front_toe": "0.02°",
+          "rear_toe": "0.12°",
+          "front_suspension": 39,
+          "rear_suspension": 3,
+          "front_anti_roll_bar": 10,
+          "rear_anti_roll_bar": 17,
+          "front_suspension_height": 23,
+          "rear_suspension_height": 49,
+          "brake_pressure": "100%",
+          "brake_bias": "58%",
+          "engine_braking": "50%",
+          "tyre_pressures": [
+            21.8,
+            21.8,
+            23.3,
+            23.3
+          ],
+          "ballast": 6,
+          "fuel_load": 10.0
+        },
+        "live_telemetry": {
+          "speed": 0,
+          "gear": 55,
+          "rpm": 17719,
+          "throttle": 0,
+          "brake": 1108325,
+          "tyre_wear": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "lap_history": []
+      },
+      {
+        "id": "p_7",
+        "name": "HAMILTON",
+        "position": 17,
+        "gap": "+0.000s",
+        "current_lap": 1,
+        "tyre_compound": "Medium",
+        "strategy": "AI Analysis Pending...",
+        "car_setup": {
+          "front_wing": 48,
+          "rear_wing": 45,
+          "on_throttle_diff": "90%",
+          "off_throttle_diff": "35%",
+          "front_camber": "-3.50°",
+          "rear_camber": "-2.00°",
+          "front_toe": "0.02°",
+          "rear_toe": "0.12°",
+          "front_suspension": 39,
+          "rear_suspension": 3,
+          "front_anti_roll_bar": 10,
+          "rear_anti_roll_bar": 17,
+          "front_suspension_height": 23,
+          "rear_suspension_height": 49,
+          "brake_pressure": "100%",
+          "brake_bias": "58%",
+          "engine_braking": "50%",
+          "tyre_pressures": [
+            21.8,
+            21.8,
+            23.3,
+            23.3
+          ],
+          "ballast": 6,
+          "fuel_load": 10.0
+        },
+        "live_telemetry": {
+          "speed": 0,
+          "gear": 20,
+          "rpm": 5120,
+          "throttle": 0,
+          "brake": 0,
+          "tyre_wear": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "lap_history": []
+      },
+      {
+        "id": "p_9",
+        "name": "SAINZ",
+        "position": 18,
+        "gap": "+0.000s",
+        "current_lap": 1,
+        "tyre_compound": "Hard",
+        "strategy": "AI Analysis Pending...",
+        "car_setup": {
+          "front_wing": 48,
+          "rear_wing": 45,
+          "on_throttle_diff": "90%",
+          "off_throttle_diff": "35%",
+          "front_camber": "-3.50°",
+          "rear_camber": "-2.00°",
+          "front_toe": "0.02°",
+          "rear_toe": "0.12°",
+          "front_suspension": 39,
+          "rear_suspension": 3,
+          "front_anti_roll_bar": 10,
+          "rear_anti_roll_bar": 17,
+          "front_suspension_height": 23,
+          "rear_suspension_height": 49,
+          "brake_pressure": "100%",
+          "brake_bias": "58%",
+          "engine_braking": "50%",
+          "tyre_pressures": [
+            21.8,
+            21.8,
+            23.3,
+            23.3
+          ],
+          "ballast": 6,
+          "fuel_load": 10.0
+        },
+        "live_telemetry": {
+          "speed": 128,
+          "gear": 20,
+          "rpm": 5120,
+          "throttle": 0,
+          "brake": 0,
+          "tyre_wear": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "lap_history": []
+      },
+      {
+        "id": "p_2",
+        "name": "RUSSELL",
+        "position": 19,
+        "gap": "+0.000s",
+        "current_lap": 1,
+        "tyre_compound": "Medium",
+        "strategy": "AI Analysis Pending...",
+        "car_setup": {
+          "front_wing": 48,
+          "rear_wing": 45,
+          "on_throttle_diff": "90%",
+          "off_throttle_diff": "35%",
+          "front_camber": "-3.50°",
+          "rear_camber": "-2.00°",
+          "front_toe": "0.02°",
+          "rear_toe": "0.12°",
+          "front_suspension": 39,
+          "rear_suspension": 3,
+          "front_anti_roll_bar": 10,
+          "rear_anti_roll_bar": 17,
+          "front_suspension_height": 23,
+          "rear_suspension_height": 49,
+          "brake_pressure": "100%",
+          "brake_bias": "58%",
+          "engine_braking": "50%",
+          "tyre_pressures": [
+            21.8,
+            21.8,
+            23.3,
+            23.3
+          ],
+          "ballast": 6,
+          "fuel_load": 10.0
+        },
+        "live_telemetry": {
+          "speed": 0,
+          "gear": 15,
+          "rpm": 0,
+          "throttle": 0,
+          "brake": 0,
+          "tyre_wear": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "lap_history": []
+      },
+      {
+        "id": "p_21",
+        "name": "BOTTAS",
+        "position": 20,
+        "gap": "+0.000s",
+        "current_lap": 1,
+        "tyre_compound": "Hard",
+        "strategy": "AI Analysis Pending...",
+        "car_setup": {
+          "front_wing": 48,
+          "rear_wing": 45,
+          "on_throttle_diff": "90%",
+          "off_throttle_diff": "35%",
+          "front_camber": "-3.50°",
+          "rear_camber": "-2.00°",
+          "front_toe": "0.02°",
+          "rear_toe": "0.12°",
+          "front_suspension": 39,
+          "rear_suspension": 3,
+          "front_anti_roll_bar": 10,
+          "rear_anti_roll_bar": 17,
+          "front_suspension_height": 23,
+          "rear_suspension_height": 49,
+          "brake_pressure": "100%",
+          "brake_bias": "58%",
+          "engine_braking": "50%",
+          "tyre_pressures": [
+            21.8,
+            21.8,
+            23.3,
+            23.3
+          ],
+          "ballast": 6,
+          "fuel_load": 10.0
+        },
+        "live_telemetry": {
+          "speed": 5120,
+          "gear": 69,
+          "rpm": 28229,
+          "throttle": 0,
+          "brake": 317239,
+          "tyre_wear": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "lap_history": []
+      },
+      {
+        "id": "p_1",
+        "name": "PIASTRI",
+        "position": 21,
+        "gap": "+0.000s",
+        "current_lap": 1,
+        "tyre_compound": "Medium",
+        "strategy": "AI Analysis Pending...",
+        "car_setup": {
+          "front_wing": 48,
+          "rear_wing": 45,
+          "on_throttle_diff": "90%",
+          "off_throttle_diff": "35%",
+          "front_camber": "-3.50°",
+          "rear_camber": "-2.00°",
+          "front_toe": "0.02°",
+          "rear_toe": "0.12°",
+          "front_suspension": 39,
+          "rear_suspension": 3,
+          "front_anti_roll_bar": 10,
+          "rear_anti_roll_bar": 17,
+          "front_suspension_height": 23,
+          "rear_suspension_height": 49,
+          "brake_pressure": "100%",
+          "brake_bias": "58%",
+          "engine_braking": "50%",
+          "tyre_pressures": [
+            21.8,
+            21.8,
+            23.3,
+            23.3
+          ],
+          "ballast": 6,
+          "fuel_load": 10.0
+        },
+        "live_telemetry": {
+          "speed": 0,
+          "gear": 80,
+          "rpm": 15,
+          "throttle": 0,
+          "brake": 0,
+          "tyre_wear": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "lap_history": []
+      },
+      {
+        "id": "p_14",
+        "name": "BEARMAN",
+        "position": 22,
+        "gap": "+0.000s",
+        "current_lap": 1,
+        "tyre_compound": "Medium",
+        "strategy": "AI Analysis Pending...",
+        "car_setup": {
+          "front_wing": 48,
+          "rear_wing": 45,
+          "on_throttle_diff": "90%",
+          "off_throttle_diff": "35%",
+          "front_camber": "-3.50°",
+          "rear_camber": "-2.00°",
+          "front_toe": "0.02°",
+          "rear_toe": "0.12°",
+          "front_suspension": 39,
+          "rear_suspension": 3,
+          "front_anti_roll_bar": 10,
+          "rear_anti_roll_bar": 17,
+          "front_suspension_height": 23,
+          "rear_suspension_height": 49,
+          "brake_pressure": "100%",
+          "brake_bias": "58%",
+          "engine_braking": "50%",
+          "tyre_pressures": [
+            21.8,
+            21.8,
+            23.3,
+            23.3
+          ],
+          "ballast": 6,
+          "fuel_load": 10.0
+        },
+        "live_telemetry": {
+          "speed": 0,
+          "gear": 0,
+          "rpm": 17990,
+          "throttle": 0,
+          "brake": 0,
+          "tyre_wear": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "lap_history": []
+      }
+    ]
+  },
+  "internal_state": {
+    "current_laps": {
+      "0": 1,
+      "1": 1,
+      "2": 1,
+      "3": 2,
+      "4": 1,
+      "5": 1,
+      "6": 1,
+      "7": 1,
+      "8": 1,
+      "9": 1,
+      "10": 2,
+      "11": 1,
+      "12": 1,
+      "13": 1,
+      "14": 1,
+      "15": 1,
+      "16": 1,
+      "17": 1,
+      "18": 1,
+      "19": 1,
+      "20": 3,
+      "21": 1,
+      "22": 0,
+      "23": 0
+    },
+    "last_recorded_distance": {
+      "0": -3573.55908203125,
+      "1": -3565.0859375,
+      "2": -3547.2705078125,
+      "3": -231.178466796875,
+      "4": -3530.31201171875,
+      "5": -3538.089599609375,
+      "6": -3513.49365234375,
+      "7": -3521.0595703125,
+      "8": -2718.463623046875,
+      "9": -3504.798828125,
+      "10": 3222.515625,
+      "11": -3480.826904296875,
+      "12": -3464.238525390625,
+      "13": -3471.904296875,
+      "14": -3447.68505859375,
+      "15": -3455.218017578125,
+      "16": -3424.38671875,
+      "17": -3431.7890625,
+      "18": -3415.831298828125,
+      "19": -3408.26220703125,
+      "20": 199.95947265625,
+      "21": -3399.50439453125,
+      "22": -1,
+      "23": -1
+    },
+    "lap_history_lens": {
+      "0": 0,
+      "1": 0,
+      "2": 0,
+      "3": 1,
+      "4": 0,
+      "5": 0,
+      "6": 0,
+      "7": 0,
+      "8": 0,
+      "9": 0,
+      "10": 1,
+      "11": 0,
+      "12": 0,
+      "13": 0,
+      "14": 0,
+      "15": 0,
+      "16": 0,
+      "17": 0,
+      "18": 0,
+      "19": 0,
+      "20": 3,
+      "21": 0,
+      "22": 0,
+      "23": 0
+    }
+  }
+}

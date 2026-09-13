@@ -77,14 +77,29 @@ function Dashboard({ settings, setSettings, onExit }) {
 
 
   useEffect(() => {
-    setConnected(true);
-    const interval = setInterval(() => {
-      const parsedData = getDummyPayload(settings.units);
-      setData(parsedData);
-    }, 1000 / settings.updateRate);
+    const ws = new WebSocket(`ws://localhost:8080/ws?port=${settings.port}&rate=${settings.updateRate}&units=${settings.units}`);
+    
+    ws.onopen = () => {
+      setConnected(true);
+    };
 
-    return () => clearInterval(interval);
-  }, [settings.units, settings.updateRate]);
+    ws.onmessage = (event) => {
+      const parsedData = JSON.parse(event.data);
+      if (parsedData.status === "waiting_for_data") {
+        // Keep waiting screen until real data arrives
+        return;
+      }
+      setData(parsedData);
+    };
+
+    ws.onclose = () => {
+      setConnected(false);
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, [settings.port, settings.units, settings.updateRate]);
 
 
   if (!data) {
