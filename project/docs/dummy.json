@@ -1,0 +1,225 @@
+{
+  "status": "live",
+  "circuit_environment": {
+    "track_name": "Silverstone",
+    "weather": "Sunny",
+    "track_temp": 32,
+    "air_temp": 24,
+    "track_length": 5891,
+    "total_laps": 52,
+    "sector2_start": 1950,
+    "sector3_start": 3800
+  },
+  "players": [
+    {
+      "id": "p_1",
+      "name": "HAM (You)",
+      "position": 1,
+      "gap": "Leader",
+      "current_lap": 14,
+      "tyre_compound": "Soft (C3)",
+      "strategy": "Plan A: Box Lap 18 for Hards.",
+      "car_setup": {
+        "front_wing": 20,
+        "rear_wing": 15,
+        "on_throttle_diff": "58%",
+        "off_throttle_diff": "60%",
+        "front_camber": "-2.80°",
+        "rear_camber": "-1.20°",
+        "front_toe": "0.05°",
+        "rear_toe": "0.20°",
+        "front_suspension": 8,
+        "rear_suspension": 4,
+        "front_anti_roll_bar": 8,
+        "rear_anti_roll_bar": 2,
+        "front_suspension_height": 33,
+        "rear_suspension_height": 35,
+        "brake_pressure": "100%",
+        "brake_bias": "58%",
+        "engine_braking": "50%",
+        "tyre_pressures": [
+          22.5,
+          22.5,
+          20.1,
+          20.1
+        ],
+        "ballast": 0,
+        "fuel_load": 45.2
+      },
+      "live_telemetry": {
+        "speed": 285,
+        "gear": 7,
+        "rpm": 11500,
+        "throttle": 100,
+        "brake": 0,
+        "tyre_wear": [
+          15.2,
+          15,
+          16.5,
+          16.1
+        ]
+      },
+      "best_info": {
+        "best_lap_num": 13,
+        "best_sector1_lap": 13,
+        "best_sector2_lap": 13,
+        "best_sector3_lap": 13
+      },
+      "sector_history": [
+        {
+          "lap": 13,
+          "lap_time": "1:24.312",
+          "sector1": "28.100",
+          "sector2": "29.200",
+          "sector3": "27.012",
+          "valid": true
+        },
+        {
+          "lap": 14,
+          "lap_time": "1:24.501",
+          "sector1": "28.150",
+          "sector2": "29.300",
+          "sector3": "27.051",
+          "valid": true
+        }
+      ],
+      "lap_history": [
+        {
+          "lap": 13,
+          "time": "1:24.312",
+          "delta": "-0.150",
+          "avg_tyre_wear_lap": 1.2,
+          "telemetry_points": [
+            {
+              "distance": "Turn 1",
+              "brake": 10,
+              "throttle": 80,
+              "wear_diff": "0.02",
+              "time_diff_to_rival": "+0.05s (Slower)",
+              "rival_brake": 5,
+              "rival_throttle": 90,
+              "wear_diff_leader": "0.0",
+              "time_diff_leader": "Equal",
+              "leader_brake": 10,
+              "leader_throttle": 80
+            }
+          ],
+          "corners": [
+            {
+              "direction": "Right",
+              "entry_speed": 290,
+              "apex_speed": 260,
+              "exit_speed": 280,
+              "max_g_lat": 4.5
+            }
+          ]
+        }
+      ],
+      "current_telemetry": [
+        {
+          "distance_m": 0,
+          "x": 0,
+          "z": 0
+        },
+        {
+          "distance_m": 1000,
+          "x": 500,
+          "z": 200
+        },
+        {
+          "distance_m": 2000,
+          "x": 800,
+          "z": 500
+        },
+        {
+          "distance_m": 3000,
+          "x": 400,
+          "z": 800
+        }
+      ]
+    },
+    {
+      "id": "p_2",
+      "name": "VER",
+      "position": 2,
+      "gap": "+2.4s",
+      "current_lap": 14,
+      "tyre_compound": "Medium (C2)",
+      "strategy": "Plan B.",
+      "car_setup": {
+        "front_wing": 20,
+        "rear_wing": 15,
+        "on_throttle_diff": "58%",
+        "off_throttle_diff": "60%",
+        "front_camber": "-2.80°",
+        "rear_camber": "-1.20°",
+        "front_toe": "0.05°",
+        "rear_toe": "0.20°",
+        "front_suspension": 8,
+        "rear_suspension": 4,
+        "front_anti_roll_bar": 8,
+        "rear_anti_roll_bar": 2,
+        "front_suspension_height": 33,
+        "rear_suspension_height": 35,
+        "brake_pressure": "100%",
+        "brake_bias": "58%",
+        "engine_braking": "50%",
+        "tyre_pressures": [
+          22.5,
+          22.5,
+          20.1,
+          20.1
+        ],
+        "ballast": 0,
+        "fuel_load": 45.2
+      },
+      "live_telemetry": {
+        "speed": 280,
+        "gear": 7,
+        "rpm": 11200,
+        "throttle": 100,
+        "brake": 0,
+        "tyre_wear": [
+          12.1,
+          12,
+          13.5,
+          13.5
+        ]
+      }
+    }
+  ],
+  "sector_comparisons": {
+    "vs_ahead": [
+      {
+        "lap": 13,
+        "lap_delta_ms": -150,
+        "sectors": [
+          {
+            "sector": 1,
+            "delta_ms": -50,
+            "player_ms": 28100,
+            "rival_ms": 28150,
+            "player_time": "28.100",
+            "rival_time": "28.150"
+          },
+          {
+            "sector": 2,
+            "delta_ms": -50,
+            "player_ms": 29200,
+            "rival_ms": 29250,
+            "player_time": "29.200",
+            "rival_time": "29.250"
+          },
+          {
+            "sector": 3,
+            "delta_ms": -50,
+            "player_ms": 27012,
+            "rival_ms": 27062,
+            "player_time": "27.012",
+            "rival_time": "27.062"
+          }
+        ]
+      }
+    ]
+  }
+}
