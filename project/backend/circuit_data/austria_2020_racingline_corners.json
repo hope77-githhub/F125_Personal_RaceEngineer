@@ -1,0 +1,58 @@
+{
+  "track_name": "austria_2020_racingline",
+  "calibration_params": {
+    "threshold": 0.008,
+    "min_length": 40
+  },
+  "corners": [
+    {
+      "turn": 1,
+      "name": "Turn 1",
+      "entry_dist": 425,
+      "apex_dist": 463,
+      "exit_dist": 493
+    },
+    {
+      "turn": 2,
+      "name": "Turn 2",
+      "entry_dist": 1371,
+      "apex_dist": 1411,
+      "exit_dist": 1447
+    },
+    {
+      "turn": 3,
+      "name": "Turn 3",
+      "entry_dist": 2172,
+      "apex_dist": 2223,
+      "exit_dist": 2274
+    },
+    {
+      "turn": 4,
+      "name": "Turn 4",
+      "entry_dist": 2677,
+      "apex_dist": 2731,
+      "exit_dist": 2852
+    },
+    {
+      "turn": 5,
+      "name": "Turn 5",
+      "entry_dist": 2979,
+      "apex_dist": 3064,
+      "exit_dist": 3138
+    },
+    {
+      "turn": 6,
+      "name": "Turn 6",
+      "entry_dist": 3748,
+      "apex_dist": 3759,
+      "exit_dist": 3823
+    },
+    {
+      "turn": 7,
+      "name": "Turn 7",
+      "entry_dist": 3965,
+      "apex_dist": 4014,
+      "exit_dist": 4063
+    }
+  ]
+}

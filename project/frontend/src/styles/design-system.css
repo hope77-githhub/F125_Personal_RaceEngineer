@@ -1,38 +1,65 @@
 :root {
-  --color-primary: #5865f2;
+  /* Coinbase Design System — Color Tokens */
+  --color-primary: #0052ff;
+  --color-primary-active: #003ecc;
+  --color-primary-disabled: #a8b8cc;
+  --color-ink: #0a0b0d;
+  --color-body: #5b616e;
+  --color-body-strong: #0a0b0d;
+  --color-muted: #7c828a;
+  --color-muted-soft: #a8acb3;
+  --color-hairline: #dee1e6;
+  --color-hairline-soft: #eef0f3;
+  --color-canvas: #ffffff;
+  --color-surface-soft: #f7f7f7;
+  --color-surface-card: #ffffff;
+  --color-surface-strong: #eef0f3;
+  --color-surface-dark: #0a0b0d;
+  --color-surface-dark-elevated: #16181c;
   --color-on-primary: #ffffff;
-  --color-green: #35ed7e;
-  --color-magenta: #ec48bd;
-  --color-link: #00b0f4;
-  --color-canvas: #0a0d3a;
-  --color-surface-indigo: #1e2353;
-  --color-surface-onyx: #23272a;
-  --color-surface-black: #000000;
-  --color-ink: #ffffff;
-  --color-ink-dark: #000000;
-  --color-muted: #aaaaaa;
-  --color-hairline: #23272a;
+  --color-on-dark: #ffffff;
+  --color-on-dark-soft: #a8acb3;
+  --color-semantic-up: #05b169;
+  --color-semantic-down: #cf202f;
+  --color-accent-yellow: #f4b000;
 
-  --rounded-xs: 6px;
-  --rounded-sm: 12px;
-  --rounded-md: 14px;
+  /* Legacy alias mappings for seamless compatibility */
+  --color-green: #05b169;
+  --color-magenta: #0052ff;
+  --color-link: #0052ff;
+  --color-surface-indigo: #eef0f3;
+  --color-surface-onyx: #f7f7f7;
+  --color-surface-black: #0a0b0d;
+
+  /* Coinbase Border Radius Scale */
+  --rounded-none: 0px;
+  --rounded-xs: 4px;
+  --rounded-sm: 8px;
+  --rounded-md: 12px;
   --rounded-lg: 16px;
-  --rounded-xl: 40px;
-  --rounded-pill: 50px;
-  --rounded-jumbo: 120px;
+  --rounded-xl: 24px;
+  --rounded-pill: 100px;
   --rounded-full: 9999px;
 
+  /* Coinbase 4px Base Spacing System */
   --spacing-xxs: 4px;
   --spacing-xs: 8px;
   --spacing-sm: 12px;
-  --spacing-md: 16px;
-  --spacing-lg: 20px;
-  --spacing-xl: 24px;
-  --spacing-xxl: 32px;
-  --spacing-section: 40px;
-  
-  --font-display: "Arial Black", impact, sans-serif; /* fallback for ABC Ginto Nord */
-  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; /* fallback for ggsans */
+  --spacing-base: 16px;
+  --spacing-md: 20px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-xxl: 48px;
+  --spacing-section: 64px;
+
+  /* Coinbase Typography Stack (Inter & JetBrains Mono Substitutes) */
+  --font-display: 'Coinbase Display', 'Inter', -apple-system, system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-body: 'Coinbase Sans', 'Inter', -apple-system, system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: 'Coinbase Mono', 'JetBrains Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
@@ -40,101 +67,409 @@ body {
   background-color: var(--color-canvas);
   color: var(--color-ink);
   font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Top Navigation */
+.cb-top-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: 64px;
+  background-color: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--color-hairline);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--spacing-xl);
+}
+
+.cb-top-nav-inner {
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-base);
+}
+
+.cb-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  color: var(--color-primary);
+}
+
+.cb-brand-mark {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--rounded-full);
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Page Containers & Editorial Rhythm Bands */
+.cb-band-dark {
+  background-color: var(--color-surface-dark);
+  color: var(--color-on-dark);
+  padding: var(--spacing-xxl) 0;
+}
+
+.cb-band-light {
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+  padding: var(--spacing-xxl) 0;
+}
+
+.cb-band-soft {
+  background-color: var(--color-surface-soft);
+  color: var(--color-ink);
+  padding: var(--spacing-xxl) 0;
+  border-top: 1px solid var(--color-hairline-soft);
+  border-bottom: 1px solid var(--color-hairline-soft);
 }
 
 .dashboard-container {
-  max-width: 1200px;
+  max-width: 1240px;
   margin: 0 auto;
-  padding: var(--spacing-section);
+  padding: 0 var(--spacing-lg);
 }
 
+/* Display & Section Typography (Weight 400 per DESIGN-coinbase.md) */
 .hero-heading {
   font-family: var(--font-display);
-  font-size: 56px;
-  font-weight: 800;
-  text-transform: uppercase;
-  margin-bottom: var(--spacing-xxl);
+  font-size: 44px;
+  font-weight: 400;
+  line-height: 1.09;
+  letter-spacing: -1.3px;
+  margin: 0 0 var(--spacing-xs) 0;
+  color: inherit;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 1.13;
+  letter-spacing: -0.6px;
+  margin: 0;
   color: var(--color-ink);
 }
 
+/* Number Display (CoinbaseMono on every number) */
+.mono-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+/* Grids */
 .grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-xl);
-  margin-bottom: var(--spacing-section);
+  gap: var(--spacing-lg);
 }
 
 .grid-3 {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: var(--spacing-xl);
-  margin-bottom: var(--spacing-section);
+  gap: var(--spacing-lg);
 }
 
+@media (max-width: 1024px) {
+  .grid-2,
+  .grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Cards */
 .card {
-  background-color: var(--color-surface-indigo);
-  border-radius: var(--rounded-lg);
+  background-color: var(--color-surface-card);
+  color: var(--color-ink);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--rounded-xl);
+  padding: var(--spacing-xl);
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.product-ui-card-dark {
+  background-color: var(--color-surface-dark-elevated);
+  color: var(--color-on-dark);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--rounded-xl);
   padding: var(--spacing-xl);
 }
 
-.card-gradient {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-magenta) 100%);
-  border-radius: var(--rounded-xl);
-  padding: var(--spacing-section);
-}
-
 .card-header {
-  font-family: var(--font-display);
-  font-size: 22px;
-  font-weight: 700;
-  margin-bottom: var(--spacing-md);
-  text-transform: uppercase;
+  font-family: var(--font-body);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.33;
+  letter-spacing: 0;
+  margin-bottom: var(--spacing-base);
+  color: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .stat-value {
-  font-family: var(--font-display);
-  font-size: 48px;
-  color: var(--color-green);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 40px;
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -1px;
+  color: var(--color-on-dark);
 }
 
+/* Buttons & Pills (Every CTA is rounded.pill = 100px) */
+.btn-primary {
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.15;
+  border-radius: var(--rounded-pill);
+  padding: 12px 22px;
+  height: 44px;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background-color 0.15s ease;
+}
+
+.btn-primary:hover,
+.btn-primary:active {
+  background-color: var(--color-primary-active);
+}
+
+.btn-pill-cta {
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.15;
+  border-radius: var(--rounded-pill);
+  padding: 16px 32px;
+  height: 56px;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease;
+}
+
+.btn-pill-cta:hover,
+.btn-pill-cta:active {
+  background-color: var(--color-primary-active);
+}
+
+.btn-secondary-light {
+  background-color: var(--color-surface-strong);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--rounded-pill);
+  padding: 8px 16px;
+  height: 36px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-secondary-light.active {
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.btn-secondary-dark {
+  background-color: var(--color-surface-dark-elevated);
+  color: var(--color-on-dark);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: var(--rounded-pill);
+  padding: 8px 16px;
+  height: 36px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-secondary-dark.active {
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
+  border-color: var(--color-primary);
+}
+
+/* Badges & Circular Icon Plates */
+.badge,
+.badge-pill {
+  background-color: var(--color-surface-strong);
+  color: var(--color-ink);
+  padding: 4px 12px;
+  border-radius: var(--rounded-pill);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.badge-primary {
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.asset-icon-circular {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: var(--rounded-full);
+  background-color: var(--color-surface-strong);
+  color: var(--color-ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Asset Rows & Leaderboard Rows */
+.asset-row,
 .leaderboard-row {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  padding: var(--spacing-sm) var(--spacing-md);
-  background-color: var(--color-surface-onyx);
+  padding: 12px 16px;
   border-radius: var(--rounded-md);
-  margin-bottom: var(--spacing-xs);
+  border: 1px solid var(--color-hairline-soft);
+  background-color: var(--color-canvas);
+  margin-bottom: 8px;
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
 }
-
-.badge {
-  background-color: var(--color-magenta);
-  color: var(--color-ink);
-  padding: var(--spacing-xxs) var(--spacing-sm);
-  border-radius: var(--rounded-pill);
-  font-size: 12px;
-  font-weight: bold;
-}
-
-.progress-bar-bg {
-  width: 100%;
-  height: 12px;
-  background-color: var(--color-surface-onyx);
-  border-radius: var(--rounded-pill);
-  overflow: hidden;
-  margin-top: var(--spacing-xxs);
-}
-
-.progress-bar-fill {
-  height: 100%;
-  background-color: var(--color-green);
-  border-radius: var(--rounded-pill);
-  transition: width 0.1s ease;
-}
-.progress-bar-fill.red { background-color: #ff3366; }
 
 .clickable-row {
   cursor: pointer;
 }
+
 .clickable-row:hover {
-  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  background-color: var(--color-surface-soft);
+}
+
+.clickable-row.active {
+  border-color: var(--color-primary);
+  background-color: rgba(0, 82, 255, 0.06);
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+/* Semantic Text Colors (Text color only per DESIGN-coinbase.md) */
+.text-up {
+  color: var(--color-semantic-up);
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
+
+.text-down {
+  color: var(--color-semantic-down);
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
+
+.text-primary-blue {
+  color: var(--color-primary);
+}
+
+/* Inputs & Selects */
+.cb-input,
+.cb-select {
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  border-radius: var(--rounded-md);
+  padding: 12px 16px;
+  height: 46px;
+  border: 1px solid var(--color-hairline);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.cb-input:focus,
+.cb-select:focus {
+  border: 2px solid var(--color-primary);
+}
+
+/* Tables */
+.cb-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.cb-table th {
+  color: var(--color-muted);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+.cb-table td {
+  padding: 12px 8px;
+  border-bottom: 1px solid var(--color-hairline-soft);
+  color: var(--color-ink);
+}
+
+.cb-table tbody tr {
+  transition: background-color 0.12s ease;
+}
+
+.cb-table tbody tr:hover {
+  background-color: var(--color-surface-soft);
+}
+
+.cb-table tbody tr.selected-row {
+  background-color: rgba(0, 82, 255, 0.06);
 }

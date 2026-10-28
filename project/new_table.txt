@@ -1,0 +1,71 @@
+﻿      {/* Corner Analysis Section */}
+      <div className="card" style={{ marginTop: 'var(--spacing-xl)' }}>
+        <div className="card-header">{t.cornerAnalysis}</div>
+        {trackPoints && trackPoints.length > 0 && circuit_corners && circuit_corners.length > 0 ? (
+           <div style={{ width: '100%', overflowX: 'auto', paddingBottom: '8px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'center' }}>
+                <thead style={{ backgroundColor: 'var(--color-surface-onyx)', color: '#aaa', borderBottom: '1px solid #333' }}>
+                  <tr>
+                    <th style={{ padding: '12px 8px' }} rowSpan="2">TURN</th>
+                    <th style={{ padding: '4px 8px', borderBottom: '1px solid #555' }} colSpan="3">ENTRY</th>
+                    <th style={{ padding: '4px 8px', borderBottom: '1px solid #555' }} colSpan="3">APEX</th>
+                    <th style={{ padding: '4px 8px', borderBottom: '1px solid #555' }} colSpan="3">EXIT</th>
+                  </tr>
+                  <tr>
+                    <th style={{ padding: '4px 8px' }}>GEAR</th>
+                    <th style={{ padding: '4px 8px' }}>THR</th>
+                    <th style={{ padding: '4px 8px' }}>BRK</th>
+                    <th style={{ padding: '4px 8px' }}>GEAR</th>
+                    <th style={{ padding: '4px 8px' }}>THR</th>
+                    <th style={{ padding: '4px 8px' }}>BRK</th>
+                    <th style={{ padding: '4px 8px' }}>GEAR</th>
+                    <th style={{ padding: '4px 8px' }}>THR</th>
+                    <th style={{ padding: '4px 8px' }}>BRK</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {circuit_corners.map((c, i) => {
+                     const entryIdx = trackPoints.findIndex(p => p.distance_m >= c.entry_dist);
+                     const apexIdx = trackPoints.findIndex(p => p.distance_m >= c.apex_dist);
+                     const exitIdx = trackPoints.findIndex(p => p.distance_m >= c.exit_dist);
+                     
+                     const formatData = (idx) => {
+                         if (idx === -1 || !trackPoints[idx]) return { gear: '-', throttle: '-', brake: '-' };
+                         return {
+                             gear: trackPoints[idx].gear,
+                             throttle: trackPoints[idx].throttle + '%',
+                             brake: trackPoints[idx].brake + '%'
+                         };
+                     };
+                     
+                     const entry = formatData(entryIdx);
+                     const apex = formatData(apexIdx);
+                     const exit = formatData(exitIdx);
+                     
+                     return (
+                       <tr key={i} style={{ borderBottom: '1px solid #333' }}>
+                         <td style={{ padding: '8px 4px', fontWeight: 'bold', color: '#fff' }}>{c.name}</td>
+                         
+                         <td style={{ padding: '8px 4px', color: '#ffcc00' }}>{entry.gear}</td>
+                         <td style={{ padding: '8px 4px', color: '#00aaff' }}>{entry.throttle}</td>
+                         <td style={{ padding: '8px 4px', color: '#ff3366' }}>{entry.brake}</td>
+                         
+                         <td style={{ padding: '8px 4px', color: '#ffcc00' }}>{apex.gear}</td>
+                         <td style={{ padding: '8px 4px', color: '#00aaff' }}>{apex.throttle}</td>
+                         <td style={{ padding: '8px 4px', color: '#ff3366' }}>{apex.brake}</td>
+                         
+                         <td style={{ padding: '8px 4px', color: '#ffcc00' }}>{exit.gear}</td>
+                         <td style={{ padding: '8px 4px', color: '#00aaff' }}>{exit.throttle}</td>
+                         <td style={{ padding: '8px 4px', color: '#ff3366' }}>{exit.brake}</td>
+                       </tr>
+                     );
+                  })}
+                </tbody>
+              </table>
+           </div>
+        ) : (
+           <div style={{ color: 'var(--color-muted)', padding: '20px', textAlign: 'center' }}>
+             {trackPoints && trackPoints.length > 0 ? "No circuit corner data configured for this track." : "Select a lap from Lap History to see corner analysis."}
+           </div>
+        )}
+      </div>

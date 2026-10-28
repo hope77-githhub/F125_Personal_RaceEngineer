@@ -10,36 +10,58 @@ corners = [
     "Turn 17 (Chicane Mid)", "Turn 18 (Club Exit)"
 ]
 
-def generate_telemetry(corners, base_brake, base_throttle, time_diff_base):
-    pts = []
-    for i, c in enumerate(corners):
-        b = max(0, min(100, base_brake + random.randint(-10, 10)))
-        t = max(0, min(100, base_throttle + random.randint(-10, 10)))
-        
-        rb = max(0, min(100, b + random.randint(-5, 5)))
-        rt = max(0, min(100, t + random.randint(-5, 5)))
-        td = round(time_diff_base + random.uniform(-0.1, 0.1), 2)
-        td_str = f"{td:+.2f}s " + ("(Faster)" if td < 0 else "(Slower)" if td > 0 else "(Equal)")
-        
-        lb = max(0, min(100, b + random.randint(-8, 8)))
-        lt = max(0, min(100, t + random.randint(-8, 8)))
-        ld = round(time_diff_base + random.uniform(0.0, 0.2), 2) 
-        ld_str = f"{ld:+.2f}s " + ("(Faster)" if ld < 0 else "(Slower)" if ld > 0 else "(Equal)")
+import os
 
-        pts.append({
-            "distance": c,
-            "brake": b,
-            "throttle": t,
-            "wear_diff": round(random.uniform(0.01, 0.1), 2),
-            "time_diff_to_rival": td_str,
-            "rival_brake": rb,
-            "rival_throttle": rt,
-            "wear_diff_leader": round(random.uniform(0.02, 0.15), 2),
-            "time_diff_leader": ld_str,
-            "leader_brake": lb,
-            "leader_throttle": lt
-        })
-    return pts
+def generate_telemetry_from_debug():
+    try:
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        debug_path = os.path.join(base_dir, "docs", "debug_payload.json")
+        with open(debug_path, "r", encoding="utf-8") as f:
+            debug_payload = json.load(f)
+            
+        lap_data = debug_payload.get("packet_id_2", {}).get("m_lapData", [])
+        tele_data = debug_payload.get("packet_id_6", {}).get("m_carTelemetryData", [])
+        motion_data = debug_payload.get("packet_id_0", {}).get("m_carMotionData", [])
+        
+        pts = []
+        for i in range(22):
+            if i >= len(lap_data) or i >= len(tele_data):
+                continue
+                
+            ld = lap_data[i]
+            td = tele_data[i]
+            md = motion_data[i] if i < len(motion_data) else {}
+            
+            b = int((td.get("m_brake", 0) or 0) * 100)
+            t = int((td.get("m_throttle", 0) or 0) * 100)
+            
+            pts.append({
+                "distance_m": ld.get("m_lapDistance", 0),
+                "speed": td.get("m_speed", 0),
+                "throttle": t,
+                "brake": b,
+                "gear": td.get("m_gear", 0),
+                "steer": td.get("m_steer", 0),
+                "rpm": td.get("m_engineRPM", 0),
+                "g_lat": md.get("m_gForceLateral", 0),
+                "g_lon": md.get("m_gForceLongitudinal", 0),
+                
+                # Keep dummy rivalry data for UI compatibility
+                "wear_diff": round(random.uniform(0.01, 0.1), 2),
+                "time_diff_to_rival": "+0.10s",
+                "rival_brake": max(0, min(100, b + random.randint(-5, 5))),
+                "rival_throttle": max(0, min(100, t + random.randint(-5, 5))),
+                "wear_diff_leader": round(random.uniform(0.02, 0.15), 2),
+                "time_diff_leader": "+0.10s",
+                "leader_brake": max(0, min(100, b + random.randint(-8, 8))),
+                "leader_throttle": max(0, min(100, t + random.randint(-8, 8)))
+            })
+            
+        pts.sort(key=lambda x: x["distance_m"])
+        return pts
+    except Exception as e:
+        print(f"Error loading debug payload: {e}")
+        return []
 
 def get_setup(fw, rw, bb):
     return {
@@ -67,15 +89,15 @@ def get_setup(fw, rw, bb):
 
 # Pre-generate some static lap history so we don't recreate it every frame
 p1_lap_hist = [
-    { "lap": 13, "time": "1:24.312", "delta": "-0.150", "avg_tyre_wear_lap": 1.2, "telemetry_points": generate_telemetry(corners, 85, 15, -0.05) },
-    { "lap": 14, "time": "1:24.501", "delta": "+0.189", "avg_tyre_wear_lap": 1.5, "telemetry_points": generate_telemetry(corners, 85, 15, 0.0) }
+    { "lap": 13, "time": "1:24.312", "delta": "-0.150", "avg_tyre_wear_lap": 1.2, "telemetry_points": generate_telemetry_from_debug() },
+    { "lap": 14, "time": "1:24.501", "delta": "+0.189", "avg_tyre_wear_lap": 1.5, "telemetry_points": generate_telemetry_from_debug() }
 ]
 p2_lap_hist = [
-    { "lap": 13, "time": "1:24.400", "delta": "+0.100", "avg_tyre_wear_lap": 1.0, "telemetry_points": generate_telemetry(corners, 80, 20, 0.05) },
-    { "lap": 14, "time": "1:24.450", "delta": "+0.050", "avg_tyre_wear_lap": 1.1, "telemetry_points": generate_telemetry(corners, 80, 20, 0.0) }
+    { "lap": 13, "time": "1:24.400", "delta": "+0.100", "avg_tyre_wear_lap": 1.0, "telemetry_points": generate_telemetry_from_debug() },
+    { "lap": 14, "time": "1:24.450", "delta": "+0.050", "avg_tyre_wear_lap": 1.1, "telemetry_points": generate_telemetry_from_debug() }
 ]
 p3_lap_hist = [
-    { "lap": 13, "time": "1:24.600", "delta": "+0.300", "avg_tyre_wear_lap": 1.4, "telemetry_points": generate_telemetry(corners, 90, 10, 0.1) }
+    { "lap": 13, "time": "1:24.600", "delta": "+0.300", "avg_tyre_wear_lap": 1.4, "telemetry_points": generate_telemetry_from_debug() }
 ]
 
 

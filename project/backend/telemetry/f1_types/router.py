@@ -10,7 +10,7 @@ from .participants import PacketParticipantsData
 from .car_status import PacketCarStatusData
 from .session_history import PacketSessionHistoryData
 from .motion import PacketMotionData
-
+from .car_telemetry2 import PacketCarTelemetry2Data
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +26,7 @@ PACKET_TYPES = {
     6: PacketCarTelemetryData,
     10: PacketCarDamageData,
     11: PacketSessionHistoryData,
+    16: PacketCarTelemetry2Data,
 }
 
 def parse_packet(data: bytes):

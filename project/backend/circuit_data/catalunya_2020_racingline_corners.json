@@ -1,0 +1,86 @@
+{
+  "track_name": "catalunya_2020_racingline",
+  "calibration_params": {
+    "threshold": 0.007,
+    "min_length": 15
+  },
+  "corners": [
+    {
+      "turn": 1,
+      "name": "Turn 1",
+      "entry_dist": 795,
+      "apex_dist": 853,
+      "exit_dist": 890
+    },
+    {
+      "turn": 2,
+      "name": "Turn 2",
+      "entry_dist": 908,
+      "apex_dist": 943,
+      "exit_dist": 1000
+    },
+    {
+      "turn": 3,
+      "name": "Turn 3",
+      "entry_dist": 1053,
+      "apex_dist": 1089,
+      "exit_dist": 1291
+    },
+    {
+      "turn": 4,
+      "name": "Turn 4",
+      "entry_dist": 1663,
+      "apex_dist": 1742,
+      "exit_dist": 1891
+    },
+    {
+      "turn": 5,
+      "name": "Turn 5",
+      "entry_dist": 2065,
+      "apex_dist": 2135,
+      "exit_dist": 2200
+    },
+    {
+      "turn": 6,
+      "name": "Turn 6",
+      "entry_dist": 2500,
+      "apex_dist": 2558,
+      "exit_dist": 2603
+    },
+    {
+      "turn": 7,
+      "name": "Turn 7",
+      "entry_dist": 2845,
+      "apex_dist": 2888,
+      "exit_dist": 2965
+    },
+    {
+      "turn": 8,
+      "name": "Turn 8",
+      "entry_dist": 3445,
+      "apex_dist": 3512,
+      "exit_dist": 3647
+    },
+    {
+      "turn": 9,
+      "name": "Turn 9",
+      "entry_dist": 3697,
+      "apex_dist": 3789,
+      "exit_dist": 3900
+    },
+    {
+      "turn": 10,
+      "name": "Turn 10",
+      "entry_dist": 4021,
+      "apex_dist": 4044,
+      "exit_dist": 4110
+    },
+    {
+      "turn": 11,
+      "name": "Turn 11",
+      "entry_dist": 4294,
+      "apex_dist": 4386,
+      "exit_dist": 4426
+    }
+  ]
+}

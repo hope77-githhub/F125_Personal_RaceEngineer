@@ -1,0 +1,114 @@
+{
+  "track_name": "monaco_2020_racingline",
+  "calibration_params": {
+    "threshold": 0.007,
+    "min_length": 15
+  },
+  "corners": [
+    {
+      "turn": 1,
+      "name": "Turn 1",
+      "entry_dist": 186,
+      "apex_dist": 229,
+      "exit_dist": 259
+    },
+    {
+      "turn": 2,
+      "name": "Turn 2",
+      "entry_dist": 693,
+      "apex_dist": 820,
+      "exit_dist": 843
+    },
+    {
+      "turn": 3,
+      "name": "Turn 3",
+      "entry_dist": 857,
+      "apex_dist": 902,
+      "exit_dist": 957
+    },
+    {
+      "turn": 4,
+      "name": "Turn 4",
+      "entry_dist": 1098,
+      "apex_dist": 1144,
+      "exit_dist": 1171
+    },
+    {
+      "turn": 5,
+      "name": "Turn 5",
+      "entry_dist": 1235,
+      "apex_dist": 1266,
+      "exit_dist": 1302
+    },
+    {
+      "turn": 6,
+      "name": "Turn 6",
+      "entry_dist": 1308,
+      "apex_dist": 1348,
+      "exit_dist": 1381
+    },
+    {
+      "turn": 7,
+      "name": "Turn 7",
+      "entry_dist": 1386,
+      "apex_dist": 1436,
+      "exit_dist": 1487
+    },
+    {
+      "turn": 8,
+      "name": "Turn 8",
+      "entry_dist": 2071,
+      "apex_dist": 2114,
+      "exit_dist": 2149
+    },
+    {
+      "turn": 9,
+      "name": "Turn 9",
+      "entry_dist": 2355,
+      "apex_dist": 2377,
+      "exit_dist": 2438
+    },
+    {
+      "turn": 10,
+      "name": "Turn 10",
+      "entry_dist": 2468,
+      "apex_dist": 2522,
+      "exit_dist": 2537
+    },
+    {
+      "turn": 11,
+      "name": "Turn 11",
+      "entry_dist": 2668,
+      "apex_dist": 2699,
+      "exit_dist": 2710
+    },
+    {
+      "turn": 12,
+      "name": "Turn 12",
+      "entry_dist": 2719,
+      "apex_dist": 2731,
+      "exit_dist": 2776
+    },
+    {
+      "turn": 13,
+      "name": "Turn 13",
+      "entry_dist": 2799,
+      "apex_dist": 2852,
+      "exit_dist": 2862
+    },
+    {
+      "turn": 14,
+      "name": "Turn 14",
+      "entry_dist": 2896,
+      "apex_dist": 2939,
+      "exit_dist": 2966
+    },
+    {
+      "turn": 15,
+      "name": "Turn 15",
+      "entry_dist": 2976,
+      "apex_dist": 3018,
+      "exit_dist": 3036
+    }
+  ]
+}

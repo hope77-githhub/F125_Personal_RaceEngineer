@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>F1 Track Calibration Tool</title>
+  
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    /* Mastercard Inspired Design System */
+    body { margin: 0; background-color: #141413; color: #F3F0EE; font-family: 'Arial', sans-serif; }
+    .container { padding: 40px; display: flex; flex-direction: column; align-items: center; }
+    .panel { background: #1c1c1b; padding: 30px; border-radius: 40px; margin-bottom: 20px; width: 100%; max-width: 1000px; box-sizing: border-box; box-shadow: 0 24px 48px rgba(0,0,0,0.5); }
+    
+    .btn-primary {
+      background-color: #CF4500; color: #F3F0EE; border: none; border-radius: 20px;
+      padding: 12px 24px; font-weight: bold; font-size: 14px; cursor: pointer; transition: 0.2s;
+    }
+    .btn-primary:hover { background-color: #e65c00; transform: translateY(-2px); }
+    
+    .btn-secondary {
+      background-color: #F3F0EE; color: #141413; border: none; border-radius: 20px;
+      padding: 12px 24px; font-weight: bold; font-size: 14px; cursor: pointer; transition: 0.2s;
+    }
+    .btn-secondary:hover { background-color: #e0dcd9; transform: translateY(-2px); }
+
+    .slider-group { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
+    .slider-group label { width: 180px; font-weight: bold; color: #a1a1aa; }
+    .slider-group input[type="range"] { flex: 1; margin: 0 15px; cursor: pointer; }
+    .slider-group span { width: 60px; text-align: right; color: #CF4500; font-weight: bold; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; text-align: center; }
+    th { background: #2b2b2a; color: #CF4500; padding: 12px; border-radius: 8px 8px 0 0; }
+    td { border-bottom: 1px solid #333; padding: 10px; color: #F3F0EE; }
+    tr:hover td { background: #2b2b2a; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useMemo } = React;
+
+    // 수학: 미분 함수
+    const np_gradient = (arr) => {
+      const n = arr.length;
+      const grad = new Float32Array(n);
+      if (n < 2) return grad;
+      grad[0] = arr[1] - arr[0];
+      grad[n - 1] = arr[n - 1] - arr[n - 2];
+      for (let i = 1; i < n - 1; i++) {
+        grad[i] = (arr[i + 1] - arr[i - 1]) / 2.0;
+      }
+      return grad;
+    };
+
+    // 수학: 로우패스 필터 (노이즈 제거)
+    const smoothArray = (arr, windowSize) => {
+      const res = new Float32Array(arr.length);
+      const half = Math.floor(windowSize / 2);
+      for (let i = 0; i < arr.length; i++) {
+        let sum = 0, count = 0;
+        for (let j = Math.max(0, i - half); j <= Math.min(arr.length - 1, i + half); j++) {
+          sum += arr[j];
+          count++;
+        }
+        res[i] = sum / count;
+      }
+      return res;
+    };
+
+    function TrackMapper() {
+      const [trackData, setTrackData] = useState([]);
+      const [fileName, setFileName] = useState("");
+      
+      // 모나코 서킷 최적값을 기본으로 세팅 (threshold: 0.007)
+      const [threshold, setThreshold] = useState(0.007);
+      const [minLength, setMinLength] = useState(15);
+
+      const handleFileUpload = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setFileName(file.name);
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const text = event.target.result;
+          const lines = text.split(/\r?\n/);
+          
+          const headerLine = lines.find(l => l.toLowerCase().includes('dist'));
+          if (!headerLine) { alert("Invalid file format."); return; }
+          
+          const headers = headerLine.split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
+          const distIdx = headers.indexOf('dist');
+          const zIdx = headers.findIndex(h => h.includes('pos_z') || h === 'z');
+          const xIdx = headers.findIndex(h => h.includes('pos_x') || h === 'x');
+
+          const startIndex = lines.indexOf(headerLine) + 1;
+          const parsedPoints = [];
+          let lastDist = -Infinity;
+
+          for (let i = startIndex; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+            const parts = line.split(',');
+            const dist = parseFloat(parts[distIdx]);
+            const pos_z = parseFloat(parts[zIdx]);
+            const pos_x = parseFloat(parts[xIdx]);
+
+            if (!isNaN(dist) && !isNaN(pos_z) && !isNaN(pos_x)) {
+              if (dist > lastDist + 0.001) {
+                // 게임 방향과 맞추기 위해 x, y축 스왑 및 부호 반전
+                parsedPoints.push({ index: parsedPoints.length, dist, x: pos_z, y: -pos_x });
+                lastDist = dist;
+              }
+            }
+          }
+
+          if (parsedPoints.length < 10) return;
+
+          const n = parsedPoints.length;
+          const distArr = new Float32Array(n);
+          const xArr = new Float32Array(n);
+          const yArr = new Float32Array(n);
+
+          for(let i=0; i<n; i++) {
+            distArr[i] = parsedPoints[i].dist;
+            xArr[i] = parsedPoints[i].x;
+            yArr[i] = parsedPoints[i].y;
+          }
+
+          // 2차 미분 전 좌표 노이즈 1차 필터링
+          const sx = smoothArray(xArr, 11);
+          const sy = smoothArray(yArr, 11);
+
+          const ds = np_gradient(distArr);
+          for(let i=0; i<n; i++) if (ds[i] === 0) ds[i] = 0.001;
+
+          const dx = np_gradient(sx).map((v, i) => v / ds[i]);
+          const dy = np_gradient(sy).map((v, i) => v / ds[i]);
+          const ddx = np_gradient(dx).map((v, i) => v / ds[i]);
+          const ddy = np_gradient(dy).map((v, i) => v / ds[i]);
+
+          const curvature = new Float32Array(n);
+          for(let i=0; i<n; i++) {
+            const num = Math.abs(dx[i] * ddy[i] - dy[i] * ddx[i]);
+            let den = Math.pow(dx[i]*dx[i] + dy[i]*dy[i], 1.5);
+            if (den < 0.0001) den = 0.0001;
+            curvature[i] = num / den;
+          }
+
+          const smooth_curv = smoothArray(curvature, 15);
+          for(let i=0; i<n; i++) parsedPoints[i].curvature = smooth_curv[i];
+
+          setTrackData(parsedPoints);
+        };
+        reader.readAsText(file);
+      };
+
+      // 곡률 기반 코너 분할 알고리즘
+      const corners = useMemo(() => {
+        if (trackData.length === 0) return [];
+        const detected = [];
+        let currentGroup = [];
+
+        trackData.forEach((p) => {
+          if (p.curvature > threshold) {
+            currentGroup.push(p);
+          } else {
+            if (currentGroup.length > 0) {
+              const entryDist = currentGroup[0].dist;
+              const exitDist = currentGroup[currentGroup.length - 1].dist;
+              
+              if (exitDist - entryDist >= minLength) {
+                let apex = currentGroup[0];
+                currentGroup.forEach(cp => {
+                  if (cp.curvature > apex.curvature) apex = cp;
+                });
+                
+                detected.push({
+                  turn: detected.length + 1,
+                  entry: currentGroup[0],
+                  apex: apex,
+                  exit: currentGroup[currentGroup.length - 1]
+                });
+              }
+            }
+            currentGroup = [];
+          }
+        });
+        return detected;
+      }, [trackData, threshold, minLength]);
+
+      // 💡 [핵심] 찾아낸 코너를 백엔드용 JSON으로 추출하는 함수
+      const exportToJson = () => {
+        if (corners.length === 0) return;
+
+        const configData = {
+          track_name: fileName.replace('.txt', '').replace('.csv', ''),
+          calibration_params: { threshold, min_length: minLength },
+          corners: corners.map(c => ({
+            turn: c.turn,
+            name: `Turn ${c.turn}`, // 사용자가 나중에 "Sainte Devote" 등으로 수정 가능
+            entry_dist: Math.round(c.entry.dist),
+            apex_dist: Math.round(c.apex.dist),
+            exit_dist: Math.round(c.exit.dist)
+          }))
+        };
+
+        const jsonString = JSON.stringify(configData, null, 2);
+        const blob = new Blob([jsonString], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${configData.track_name}_corners.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      };
+
+      const boundingBox = useMemo(() => {
+        if (trackData.length === 0) return null;
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        trackData.forEach(p => {
+          if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x;
+          if (p.y < minY) minY = p.y; if (p.y > maxY) maxY = p.y;
+        });
+        const padding = 150; 
+        return {
+          minX: minX - padding, minY: minY - padding,
+          width: (maxX - minX) + padding * 2, height: (maxY - minY) + padding * 2
+        };
+      }, [trackData]);
+
+      const trackPathString = useMemo(() => {
+        if (trackData.length === 0) return "";
+        return trackData.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+      }, [trackData]);
+
+      return (
+        <div className="container">
+          <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+            <h1 style={{ margin: '0 0 10px 0', fontSize: '32px' }}>🏎️ Track Calibration Tool</h1>
+            <p style={{ color: '#888', marginBottom: '20px' }}>
+              Upload telemetry, tune parameters, and export the corner config for your backend.
+            </p>
+            
+            <label className="btn-secondary">
+              📁 Load Raw Telemetry File
+              <input type="file" accept=".txt,.csv" onChange={handleFileUpload} style={{ display: 'none' }} />
+            </label>
+            {fileName && <p style={{ marginTop: '15px', color: '#CF4500', fontWeight: 'bold' }}>{fileName}</p>}
+          </div>
+
+          {trackData.length > 0 && (
+            <div className="panel" style={{ display: 'flex', gap: '40px', alignItems: 'flex-start' }}>
+              
+              {/* 왼쪽: 미니맵 및 파라미터 제어 */}
+              <div style={{ flex: '1.2' }}>
+                <div style={{ marginBottom: '20px' }}>
+                  <div className="slider-group">
+                    <label>Sensitivity (Threshold)</label>
+                    <input type="range" min="0.001" max="0.02" step="0.001" value={threshold} onChange={e => setThreshold(parseFloat(e.target.value))} />
+                    <span>{threshold.toFixed(3)}</span>
+                  </div>
+                  <div className="slider-group">
+                    <label>Min Corner Length</label>
+                    <input type="range" min="5" max="50" step="1" value={minLength} onChange={e => setMinLength(parseInt(e.target.value))} />
+                    <span>{minLength}m</span>
+                  </div>
+                </div>
+
+                <div style={{ backgroundColor: '#141413', borderRadius: '20px', padding: '10px', boxShadow: 'inset 0 4px 10px rgba(0,0,0,0.5)' }}>
+                  <svg viewBox={`${boundingBox.minX} ${boundingBox.minY} ${boundingBox.width} ${boundingBox.height}`} style={{ width: '100%', height: 'auto', transform: 'rotate(20deg)' }}>
+                    <path d={trackPathString} fill="none" stroke="#333" strokeWidth="8" strokeLinejoin="round" />
+                    <path d={trackPathString} fill="none" stroke="#F3F0EE" strokeWidth="1" strokeLinejoin="round" />
+
+                    {corners.map((c) => (
+                      <g key={`corner-${c.turn}`}>
+                        {/* 코너 진입~탈출 선 (주황) */}
+                        <path 
+                          d={trackData.slice(c.entry.index, c.exit.index + 1).map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')}
+                          fill="none" stroke="#CF4500" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round"
+                        />
+                        <circle cx={c.entry.x} cy={c.entry.y} r="6" fill="#3b82f6" />
+                        <circle cx={c.apex.x} cy={c.apex.y} r="12" fill="#F3F0EE" stroke="#CF4500" strokeWidth="3" />
+                        <text x={c.apex.x} y={c.apex.y} fill="#141413" fontSize="12" fontWeight="bold" textAnchor="middle" alignmentBaseline="central" dy="1" transform={`translate(${c.apex.x}, ${c.apex.y}) rotate(-20deg) translate(${-c.apex.x}, ${-c.apex.y})`}>
+                          {c.turn}
+                        </text>
+                        <circle cx={c.exit.x} cy={c.exit.y} r="6" fill="#22c55e" />
+                      </g>
+                    ))}
+                  </svg>
+                </div>
+              </div>
+
+              {/* 오른쪽: 결과 테이블 및 다운로드 버튼 */}
+              <div style={{ flex: '0.8', display: 'flex', flexDirection: 'column', maxHeight: '700px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                  <h3 style={{ margin: 0 }}>Detected Corners <span style={{ color: '#CF4500' }}>({corners.length})</span></h3>
+                  <button className="btn-primary" onClick={exportToJson}>💾 Export JSON</button>
+                </div>
+                
+                <div style={{ overflowY: 'auto', borderRadius: '8px', border: '1px solid #333' }}>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Turn</th>
+                        <th style={{ color: '#3b82f6' }}>Entry (m)</th>
+                        <th>Apex (m)</th>
+                        <th style={{ color: '#22c55e' }}>Exit (m)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {corners.map(c => (
+                        <tr key={c.turn}>
+                          <td style={{ fontWeight: 'bold' }}>T{c.turn}</td>
+                          <td>{c.entry.dist.toFixed(0)}</td>
+                          <td style={{ color: '#CF4500', fontWeight: 'bold' }}>{c.apex.dist.toFixed(0)}</td>
+                          <td>{c.exit.dist.toFixed(0)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<TrackMapper />);
+  </script>
+</body>
+</html>
