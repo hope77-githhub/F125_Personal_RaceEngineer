@@ -1,47 +1,72 @@
-# F1 AI Race Engineer Dashboard
+# 🏎️ F1 AI Race Engineer Dashboard
 
-This project is a **Race Engineering Dashboard** that analyzes real-time UDP telemetry data from the F1 26 game, providing players with strategic insights and detailed turn-by-turn lap comparisons.
+> **Institutional-grade telemetry, corner-by-corner kinematics, and real-time race strategy for F1 25 / F1 26.**
 
-## 🚀 Current Features
+A high-performance web dashboard that captures real-time high-speed UDP telemetry (port `20777`) from EA SPORTS™ F1 25 / F1 26, analyzing turn-by-turn kinematics, tire degradation, and circuit telemetry to provide drivers with professional pitwall-grade engineering insights.
 
-**Phase 1 (UI/Dummy Integration)** and **Phase 2 (Real UDP Packet Parsing Architecture)** have been successfully completed.
-
-### 1. Advanced Session Setup UI
-Configure your race environment easily via the web-based Setup UI.
-*   **i18n Support:** Fully supports English (ENG) and Korean (KOR) UI with real-time switching.
-*   **Unit Conversion:** Supports Metric (km/h, °C) and Imperial (mph, °F) systems.
-*   **Telemetry Rate:** Choose between 30Hz or 60Hz data refresh rates based on your network environment.
-*   **Engineer Persona Selection:** Select your AI Engineer's voice persona (e.g., GP for Max Verstappen, Bono for Lewis Hamilton, Ricky for Carlos Sainz).
-
-### 2. Perfect Binary Packet Parsing (F1 26 UDP C-Struct Parsing)
-A robust Python backend pipeline built with `ctypes` decodes the massive binary telemetry packets sent by the F1 26 game without dropping a single byte.
-*   **Packet 1 (Session):** Parses track metadata including track temp, weather, and track length.
-*   **Packet 2 (Lap Data):** Tracks lap times, sector times, current positions, and delta times to cars ahead/leader.
-*   **Packet 4 (Participants):** Matches real names and nationalities for multiplayer and AI drivers.
-*   **Packet 5 (Car Setups):** 100% decoding of the 49-byte setup data (suspension, wing angles, tyre pressures, etc.).
-*   **Packet 6 (Car Telemetry):** Captures 60Hz pedal inputs (brake/throttle), speed, gear, and engine RPM.
-*   **Packet 10 (Car Damage):** Extracts exact tyre wear percentages and car damage metrics.
-
-### 3. Turn-by-Turn Lap Analysis & XY Graphs
-Telemetry data is buffered and grouped by sectors (~5% intervals of the track) per lap to provide deep analytical insights.
-*   **Comparison Toggle:** Compare your telemetry against the **'Car Ahead'** or the **'Race Leader'**.
-*   **Live Speed Graph (XY):** A dynamic, scrolling SVG graph showing your speed overlaying your rivals' speeds in real-time. Features toggleable visibility for each player.
-*   **Pedal Work Graph (XY):** A smooth, real-time scrolling graph showing Throttle (Green) and Brake (Red) inputs to analyze trail braking and pedal application.
+Built with the Coinbase Design System aesthetic—combining a deep dark hero band, crisp white editorial canvas, soft surface elevations, and tabular `JetBrains Mono` typography for high data density and readability.
 
 ---
 
-## 🛠️ Planned Features
+## 📸 Screenshots
 
-### Phase 3: AI Voice Feedback (Voice Cloning TTS) - ⏳ Pending Data
-*   Utilize local AI models (e.g., Coqui XTTSv2) to clone the voices of real F1 engineers (GP, Bono, etc.) based on the persona selected in the Setup UI.
-*   Convert AI strategy text into real-time WAV audio streaming for hands-free audio feedback while racing.
+| 1. Session Configuration & Replay | 2. Lap Archive & Corner Telemetry |
+| :---: | :---: |
+| ![Session Configuration](project/docs/images/01_session_configuration.png) | ![Lap History and Setup](project/docs/images/02_lap_history_and_setup.png) |
+| Replay circuit selection, 60Hz UDP port, AI voice persona | Multi-lap history, corner entry/apex/exit metrics, setup & wear |
 
-### Phase 4: Transparent Overlay HUD
-*   Implement an Electron or Windows Form-based transparent overlay to display the dashboard directly over the game screen without interrupting gameplay.
+| 3. Turn-by-Turn Kinematics Matrix | 4. Interactive Circuit Map & Sectors |
+| :---: | :---: |
+| ![Corner Analysis Matrix](project/docs/images/03_corner_analysis_matrix.png) | ![Circuit Map and Sectors](project/docs/images/04_circuit_map_and_sectors.png) |
+| Full corner table (T1~TN) with speed, gear, pedals, brake point, G-force | Vector racing line, clickable dynamic apex markers, split timing |
 
 ---
 
-## 💻 Tech Stack
-*   **Backend:** Python 3 (FastAPI, WebSockets, `ctypes` for C-struct Memory Mapping)
-*   **Frontend:** React (Vite), CSS Grid & Flexbox, Native SVG for real-time charting, i18n
-*   **Architecture:** Data Pipeline (UDP Listener ➡️ Router ➡️ StateManager ➡️ WebSocket)
+## ✨ Key Features
+
+### 1. Advanced Session Configuration & Replay
+* **Live & Replay Modes**: Stream live from the game at 60Hz or replay pre-recorded telemetry files (Catalunya 9 Laps, Austria, etc.) at 1x to 4x playback speed.
+* **i18n & Unit Conversion**: Real-time switching between English (ENG) / Korean (KOR) and Metric (km/h, °C) / Imperial (mph, °F).
+* **AI Engineer Persona**: Select your race engineer voice persona (GP for Max Verstappen, Bono for Lewis Hamilton, Ricky for Carlos Sainz).
+
+### 2. High-Fidelity Packet Parsing & Kinematics Engine
+* **Full C-Struct Parsing**: `Packet 0` (Motion), `Packet 1` (Session), `Packet 2` (Lap Data), `Packet 4` (Participants), `Packet 5` (Car Setups), `Packet 6` (Car Telemetry), `Packet 10` (Car Damage), `Packet 11` (Session History).
+* **Turn-by-Turn Telemetry & Kinematics**:
+  * Entry, Apex, and Exit speeds (`km/h`), gear selection, throttle %, and brake %.
+  * Precise Braking Point (`m`) detection and Throttle-On (`m`) re-application point.
+  * Lateral G-load (`Max G`) and live rival comparison (`vs Ahead` / `vs Leader`).
+
+### 3. Interactive Multi-Lap History
+* Click any completed lap (`Lap 1` through `Lap 9`) or `LIVE` buffer to inspect turn-by-turn telemetry cards.
+* Official millisecond lap and sector times (`S1, S2, S3`) directly parsed from `SessionHistory`.
+
+### 4. Interactive Circuit Map
+* Smooth SVG vector racing line generated from high-density circuit coordinates.
+* Interactive corner markers (`T1 ~ T11`) tracking the driver's dynamic apex (actual minimum speed location) per lap.
+* Click any corner on the map to inspect its telemetry profile.
+
+---
+
+## 💻 Quick Start
+
+### 1. Backend
+```bash
+cd project/backend
+# Activate your python virtual environment
+python main.py
+```
+* Runs at `http://localhost:8080`. With the pre-parsed disk cache (`_parsed_laps_cache_v3.json`), server startup and lap preloading take only ~28ms.
+
+### 2. Frontend
+```bash
+cd project/frontend
+npm install
+npm run dev
+```
+* Open your browser at `http://localhost:5173`.
+
+---
+
+## 📖 Documentation
+* [Data Structure & Rendering Architecture Guide](project/docs/DATA_AND_RENDERING_GUIDE.md)
+* [Coinbase Design System Specification](project/frontend/DESIGN-coinbase.md)

@@ -127,15 +127,15 @@ F1 게임이 실시간 UDP(기본 포트 `20777`)로 송출하는 바이너리 �
 
 ## 4. 화면(UI) 섹션별 사용 데이터 및 계산 방식
 
-### ① 상단 다크 히어로 밴드: Live Telemetry & Leaderboard
-* **Live Speed Comparison 그래프**:
-  * 매 WebSocket 수신 시점마다 각 차량의 현재 속도(`live_telemetry.speed`)를 시계열 버퍼(`history`, 최근 160프레임)에 쌓아 실시간 꺾은선 그래프로 렌더링합니다.
-* **Pedal Telemetry (Throttle & Brake) 그래프**:
-  * 선택된 드라이버의 스로틀(`live_telemetry.throttle`, 초록선 `#05b169`)과 브레이크(`live_telemetry.brake`, 빨간선 `#cf202f`) 퍼센트 변화를 실시간으로 그립니다.
-* **Live Classification (리더보드)**:
-  * `packet_id_2`의 `m_carPosition` 순으로 정렬하며, 선두(`LEADER`) 대비 격차 또는 앞차 대비 시간 격차(`m_deltaToCarInFrontMSPart`)를 표시합니다.
+### ① 초기 세션 환경 설정 (Session Configuration)
+![Session Configuration](images/01_session_configuration.png)
+* **Recorded Telemetry Replay 토글**: 백엔드 `data/circuit_*/`에 저장된 녹화 데이터를 1x~4x 속도로 모의 스트리밍하거나 실시간 F1 게임 UDP(`20777`) 수신으로 전환합니다.
+* **AI Engineer Voice**: 레이스 도중 타이어/코너 상황을 음성으로 전달할 엔지니어 페르소나(`GP`, `Bono`, `Ricky`)를 지정합니다.
 
-### ② Band 2 좌측: Lap History & 코너별 텔레메트리 카드
+---
+
+### ② Band 2: Lap History & 코너별 텔레메트리 카드 & 차량 셋업
+![Lap History and Car Setup](images/02_lap_history_and_setup.png)
 * **랩 목록 (`Lap 1 ~ Lap 9`, `LIVE`)**:
   * **랩타임(`time`) 및 섹터 타임(`S1, S2, S3`)**: `packet_id_11`(`SessionHistory`)에 기록된 공식 밀리초 기록을 `분:초.밀리초` 포맷으로 변환해 표시합니다.
   * **베스트 랩 델타(`delta`)**: 완주한 모든 랩 중 가장 빠른 랩(`BEST LAP`)을 기준으로 각 랩의 시간 차이(`+0.383s` 등)를 계산합니다.
@@ -147,18 +147,22 @@ F1 게임이 실시간 UDP(기본 포트 `20777`)로 송출하는 바이너리 �
     * **Throttle On (`throttle_on_dist`)**: 에이펙스 통과 직후 스로틀을 다시 `25%` 이상 전개하기 시작한 거리(`m`)
     * **Max Lateral G (`max_g_lat`)**: 코너 통과 중 발생한 최대 횡가속도(`G`)
     * **vs Ahead / vs Leader 비교 바**: 동일 코너에서 앞차(`ahead`) 또는 선두(`leader`) 차량이 기록한 브레이크 답력, 스로틀 전개량, 에이펙스 최저 속도를 내 기록과 나란히 막대그래프로 비교합니다.
+* **차량 셋업 (우측 상단)**: `packet_id_5`에서 파싱한 프론트/리어 윙 수치, 온/오프 스로틀 디퍼렌셜, 서스펜션 지오메트리, 브레이크 압력 및 밸런스를 표시합니다.
+* **Live Tyre Surface Wear (우측 중단)**: `packet_id_10`의 `m_tyresWear[0..3]` 배열을 통해 `FL`, `FR`, `RL`, `RR` 각 타이어 마모율을 프로그레스 바로 표시합니다.
+* **AI Race Engineer Briefing (우측 하단)**: 현재 타이어 마모도, 앞차와의 코너 속도 차이, 랩타임 추이를 종합하여 생성된 레이스 엔지니어 브리핑 메시지를 출력합니다.
 
-### ③ Band 2 우측: Car Setup & Live Tyre Wear & AI Race Engineer
-* **Car Setup**: `packet_id_5`에서 파싱한 프론트/리어 윙 수치, 온/오프 스로틀 디퍼렌셜, 서스펜션 지오메트리, 브레이크 압력 및 밸런스를 표시합니다.
-* **Live Tyre Surface Wear**: `packet_id_10`의 `m_tyresWear[0..3]` 배열을 통해 `FL`, `FR`, `RL`, `RR` 각 타이어 마모율을 프로그레스 바로 표시합니다.
-* **AI Race Engineer Briefing**: 현재 타이어 마모도, 앞차와의 코너 속도 차이, 랩타임 추이를 종합하여 생성된 레이스 엔지니어 브리핑 메시지를 출력합니다.
+---
 
-### ④ Band 3: Corner Analysis (전체 코너 매트릭스 테이블)
+### ③ Band 3: Corner Analysis (전체 코너 매트릭스 테이블)
+![Corner Analysis Matrix](images/03_corner_analysis_matrix.png)
 * 선택된 랩의 모든 코너(`Turn 1 ~ Turn N`)를 한눈에 비교할 수 있는 종합 표입니다.
 * 상단의 빠른 랩 전환 버튼(`LIVE`, `Lap 1` ~ `Lap 9`)을 눌러 랩 간 코너 진입/정점/탈출 속도 및 브레이킹 포인트 변화를 즉시 대조할 수 있습니다.
 * 특정 행(Row)을 클릭하면 하단의 딥다이브 요약 바와 서킷 맵의 해당 코너 마커가 동시에 하이라이트됩니다.
 
-### ⑤ Band 4: Interactive Circuit Map & Sector Analysis
+---
+
+### ④ Band 4: Interactive Circuit Map & Sector Analysis
+![Circuit Map and Sectors](images/04_circuit_map_and_sectors.png)
 * **Interactive Circuit Map**:
   * `reference_track` 좌표를 SVG 뷰포트(`400x400`)에 맞게 자동 스케일링하여 서킷 전체 모양을 그립니다.
   * `packet_id_1`의 섹터 시작 거리(`m_sector2LapDistanceStart`, `m_sector3LapDistanceStart`)에 수직 분할선(`S1`, `S2`, `S3`)을 표시합니다.
