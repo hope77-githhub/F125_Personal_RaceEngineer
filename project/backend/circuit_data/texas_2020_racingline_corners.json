@@ -1,0 +1,238 @@
+{
+  "track_name": "texas_2020_racingline",
+  "track_id": 15,
+  "display_name": "Circuit of the Americas",
+  "lap_length_m": 5512,
+  "official_turns": 20,
+  "unresolved_turns": [],
+  "calibration_params": {
+    "threshold": 0.007,
+    "min_length": 15
+  },
+  "mapping": {
+    "method": "Signed curvature of the game racing line (2 m resampling), one window per corner, matched to the official F1 turn order and direction.",
+    "reference_file": "tracks/texas_2020_racingline.txt"
+  },
+  "corners": [
+    {
+      "turn": 1,
+      "name": "Turn 1",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 620,
+      "apex_dist": 672,
+      "exit_dist": 700,
+      "apex_radius_m": 23,
+      "note": "Steep uphill hairpin."
+    },
+    {
+      "turn": 2,
+      "name": "Turn 2",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 788,
+      "apex_dist": 922,
+      "exit_dist": 1014,
+      "apex_radius_m": 118,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 3,
+      "name": "Turn 3",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 1090,
+      "apex_dist": 1160,
+      "exit_dist": 1202,
+      "apex_radius_m": 181,
+      "note": "Flat-out left-hander."
+    },
+    {
+      "turn": 4,
+      "name": "Turn 4",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 1218,
+      "apex_dist": 1264,
+      "exit_dist": 1300,
+      "apex_radius_m": 163,
+      "note": "Flat-out right-hander."
+    },
+    {
+      "turn": 5,
+      "name": "Turn 5",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 1318,
+      "apex_dist": 1354,
+      "exit_dist": 1418,
+      "apex_radius_m": 120,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 6,
+      "name": "Turn 6",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 1440,
+      "apex_dist": 1604,
+      "exit_dist": 1630,
+      "apex_radius_m": 88,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 7,
+      "name": "Turn 7",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 1678,
+      "apex_dist": 1740,
+      "exit_dist": 1812,
+      "apex_radius_m": 79,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 8,
+      "name": "Turn 8",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 1840,
+      "apex_dist": 1908,
+      "exit_dist": 1948,
+      "apex_radius_m": 54,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 9,
+      "name": "Turn 9",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 1962,
+      "apex_dist": 1986,
+      "exit_dist": 2062,
+      "apex_radius_m": 73,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 10,
+      "name": "Turn 10",
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 2132,
+      "apex_dist": 2226,
+      "exit_dist": 2246,
+      "apex_radius_m": 201,
+      "note": "Flat-out left-hander."
+    },
+    {
+      "turn": 11,
+      "name": "Turn 11",
+      "direction": "Left",
+      "type": "hairpin",
+      "entry_dist": 2558,
+      "apex_dist": 2598,
+      "exit_dist": 2624,
+      "apex_radius_m": 17,
+      "note": "Hairpin onto the long back straight."
+    },
+    {
+      "turn": 12,
+      "name": "Turn 12",
+      "direction": "Left",
+      "type": "hairpin",
+      "entry_dist": 3752,
+      "apex_dist": 3798,
+      "exit_dist": 3830,
+      "apex_radius_m": 22,
+      "note": "Heavy braking at the end of the back straight."
+    },
+    {
+      "turn": 13,
+      "name": "Turn 13",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 3972,
+      "apex_dist": 4020,
+      "exit_dist": 4132,
+      "apex_radius_m": 34,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 14,
+      "name": "Turn 14",
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 4212,
+      "apex_dist": 4248,
+      "exit_dist": 4248,
+      "apex_radius_m": 65,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 15,
+      "name": "Turn 15",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 4250,
+      "apex_dist": 4310,
+      "exit_dist": 4344,
+      "apex_radius_m": 24,
+      "note": "Slow left-hander."
+    },
+    {
+      "turn": 16,
+      "name": "Turn 16",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 4430,
+      "apex_dist": 4518,
+      "exit_dist": 4544,
+      "apex_radius_m": 110,
+      "note": "Start of the triple-apex right (16-17-18)."
+    },
+    {
+      "turn": 17,
+      "name": "Turn 17",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 4546,
+      "apex_dist": 4576,
+      "exit_dist": 4738,
+      "apex_radius_m": 110,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 18,
+      "name": "Turn 18",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 4740,
+      "apex_dist": 4810,
+      "exit_dist": 4912,
+      "apex_radius_m": 140,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 19,
+      "name": "Turn 19",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 4998,
+      "apex_dist": 5064,
+      "exit_dist": 5132,
+      "apex_radius_m": 77,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 20,
+      "name": "Turn 20",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 5316,
+      "apex_dist": 5372,
+      "exit_dist": 5416,
+      "apex_radius_m": 36,
+      "note": "Medium-speed left-hander."
+    }
+  ]
+}

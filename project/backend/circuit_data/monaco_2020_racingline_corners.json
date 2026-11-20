@@ -1,114 +1,226 @@
 {
   "track_name": "monaco_2020_racingline",
+  "track_id": 5,
+  "display_name": "Circuit de Monaco",
+  "lap_length_m": 3323,
   "calibration_params": {
     "threshold": 0.007,
     "min_length": 15
   },
+  "mapping": {
+    "method": "Curvature of docs/tracks/monaco_2020_racingline.txt (same smoothing as the Track Calibration Tool), segmented per corner and matched to the official F1 19-turn layout.",
+    "source": "Official F1 Monaco turn numbering (T1 Sainte Dévote … T19 Anthony Noghès)",
+    "reference_file": "tracks/monaco_2020_racingline.txt"
+  },
   "corners": [
     {
       "turn": 1,
-      "name": "Turn 1",
-      "entry_dist": 186,
+      "name": "Sainte Dévote",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 188,
       "apex_dist": 229,
-      "exit_dist": 259
+      "exit_dist": 256,
+      "apex_radius_m": 40,
+      "note": "Heavy braking after the start/finish straight; 1st-gear-ish right."
     },
     {
       "turn": 2,
-      "name": "Turn 2",
-      "entry_dist": 693,
-      "apex_dist": 820,
-      "exit_dist": 843
+      "name": "Beau Rivage",
+      "direction": "Right",
+      "type": "kink",
+      "entry_dist": 557,
+      "apex_dist": 612,
+      "exit_dist": 625,
+      "apex_radius_m": 273,
+      "note": "Flat-out uphill kink towards Massenet."
     },
     {
       "turn": 3,
-      "name": "Turn 3",
-      "entry_dist": 857,
-      "apex_dist": 902,
-      "exit_dist": 957
+      "name": "Massenet",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 691,
+      "apex_dist": 820,
+      "exit_dist": 843,
+      "apex_radius_m": 54,
+      "note": "Long left at the top of the hill, blind entry."
     },
     {
       "turn": 4,
-      "name": "Turn 4",
-      "entry_dist": 1098,
-      "apex_dist": 1144,
-      "exit_dist": 1171
+      "name": "Casino Square",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 859,
+      "apex_dist": 902,
+      "exit_dist": 937,
+      "apex_radius_m": 38,
+      "note": "Right-hander onto Casino Square, bumpy exit."
     },
     {
       "turn": 5,
-      "name": "Turn 5",
-      "entry_dist": 1235,
-      "apex_dist": 1266,
-      "exit_dist": 1302
+      "name": "Mirabeau Haute",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 1108,
+      "apex_dist": 1144,
+      "exit_dist": 1168,
+      "apex_radius_m": 17,
+      "note": "Downhill braking into a tight right."
     },
     {
       "turn": 6,
-      "name": "Turn 6",
-      "entry_dist": 1308,
-      "apex_dist": 1348,
-      "exit_dist": 1381
+      "name": "Grand Hotel Hairpin",
+      "direction": "Left",
+      "type": "hairpin",
+      "entry_dist": 1245,
+      "apex_dist": 1266,
+      "exit_dist": 1293,
+      "apex_radius_m": 9,
+      "note": "Slowest corner on the F1 calendar (Fairmont/Loews)."
     },
     {
       "turn": 7,
-      "name": "Turn 7",
-      "entry_dist": 1386,
-      "apex_dist": 1436,
-      "exit_dist": 1487
+      "name": "Mirabeau Bas",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 1311,
+      "apex_dist": 1348,
+      "exit_dist": 1377,
+      "apex_radius_m": 20,
+      "note": "Short right after the hairpin."
     },
     {
       "turn": 8,
-      "name": "Turn 8",
-      "entry_dist": 2071,
-      "apex_dist": 2114,
-      "exit_dist": 2149
+      "name": "Portier",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 1408,
+      "apex_dist": 1436,
+      "exit_dist": 1471,
+      "apex_radius_m": 21,
+      "note": "Right onto the seafront; exit sets up the tunnel run."
     },
     {
       "turn": 9,
-      "name": "Turn 9",
-      "entry_dist": 2355,
-      "apex_dist": 2377,
-      "exit_dist": 2438
+      "name": "Tunnel",
+      "direction": "Right",
+      "type": "kink",
+      "entry_dist": 1705,
+      "apex_dist": 1727,
+      "exit_dist": 1811,
+      "apex_radius_m": 168,
+      "note": "Flat-out curve through the tunnel."
     },
     {
       "turn": 10,
-      "name": "Turn 10",
-      "entry_dist": 2468,
-      "apex_dist": 2522,
-      "exit_dist": 2537
+      "name": "Nouvelle Chicane (L)",
+      "direction": "Left",
+      "type": "chicane",
+      "entry_dist": 2075,
+      "apex_dist": 2096,
+      "exit_dist": 2105,
+      "apex_radius_m": 26,
+      "note": "Main overtaking spot, braking from top speed."
     },
     {
       "turn": 11,
-      "name": "Turn 11",
-      "entry_dist": 2668,
-      "apex_dist": 2699,
-      "exit_dist": 2710
+      "name": "Nouvelle Chicane (R)",
+      "direction": "Right",
+      "type": "chicane",
+      "entry_dist": 2108,
+      "apex_dist": 2114,
+      "exit_dist": 2147,
+      "apex_radius_m": 23,
+      "note": "Second part of the harbour chicane."
     },
     {
       "turn": 12,
-      "name": "Turn 12",
-      "entry_dist": 2719,
-      "apex_dist": 2731,
-      "exit_dist": 2776
+      "name": "Tabac",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 2360,
+      "apex_dist": 2377,
+      "exit_dist": 2426,
+      "apex_radius_m": 56,
+      "note": "Fast left along the harbour."
     },
     {
       "turn": 13,
-      "name": "Turn 13",
-      "entry_dist": 2799,
-      "apex_dist": 2852,
-      "exit_dist": 2862
+      "name": "Louis Chiron / Piscine (L)",
+      "direction": "Left",
+      "type": "chicane",
+      "entry_dist": 2480,
+      "apex_dist": 2522,
+      "exit_dist": 2557,
+      "apex_radius_m": 104,
+      "note": "Fast left flick into the swimming pool section."
     },
     {
       "turn": 14,
-      "name": "Turn 14",
-      "entry_dist": 2896,
-      "apex_dist": 2939,
-      "exit_dist": 2966
+      "name": "Piscine (R)",
+      "direction": "Right",
+      "type": "chicane",
+      "entry_dist": 2577,
+      "apex_dist": 2587,
+      "exit_dist": 2618,
+      "apex_radius_m": 152,
+      "note": "Right flick of the first pool chicane."
     },
     {
       "turn": 15,
-      "name": "Turn 15",
-      "entry_dist": 2976,
+      "name": "Piscine 2 (R)",
+      "direction": "Right",
+      "type": "chicane",
+      "entry_dist": 2669,
+      "apex_dist": 2699,
+      "exit_dist": 2709,
+      "apex_radius_m": 53,
+      "note": "Second, slower pool chicane — right."
+    },
+    {
+      "turn": 16,
+      "name": "Piscine 2 (L)",
+      "direction": "Left",
+      "type": "chicane",
+      "entry_dist": 2719,
+      "apex_dist": 2731,
+      "exit_dist": 2776,
+      "apex_radius_m": 57,
+      "note": "Second pool chicane — left exit."
+    },
+    {
+      "turn": 17,
+      "name": "Turn 17",
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 2776,
+      "apex_dist": 2852,
+      "exit_dist": 2868,
+      "apex_radius_m": 111,
+      "note": "Unnamed left kink along the quay before La Rascasse."
+    },
+    {
+      "turn": 18,
+      "name": "La Rascasse",
+      "direction": "Right",
+      "type": "hairpin",
+      "entry_dist": 2908,
+      "apex_dist": 2939,
+      "exit_dist": 2949,
+      "apex_radius_m": 10,
+      "note": "Tight right around the Rascasse bar."
+    },
+    {
+      "turn": 19,
+      "name": "Anthony Noghès",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 2981,
       "apex_dist": 3018,
-      "exit_dist": 3036
+      "exit_dist": 3032,
+      "apex_radius_m": 26,
+      "note": "Final right onto the start/finish straight."
     }
   ]
 }

@@ -42,16 +42,19 @@ class CircuitDataManager:
             31: "tracks/Las Vegas_2020_racingline.txt",
             32: "tracks/losail_2020_racingline.txt",
         }
-        self.corner_file_map = {
-            4: "catalunya_2020_racingline_corners.json",
-            5: "monaco_2020_racingline_corners.json",
-            17: "austria_2020_racingline_corners.json",
-        }
         self._cache = {}
         self._full_cache = {}
         self._corners_cache = {}
 
         self.circuit_data_dir = os.path.dirname(__file__)
+        # A track has corner data when circuit_data holds "<racing line file>_corners.json"
+        # (e.g. tracks/Las Vegas_2020_racingline.txt -> las_vegas_2020_racingline_corners.json).
+        self.corner_file_map = {}
+        for tid, rel in self.track_file_map.items():
+            base = os.path.splitext(os.path.basename(rel))[0].lower().replace(" ", "_")
+            fname = f"{base}_corners.json"
+            if os.path.exists(os.path.join(self.circuit_data_dir, fname)):
+                self.corner_file_map[tid] = fname
 
     def _ensure_full_track(self, track_id: int):
         if track_id in self._full_cache:
@@ -168,6 +171,36 @@ class CircuitDataManager:
         self._cache[track_id] = compact
         logger.info(f"Loaded {len(compact)} compact circuit points (from {len(full_data)}) for track_id {track_id}")
         return compact
+
+    def has_corner_data(self, track_id: int) -> bool:
+        """True only for tracks with their own corner definition file (get_corners falls back to Catalunya)."""
+        return track_id in self.corner_file_map
+
+    def corner_track_ids(self):
+        """Track IDs that have their own corner definition file."""
+        return sorted(self.corner_file_map)
+
+    def get_corner_map(self, track_id: int):
+        """Everything the frontend Corner Map needs: file metadata, enriched corners and the
+        full-resolution reference line as [dist, x, z] triples."""
+        if not self.has_corner_data(track_id):
+            return None
+        meta = {}
+        file_path = os.path.join(self.circuit_data_dir, self.corner_file_map[track_id])
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                meta = {k: v for k, v in json.load(f).items() if k != "corners"}
+        except Exception as e:
+            logger.error(f"Failed to read corner metadata from {file_path}: {e}")
+        points = [[p["dist"], p["x"], p["z"]] for p in self._ensure_full_track(track_id)]
+        return {
+            "track_id": track_id,
+            "corner_file": self.corner_file_map[track_id],
+            "reference_file": self.track_file_map.get(track_id),
+            "meta": meta,
+            "corners": self.get_corners(track_id),
+            "points": points,
+        }
 
     def get_corners(self, track_id: int):
         if track_id in self._corners_cache:

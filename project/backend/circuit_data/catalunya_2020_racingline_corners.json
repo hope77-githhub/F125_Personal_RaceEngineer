@@ -1,86 +1,172 @@
 {
   "track_name": "catalunya_2020_racingline",
+  "track_id": 4,
+  "display_name": "Circuit de Barcelona-Catalunya",
+  "lap_length_m": 4661,
+  "official_turns": 14,
+  "unresolved_turns": [],
   "calibration_params": {
     "threshold": 0.007,
     "min_length": 15
   },
+  "mapping": {
+    "method": "Signed curvature of the game racing line (2 m resampling), one window per corner, matched to the official F1 turn order and direction.",
+    "reference_file": "tracks/catalunya_2020_racingline.txt"
+  },
   "corners": [
     {
       "turn": 1,
-      "name": "Turn 1",
-      "entry_dist": 795,
+      "name": "Elf",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 791,
       "apex_dist": 853,
-      "exit_dist": 890
+      "exit_dist": 887,
+      "apex_radius_m": 56,
+      "note": "Main overtaking spot at the end of the start straight."
     },
     {
       "turn": 2,
       "name": "Turn 2",
-      "entry_dist": 908,
-      "apex_dist": 943,
-      "exit_dist": 1000
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 901,
+      "apex_dist": 937,
+      "exit_dist": 1015,
+      "apex_radius_m": 79,
+      "note": "Fast left-hander."
     },
     {
       "turn": 3,
-      "name": "Turn 3",
-      "entry_dist": 1053,
+      "name": "Renault",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 1031,
       "apex_dist": 1089,
-      "exit_dist": 1291
+      "exit_dist": 1383,
+      "apex_radius_m": 109,
+      "note": "Long, fast right — tyre-energy corner."
     },
     {
       "turn": 4,
-      "name": "Turn 4",
-      "entry_dist": 1663,
-      "apex_dist": 1742,
-      "exit_dist": 1891
+      "name": "Repsol",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 1653,
+      "apex_dist": 1737,
+      "exit_dist": 1907,
+      "apex_radius_m": 61,
+      "note": "Fast right-hander."
     },
     {
       "turn": 5,
-      "name": "Turn 5",
-      "entry_dist": 2065,
-      "apex_dist": 2135,
-      "exit_dist": 2200
+      "name": "Seat",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 2073,
+      "apex_dist": 2133,
+      "exit_dist": 2191,
+      "apex_radius_m": 35,
+      "note": "Medium-speed left-hander."
     },
     {
       "turn": 6,
       "name": "Turn 6",
-      "entry_dist": 2500,
-      "apex_dist": 2558,
-      "exit_dist": 2603
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 2405,
+      "apex_dist": 2437,
+      "exit_dist": 2459,
+      "apex_radius_m": 319,
+      "note": "Flat-out left-hander."
     },
     {
       "turn": 7,
       "name": "Turn 7",
-      "entry_dist": 2845,
-      "apex_dist": 2888,
-      "exit_dist": 2965
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 2497,
+      "apex_dist": 2561,
+      "exit_dist": 2607,
+      "apex_radius_m": 59,
+      "note": "Medium-speed left-hander."
     },
     {
       "turn": 8,
       "name": "Turn 8",
-      "entry_dist": 3445,
-      "apex_dist": 3512,
-      "exit_dist": 3647
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 2619,
+      "apex_dist": 2643,
+      "exit_dist": 2713,
+      "apex_radius_m": 168,
+      "note": "Flat-out right-hander."
     },
     {
       "turn": 9,
-      "name": "Turn 9",
-      "entry_dist": 3697,
-      "apex_dist": 3789,
-      "exit_dist": 3900
+      "name": "Campsa",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 2815,
+      "apex_dist": 2893,
+      "exit_dist": 3015,
+      "apex_radius_m": 112,
+      "note": "Blind, fast uphill right."
     },
     {
       "turn": 10,
-      "name": "Turn 10",
-      "entry_dist": 4021,
-      "apex_dist": 4044,
-      "exit_dist": 4110
+      "name": "La Caixa",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 3451,
+      "apex_dist": 3505,
+      "exit_dist": 3599,
+      "apex_radius_m": 40,
+      "note": "Slow left after the back straight."
     },
     {
       "turn": 11,
       "name": "Turn 11",
-      "entry_dist": 4294,
-      "apex_dist": 4386,
-      "exit_dist": 4426
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 3601,
+      "apex_dist": 3641,
+      "exit_dist": 3665,
+      "apex_radius_m": 118,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 12,
+      "name": "Banc Sabadell",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 3689,
+      "apex_dist": 3789,
+      "exit_dist": 3905,
+      "apex_radius_m": 51,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 13,
+      "name": "Turn 13",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 3995,
+      "apex_dist": 4037,
+      "exit_dist": 4165,
+      "apex_radius_m": 116,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 14,
+      "name": "Turn 14",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 4261,
+      "apex_dist": 4377,
+      "exit_dist": 4459,
+      "apex_radius_m": 110,
+      "note": "Final right onto the start straight."
     }
   ]
 }

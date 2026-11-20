@@ -1,0 +1,196 @@
+{
+  "track_name": "las_vegas_2020_racingline",
+  "track_id": 31,
+  "display_name": "Las Vegas Strip Circuit",
+  "lap_length_m": 6195,
+  "official_turns": 17,
+  "unresolved_turns": [
+    11
+  ],
+  "calibration_params": {
+    "threshold": 0.007,
+    "min_length": 15
+  },
+  "mapping": {
+    "method": "Signed curvature of the game racing line (2 m resampling), one window per corner, matched to the official F1 turn order and direction.",
+    "reference_file": "tracks/Las Vegas_2020_racingline.txt"
+  },
+  "corners": [
+    {
+      "turn": 1,
+      "name": "Turn 1",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 265,
+      "apex_dist": 337,
+      "exit_dist": 425,
+      "apex_radius_m": 45,
+      "note": "Slow left hairpin after the start."
+    },
+    {
+      "turn": 2,
+      "name": "Turn 2",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 495,
+      "apex_dist": 593,
+      "exit_dist": 753,
+      "apex_radius_m": 90,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 3,
+      "name": "Turn 3",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 1539,
+      "apex_dist": 1581,
+      "exit_dist": 1625,
+      "apex_radius_m": 46,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 4,
+      "name": "Turn 4",
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 1761,
+      "apex_dist": 1859,
+      "exit_dist": 2009,
+      "apex_radius_m": 158,
+      "note": "Flat-out left-hander."
+    },
+    {
+      "turn": 5,
+      "name": "Turn 5",
+      "direction": "Left",
+      "type": "chicane",
+      "entry_dist": 2013,
+      "apex_dist": 2061,
+      "exit_dist": 2077,
+      "apex_radius_m": 37,
+      "note": "Medium-speed left-hander."
+    },
+    {
+      "turn": 6,
+      "name": "Turn 6",
+      "direction": "Right",
+      "type": "chicane",
+      "entry_dist": 2089,
+      "apex_dist": 2109,
+      "exit_dist": 2179,
+      "apex_radius_m": 38,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 7,
+      "name": "Turn 7",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 2195,
+      "apex_dist": 2235,
+      "exit_dist": 2293,
+      "apex_radius_m": 35,
+      "note": "Medium-speed left-hander."
+    },
+    {
+      "turn": 8,
+      "name": "Turn 8",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 2573,
+      "apex_dist": 2813,
+      "exit_dist": 2875,
+      "apex_radius_m": 195,
+      "note": "Flat-out right-hander."
+    },
+    {
+      "turn": 9,
+      "name": "Turn 9",
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 2925,
+      "apex_dist": 2981,
+      "exit_dist": 3059,
+      "apex_radius_m": 222,
+      "note": "Flat-out left-hander."
+    },
+    {
+      "turn": 10,
+      "name": "Turn 10",
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 3061,
+      "apex_dist": 3103,
+      "exit_dist": 3169,
+      "apex_radius_m": 207,
+      "note": "Flat-out left-hander."
+    },
+    {
+      "turn": 12,
+      "name": "Turn 12",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 3207,
+      "apex_dist": 3245,
+      "exit_dist": 3277,
+      "apex_radius_m": 38,
+      "note": "Left onto the Strip."
+    },
+    {
+      "turn": 13,
+      "name": "Turn 13",
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 3833,
+      "apex_dist": 3855,
+      "exit_dist": 4189,
+      "apex_radius_m": 914,
+      "note": "Flat-out left-hander."
+    },
+    {
+      "turn": 14,
+      "name": "Turn 14",
+      "direction": "Left",
+      "type": "chicane",
+      "entry_dist": 5163,
+      "apex_dist": 5223,
+      "exit_dist": 5235,
+      "apex_radius_m": 45,
+      "note": "Chicane at the end of the Strip."
+    },
+    {
+      "turn": 15,
+      "name": "Turn 15",
+      "direction": "Right",
+      "type": "chicane",
+      "entry_dist": 5243,
+      "apex_dist": 5253,
+      "exit_dist": 5279,
+      "apex_radius_m": 62,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 16,
+      "name": "Turn 16",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 5317,
+      "apex_dist": 5327,
+      "exit_dist": 5339,
+      "apex_radius_m": 58,
+      "note": "Medium-speed left-hander."
+    },
+    {
+      "turn": 17,
+      "name": "Turn 17",
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 5991,
+      "apex_dist": 6075,
+      "exit_dist": 6185,
+      "apex_radius_m": 278,
+      "note": "Flat-out left-hander."
+    }
+  ]
+}

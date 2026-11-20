@@ -1,0 +1,183 @@
+{
+  "track_name": "sakhir_2020_racingline",
+  "track_id": 3,
+  "display_name": "Bahrain International Circuit",
+  "lap_length_m": 5406,
+  "official_turns": 15,
+  "unresolved_turns": [],
+  "calibration_params": {
+    "threshold": 0.007,
+    "min_length": 15
+  },
+  "mapping": {
+    "method": "Signed curvature of the game racing line (2 m resampling), one window per corner, matched to the official F1 turn order and direction.",
+    "reference_file": "tracks/sakhir_2020_racingline.txt"
+  },
+  "corners": [
+    {
+      "turn": 1,
+      "name": "Turn 1",
+      "direction": "Right",
+      "type": "hairpin",
+      "entry_dist": 714,
+      "apex_dist": 744,
+      "exit_dist": 774,
+      "apex_radius_m": 16,
+      "note": "Heavy braking hairpin after the start straight."
+    },
+    {
+      "turn": 2,
+      "name": "Turn 2",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 802,
+      "apex_dist": 840,
+      "exit_dist": 898,
+      "apex_radius_m": 67,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 3,
+      "name": "Turn 3",
+      "direction": "Right",
+      "type": "kink",
+      "entry_dist": 932,
+      "apex_dist": 964,
+      "exit_dist": 1004,
+      "apex_radius_m": 185,
+      "note": "Flat-out right-hander."
+    },
+    {
+      "turn": 4,
+      "name": "Turn 4",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 1488,
+      "apex_dist": 1534,
+      "exit_dist": 1620,
+      "apex_radius_m": 36,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 5,
+      "name": "Turn 5",
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 1740,
+      "apex_dist": 1792,
+      "exit_dist": 1820,
+      "apex_radius_m": 236,
+      "note": "Flat-out left-hander."
+    },
+    {
+      "turn": 6,
+      "name": "Turn 6",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 1854,
+      "apex_dist": 1902,
+      "exit_dist": 1968,
+      "apex_radius_m": 88,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 7,
+      "name": "Turn 7",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 1980,
+      "apex_dist": 2008,
+      "exit_dist": 2140,
+      "apex_radius_m": 105,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 8,
+      "name": "Turn 8",
+      "direction": "Right",
+      "type": "hairpin",
+      "entry_dist": 2246,
+      "apex_dist": 2278,
+      "exit_dist": 2328,
+      "apex_radius_m": 21,
+      "note": "Slow right-hander."
+    },
+    {
+      "turn": 9,
+      "name": "Turn 9",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 2556,
+      "apex_dist": 2678,
+      "exit_dist": 2698,
+      "apex_radius_m": 121,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 10,
+      "name": "Turn 10",
+      "direction": "Left",
+      "type": "hairpin",
+      "entry_dist": 2718,
+      "apex_dist": 2752,
+      "exit_dist": 2772,
+      "apex_radius_m": 15,
+      "note": "Tight, downhill left; easy to lock the inside front."
+    },
+    {
+      "turn": 11,
+      "name": "Turn 11",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 3418,
+      "apex_dist": 3470,
+      "exit_dist": 3638,
+      "apex_radius_m": 65,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 12,
+      "name": "Turn 12",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 3730,
+      "apex_dist": 3846,
+      "exit_dist": 3990,
+      "apex_radius_m": 121,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 13,
+      "name": "Turn 13",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 4060,
+      "apex_dist": 4142,
+      "exit_dist": 4214,
+      "apex_radius_m": 58,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 14,
+      "name": "Turn 14",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 4890,
+      "apex_dist": 4942,
+      "exit_dist": 4974,
+      "apex_radius_m": 45,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 15,
+      "name": "Turn 15",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 4976,
+      "apex_dist": 4976,
+      "exit_dist": 5056,
+      "apex_radius_m": 67,
+      "note": "Fast right-hander."
+    }
+  ]
+}

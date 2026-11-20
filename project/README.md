@@ -249,11 +249,28 @@ F1 25 패킷에는 세션 정보가 들어 있습니다: **모든 패킷 헤더�
 
 | 세션 | 무전 종류 | 코너 브레이킹 기준 |
 |---|---|---|
-| Practice / Time Trial | 코너 브레이킹, 랩 페이스, 트랙션, 타이어 마모 | 5m 이상 |
+| Practice / Time Trial | 코너 브레이킹, 랩 페이스, 트랙션, 타이어 마모, **셋업 조언** | 5m 이상 |
 | Qualifying | 코너 브레이킹, 랩 페이스 | 5m 이상 |
 | Race | 앞차 갭, 타이어 마모, 박스 지시, 페이스 하락(1초 이상 → 박스), 트랙션, 코너 브레이킹 | 10m 이상 |
 
 * Catalunya 데이터 확인 결과: **Practice 1** (Lap 4–10), **Race #1** (Lap 1–5), **Race #2** (Lap 1–6).
+* 세이프티카·VSC(`m_safetyCarStatus` 1·2)나 피트인(`m_pitStatus`, `m_pitLaneTimerActive`)이 있었던 랩은 페이스 비교·셋업 판단에서 제외.
+* 코너 정의 파일이 없는 트랙(`CircuitDataManager.has_corner_data`)에서는 코너 브레이킹 무전을 끔.
+
+---
+
+### 7. TV 오버레이 연동 (`project/overlay`, `backend/overlay_manager.py`)
+* 원본: [f1-25-tv-overlay](https://github.com/thenotrealuser/f1-25-tv-overlay) `9e9181d`, MIT. 코드는 수정 없이 포함(참고 이미지 `docs/referencias/*.png`는 MIT가 아니라 제외). 자세한 내용은 [overlay/UPSTREAM.md](overlay/UPSTREAM.md).
+* `OverlayManager`가 `node server.js --no-open`(UDP 20778, HTTP 8090)과 Electron 창(`janela/`, `OVERLAY_URL=http://127.0.0.1:8090/`)을 하위 프로세스로 실행·종료(Windows는 `taskkill /T`로 프로세스 트리 정리). 앱 종료 시 FastAPI shutdown 이벤트에서 함께 종료.
+* 패킷 전달: 라이브는 `on_udp_packet_received`에서 원본 바이트를 20778로 그대로 전송, 리플레이는 `telemetry/encoder.py`가 녹화된 dict를 ctypes 구조체로 되돌려 바이너리로 전송(녹화 패킷 410개 왕복 시험 결과 원본과 100% 동일).
+* API: `GET /api/overlay/status`, `POST /api/overlay/start {"window": true}`, `POST /api/overlay/stop`. start는 라이브 UDP 수신기가 꺼져 있으면 함께 켬.
+* Electron 44는 `npm ci`만으로 실행 파일을 받지 않아서 `node_modules/electron/install.js`를 따로 실행(약 370MB). 실행 로그: `overlay/overlay-run.log`.
+
+### 8. 셋업 조언 · 엔지니어 Q&A (`backend/state_mgmt/engineer_brain.py`)
+* **랩별 추가 기록** (`StateManager._player_lap_extras`): 완료된 랩마다 4바퀴 마모(RL, RR, FL, FR), 랩 평균 표면·내부 온도, 세이프티카·피트 플래그, 앞차·선두 갭, 순위, 셋업 값을 랩 기록에 저장.
+* **셋업 조언**: [docs/SETUP_GUIDE.md](docs/SETUP_GUIDE.md)의 규칙표(`SETUP_RULES`) — 과열·저온 → 공기압, 앞뒤 온도 불균형 → 공기압·안티롤바·디퍼렌셜, 앞뒤 마모 불균형 → 윙·안티롤바·디퍼렌셜. Practice에서 메인 스트레이트 구간에 자동 무전, 질문하면 어느 세션에서나 답변.
+* **Q&A**: `POST /api/ask {"text": "..."}` → 키워드로 의도 판별(`INTENTS`, 한국어·영어) → 현재 상태 스냅샷(`StateManager.build_qa_snapshot`)으로 답변 계산 → 미리 생성한 문장 키 목록을 이어서 재생. `GET /api/qa/presets`는 추천 질문 7개. 리플레이 중에는 리플레이 상태 기준으로 답함.
+* **음성**: `VOICE_LINES()`가 엔진이 말할 수 있는 모든 문장(셋업 7, Q&A 고정 18, 숫자별 356 = 381개)을 돌려주고, GPT-SoVITS 생성기(`bake_f125_voice.py`)가 이 목록을 그대로 생성 → `voice/setup/`, `voice/qa/`.
 
 ---
 

@@ -1,0 +1,150 @@
+/*
+ * Broadcast theme for the TV overlay (F1 AI Race Engineer).
+ * Tuned against an in-game broadcast-overlay reference (Singapore sprint, 1920x1080):
+ * tower at the top-left, logo + session header, "LAP 1 /20", 22 rows of ~3.46vh,
+ * salmon P1 box, team marks, white focus box on the player's code, compound LETTER only.
+ *
+ * Official artwork is NOT shipped. Drop your own files in overlay/local-assets/ (git-ignored):
+ *   logo.svg|png, fonts/*.woff2|ttf|otf, teams/<team>.svg|png  — see local-assets/README.md.
+ * Without them it falls back to the upstream marks/glyphs and Saira at 118% width (SIL OFL) —
+ * the closest open font to the reference type (wide, geometric, round digits).
+ * Original design: http://127.0.0.1:8090/?theme=original
+ */
+
+:root {
+  --font: "F1Local", "Saira", "Bahnschrift", "Segoe UI", "Arial Narrow", Arial, sans-serif;
+  --font-stretch: 118%;
+  --rf-row: rgba(6, 7, 10, 0.84);
+  --rf-p1: #e9545c;
+  --rf-text: #ffffff;
+  --rf-dim: #c8cbd2;
+}
+
+body { font-family: var(--font); font-stretch: var(--font-stretch); }
+body.has-font { --font-stretch: normal; }   /* user font: use as designed */
+
+/* ---------------------------------------------------------------- tower */
+#left { left: 4.2vw; top: 3.4vh; width: 12.1rem; filter: drop-shadow(0 .15rem .35rem #0008); }
+
+#brand {
+  height: 4.3rem;
+  background: linear-gradient(180deg, #2a2c35 0%, #17181f 100%);
+  border-radius: 0;
+}
+#brandMark { width: 5.6rem; height: 1.95rem; }
+#brandEvent {
+  margin-top: .05rem;
+  font: italic 900 1.3rem/1 var(--font);
+  letter-spacing: .01em; text-shadow: none; color: #fff;
+}
+/* race header: small two-line championship line under the logo (set by theme-broadcast.js) */
+#brandEvent.rf-fia {
+  margin-top: .2rem; white-space: pre-line; text-align: center;
+  font: 600 .5rem/1.15 var(--font); font-style: normal; letter-spacing: .01em; color: #e8e9ec;
+}
+/* user-supplied logo (local-assets/logo.*) replaces the upstream mark */
+body.has-logo #brandMark { display: none; }
+body.has-logo #brand::before {
+  content: ""; display: block; width: 5.6rem; height: 1.95rem;
+  background: var(--local-logo) center / contain no-repeat;
+}
+
+#lapbox {
+  height: 1.92rem; padding: 0 .5rem 0 .55rem;
+  justify-content: flex-start;
+  background: var(--rf-row);
+  border-bottom: 1px solid #ffffff12;
+  font: 400 .9rem/1 var(--font); letter-spacing: .02em; color: #fff;
+}
+#lapTxt .rf-lap { font-weight: 500; margin-right: .5rem; }
+#lapTxt .rf-cur { font-weight: 700; font-size: 1.1rem; }
+#lapTxt .rf-tot { font-weight: 500; font-size: .82rem; color: var(--rf-dim); white-space: pre; }
+#root:not(.timed) #lapbox small { display: none; }           /* "Interval" moves into the leader row */
+
+#tower { background: transparent; }
+
+.row {
+  grid-template-columns: 1.62rem 1.45rem 2.6rem minmax(0, 1fr) 1rem;
+  height: 1.87rem;
+  background: var(--rf-row);
+  border-bottom: 0;
+  font: 700 .86rem/1 var(--font);
+}
+.row:nth-child(even) { background: var(--rf-row); }
+
+.row .pos { font: 600 .9rem/1 var(--font); font-stretch: var(--font-stretch); color: #fff; }
+.row:first-child .pos { background: transparent; }
+.row:first-child .pos::before { content: none; }
+#root:not(.timed) .row:first-child .pos {
+  margin: .22rem .2rem; height: auto; align-self: stretch;
+  background: var(--rf-p1); color: #fff; border-radius: .08rem;
+}
+
+.row .team { font-size: .78rem; overflow: hidden; }
+.row .code { font: 700 .92rem/1 var(--font); font-stretch: var(--font-stretch); letter-spacing: .01em; padding: .14rem .14rem .12rem; }
+.row.me .code { color: #111216; background: #f6f6f6; }
+
+.row .gap { font: 600 .9rem/1 var(--font); font-stretch: var(--font-stretch); color: #fff; padding-right: .25rem; letter-spacing: 0; }
+.row.pit .gap { color: #ffd23f; }
+#root:not(.timed) .row:first-child .gap { font-size: 0; }
+#root:not(.timed) .row:first-child .gap::after { content: "Interval"; font: 400 .8rem/1 var(--font); font-stretch: var(--font-stretch); }
+
+/* compound: coloured letter only (colour copied from the overlay's ring colour by theme-broadcast.js) */
+.row .tyre {
+  width: auto; height: auto; border: 0 !important; border-radius: 0; background: none;
+  font: 500 .9rem/1 var(--font); font-stretch: var(--font-stretch); color: #ffd23f;
+}
+.row.me .tyre { background: none; }
+.tyrebox .age { display: none; }
+
+#cutBand { font-family: var(--font); }
+#raceBanner .headline, #raceBanner .meta { font-family: var(--font); }
+
+/* ---------------------------------------------------------------- cards & banners: font only */
+.qc, .qname, .qpos, .qbig, .qref b, .qref i, .qs, .qtyre,
+#driverFirst, #driverLast, #driverTeam, #driverNumber,
+#fastestLap .fastTitle, #fastestLap .fastName, #fastestLap .fastTime,
+#deltaPanel .dh, #deltaPanel .dv, #deltaPanel .dm { font-family: var(--font); }
+#haloGauge text { font-family: var(--font); }
+
+/* `font:` shorthands above reset the width axis; pin it for every HUD element (last rule wins) */
+#left, #left *, #qCards *, #lapCard *, #onboardCard *, #fastestLap *, #deltaPanel * { font-stretch: var(--font-stretch); }
+#left .row .team { font-stretch: 100%; letter-spacing: -.1em; }   /* 2-letter team marks must fit their column */
+
+/* ---------------------------------------------------------------- TV-pod halo (theme-broadcast.js re-lays it
+   in the reference frame's 1247x702 coordinates; the SVG covers the screen and the halo calibration of the
+   overlay becomes an offset of the whole frame) */
+#haloGauge {
+  left: 0 !important; top: 0 !important; width: 100vw !important; height: 100vh !important;
+  transform: translate(var(--rf-hdx, 0px), var(--rf-hdy, 0px)) scale(var(--halo-scale, 1)) !important;
+  transform-origin: 50% 52.9% !important;   /* dial centre: screen centre, 371/702 */
+}
+/* upstream "JOGO EM PAUSA · DADOS CONGELADOS" banner (game paused / no new packets): not wanted on screen */
+#pauseBadge { display: none !important; }
+/* bottom driver cards: never more than 3 */
+#qCards .qc:nth-child(n+4) { display: none !important; }
+#haloGauge .rf-arc { fill: none; stroke: #fff; stroke-width: 1.3; opacity: .85; }
+#haloGauge .rf-box { fill: #07152c; fill-opacity: .55; stroke-opacity: .55; }
+#haloGauge .rf-lbl { font-size: 9px; font-weight: 700; letter-spacing: .6px; fill: #e3f3ff; }
+#haloGauge .rf-vlbl { font-size: 7px; font-weight: 700; fill: #d8efff; }
+#haloGauge .rf-tag { font-size: 9px; font-weight: 700; letter-spacing: .6px; fill: #eef6ff; }
+#haloGauge .rf-tag.g { fill: #eefff6; }
+#haloGauge .rf-lbl.sm { font-size: 8px; }
+#haloGauge .rf-big { font-size: 23px; font-weight: 800; fill: #fff; }
+#haloGauge .rf-mid { font-size: 19px; font-weight: 800; fill: #fff; }
+#haloGauge #rfHalo .pill text { font-weight: 700; letter-spacing: .5px; }
+#haloGauge .rf-tickmark { fill: none; stroke: #93a9bb; stroke-width: .9; opacity: .6; }
+#haloGauge .rf-turn { font-size: 18px; font-weight: 800; fill: #fff; }
+#haloGauge .rf-tick { font-size: 7px; font-weight: 600; fill: #c8d2dc; }
+#haloGauge .rf-name { font-size: 13px; font-weight: 800; letter-spacing: .5px; fill: #f2f6ff; }
+#haloGauge .rf-name.dim { fill: #b9bec8; }
+#haloGauge .rf-name.me { font-size: 15px; }
+#haloGauge .rf-rpmbg, #haloGauge .rf-rpmfill { fill: none; stroke-width: 3; stroke-linecap: round; }
+#haloGauge .rf-rpmbg { stroke: #8d97a6; opacity: .45; }
+#haloGauge .rf-rpmfill { stroke: #6cc4ff; filter: drop-shadow(0 0 2px #2f9be0); }
+#haloGauge .rf-aero { fill: none; stroke: #e8eef5; stroke-width: 1.6; stroke-linecap: round; opacity: .8; }
+#haloGauge .rf-aero[data-state="soon"] { stroke: #f0b43a; opacity: 1; }
+#haloGauge .rf-aero[data-state="ready"] { stroke: #4be59a; opacity: 1; }
+#haloGauge .rf-aero[data-state="on"] { stroke: #22d97a; opacity: 1; filter: drop-shadow(0 0 2px #2dff94); }
+#haloGauge #rfHalo .gear { font-size: 15px; font-weight: 700; fill: #d6e2ec; filter: none; }
+#haloGauge #rfHalo .gear.active { font-size: 19px; font-weight: 900; fill: #fff; filter: drop-shadow(0 0 2px #8fe0ff); }

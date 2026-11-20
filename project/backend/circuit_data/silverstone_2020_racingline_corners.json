@@ -1,0 +1,216 @@
+{
+  "track_name": "silverstone_2020_racingline",
+  "track_id": 7,
+  "display_name": "Silverstone Circuit",
+  "lap_length_m": 5889,
+  "official_turns": 18,
+  "unresolved_turns": [],
+  "calibration_params": {
+    "threshold": 0.007,
+    "min_length": 15
+  },
+  "mapping": {
+    "method": "Signed curvature of the game racing line (2 m resampling), one window per corner, matched to the official F1 turn order and direction.",
+    "reference_file": "tracks/silverstone_2020_racingline.txt"
+  },
+  "corners": [
+    {
+      "turn": 1,
+      "name": "Abbey",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 331,
+      "apex_dist": 463,
+      "exit_dist": 541,
+      "apex_radius_m": 155,
+      "note": "Fast right after the start."
+    },
+    {
+      "turn": 2,
+      "name": "Farm",
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 565,
+      "apex_dist": 677,
+      "exit_dist": 745,
+      "apex_radius_m": 175,
+      "note": "Flat-out left-hander."
+    },
+    {
+      "turn": 3,
+      "name": "Village",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 861,
+      "apex_dist": 925,
+      "exit_dist": 981,
+      "apex_radius_m": 40,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 4,
+      "name": "The Loop",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 1005,
+      "apex_dist": 1065,
+      "exit_dist": 1109,
+      "apex_radius_m": 28,
+      "note": "Medium-speed left-hander."
+    },
+    {
+      "turn": 5,
+      "name": "Aintree",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 1151,
+      "apex_dist": 1253,
+      "exit_dist": 1349,
+      "apex_radius_m": 137,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 6,
+      "name": "Brooklands",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 1903,
+      "apex_dist": 2023,
+      "exit_dist": 2089,
+      "apex_radius_m": 61,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 7,
+      "name": "Luffield",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 2103,
+      "apex_dist": 2187,
+      "exit_dist": 2309,
+      "apex_radius_m": 43,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 8,
+      "name": "Woodcote",
+      "direction": "Right",
+      "type": "kink",
+      "entry_dist": 2497,
+      "apex_dist": 2563,
+      "exit_dist": 2649,
+      "apex_radius_m": 273,
+      "note": "Flat-out right-hander."
+    },
+    {
+      "turn": 9,
+      "name": "Copse",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 3007,
+      "apex_dist": 3077,
+      "exit_dist": 3247,
+      "apex_radius_m": 143,
+      "note": "Very fast right."
+    },
+    {
+      "turn": 10,
+      "name": "Maggotts",
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 3523,
+      "apex_dist": 3629,
+      "exit_dist": 3661,
+      "apex_radius_m": 383,
+      "note": "Start of the Maggotts–Becketts–Chapel esses (left-right-left-right-left)."
+    },
+    {
+      "turn": 11,
+      "name": "Maggotts (R)",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 3681,
+      "apex_dist": 3741,
+      "exit_dist": 3805,
+      "apex_radius_m": 144,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 12,
+      "name": "Becketts",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 3817,
+      "apex_dist": 3895,
+      "exit_dist": 3957,
+      "apex_radius_m": 124,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 13,
+      "name": "Becketts (R)",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 3967,
+      "apex_dist": 4053,
+      "exit_dist": 4149,
+      "apex_radius_m": 90,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 14,
+      "name": "Chapel",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 4167,
+      "apex_dist": 4199,
+      "exit_dist": 4261,
+      "apex_radius_m": 167,
+      "note": "Exit onto the Hangar Straight."
+    },
+    {
+      "turn": 15,
+      "name": "Stowe",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 4959,
+      "apex_dist": 5053,
+      "exit_dist": 5201,
+      "apex_radius_m": 101,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 16,
+      "name": "Vale",
+      "direction": "Left",
+      "type": "chicane",
+      "entry_dist": 5499,
+      "apex_dist": 5533,
+      "exit_dist": 5571,
+      "apex_radius_m": 39,
+      "note": "Medium-speed left-hander."
+    },
+    {
+      "turn": 17,
+      "name": "Club",
+      "direction": "Right",
+      "type": "chicane",
+      "entry_dist": 5581,
+      "apex_dist": 5601,
+      "exit_dist": 5669,
+      "apex_radius_m": 51,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 18,
+      "name": "Club (exit)",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 5671,
+      "apex_dist": 5725,
+      "exit_dist": 5873,
+      "apex_radius_m": 116,
+      "note": "Fast right-hander."
+    }
+  ]
+}

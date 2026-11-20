@@ -12,6 +12,10 @@ from telemetry.listener import F1UDPListener
 from telemetry.f1_types.router import parse_packet
 from state_mgmt.manager import StateManager, TRACK_MAP, ENGINEER_VOICE_CLIPS
 from state_mgmt.sessions import list_sessions, session_frame_refs, frame_session_uid, packet_session_uid
+from state_mgmt import engineer_brain
+from pydantic import BaseModel
+from overlay_manager import OverlayManager
+from telemetry.encoder import encode_packet
 
 app = FastAPI()
 app.add_middleware(
@@ -47,6 +51,8 @@ class Dict2Obj:
 
 udp_listener = None
 state_manager = StateManager(auto_preload=True)
+# TV overlay (project/overlay): separate Node/Electron program fed by our UDP stream
+overlay_manager = OverlayManager(BASE_DIR)
 
 # Seed state_manager with debug_payload.json snapshot so live mode has immediate valid session state
 if os.path.exists(DEBUG_FILE_PATH):
@@ -84,6 +90,7 @@ def ctypes_to_dict(obj):
 def on_udp_packet_received(data: bytes):
     """Callback function when UDP listener receives a packet."""
     global _last_raw_dump_time
+    overlay_manager.forward(data)
     packet_id, parsed_packet = parse_packet(data)
     if parsed_packet:
         state_manager.update(packet_id, parsed_packet)
@@ -193,6 +200,26 @@ def get_available_replays():
 @app.get("/api/replays")
 def get_replays_endpoint():
     return {"circuits": get_available_replays()}
+@app.get("/api/corner_map/tracks")
+def corner_map_tracks_endpoint():
+    """Tracks that have a corner definition file in backend/circuit_data."""
+    cdm = state_manager.circuit_data_manager
+    return {"tracks": [
+        {"track_id": tid, "name": TRACK_MAP.get(tid, f"Track {tid}"),
+         "corners": len(cdm.get_corners(tid)), "file": cdm.corner_file_map[tid]}
+        for tid in cdm.corner_track_ids()
+    ]}
+
+
+@app.get("/api/corner_map/{track_id}")
+def corner_map_endpoint(track_id: int):
+    data = state_manager.circuit_data_manager.get_corner_map(track_id)
+    if data is None:
+        return {"error": f"No corner data for track {track_id}"}
+    data["name"] = TRACK_MAP.get(track_id, f"Track {track_id}")
+    return data
+
+
 @app.get("/api/voice/clips")
 def get_voice_clips_endpoint():
     return {
@@ -207,6 +234,65 @@ def get_voice_clips_endpoint():
 def test_voice_trigger_endpoint(clip_id: str):
     event = state_manager.trigger_voice_clip(clip_id)
     return {"status": "triggered", "event": event}
+
+
+# The manager the driver is currently looking at: a running replay, otherwise the live UDP state.
+_active_replay_manager = None
+
+
+class AskBody(BaseModel):
+    text: str
+
+
+class OverlayStartBody(BaseModel):
+    window: bool = True
+    halo: bool = True   # TV-pod halo HUD (off upstream by default; the game doesn't report the camera)
+
+
+@app.get("/api/overlay/status")
+def overlay_status_endpoint():
+    return overlay_manager.status()
+
+
+@app.post("/api/overlay/start")
+async def overlay_start_endpoint(body: OverlayStartBody = OverlayStartBody()):
+    """Start the TV overlay (server + transparent window). Also makes sure our UDP listener runs so
+    live packets reach the overlay even before a live dashboard session is opened."""
+    global udp_listener
+    if udp_listener is None:
+        udp_listener = F1UDPListener(port=20777, update_rate=60)
+        try:
+            udp_listener.start()
+            asyncio.create_task(udp_listener.listen(on_udp_packet_received))
+        except OSError as e:
+            logger.warning(f"UDP 20777 not available for the overlay feed: {e}")
+            udp_listener = None
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(None, overlay_manager.start, body.window, body.halo)
+
+
+@app.post("/api/overlay/stop")
+def overlay_stop_endpoint():
+    return overlay_manager.stop()
+
+
+@app.on_event("shutdown")
+def _stop_overlay_on_shutdown():
+    overlay_manager.stop()
+
+
+@app.get("/api/qa/presets")
+def qa_presets_endpoint():
+    """Suggested driver questions (Korean / English) the engineer understands."""
+    return {"presets": engineer_brain.PRESET_QUESTIONS}
+
+
+@app.post("/api/ask")
+async def ask_engineer_endpoint(body: AskBody):
+    """Driver question -> spoken answer event (same shape as a radio voice_event).
+    async so it runs on the event loop between replay frames, never concurrently with them."""
+    mgr = _active_replay_manager or state_manager
+    return {"event": mgr.answer_question(body.text)}
 
 
 
@@ -229,6 +315,8 @@ async def replay_telemetry_loop(websocket: WebSocket, update_rate: int, units: s
 
     replay_manager = StateManager(auto_preload=False)
     replay_manager.preload_circuit_laps(circuit, session_uid=session)
+    global _active_replay_manager
+    _active_replay_manager = replay_manager
 
     valid_lap_nums = {l["lap"] for l in replay_manager.lap_history.get(replay_manager.player_car_index, [])}
 
@@ -268,8 +356,10 @@ async def replay_telemetry_loop(websocket: WebSocket, update_rate: int, units: s
 
     logger.info(f"Replaying {len(files_to_play)} file(s) for {circuit}: {[os.path.basename(f) for f in files_to_play]} at speed {speed}x")
     delay = max(0.015, 0.2 / max(0.1, speed))
+    overlay_sent_at = {}  # packet id -> last time it was forwarded to the TV overlay
 
     while True:
+        sent_this_pass = 0
         for fpath in files_to_play:
             logger.info(f"Streaming {os.path.basename(fpath)}...")
             try:
@@ -281,6 +371,8 @@ async def replay_telemetry_loop(websocket: WebSocket, update_rate: int, units: s
 
                     keep_lines = session_lines.get(fpath) if session_lines is not None else None
                     for line_idx, line in enumerate(all_lines):
+                        if line_idx % 500 == 0:
+                            await asyncio.sleep(0)  # filtered-out stretches must not starve the event loop
                         if keep_lines is not None and line_idx not in keep_lines:
                             continue
                         entry = json.loads(line)
@@ -305,7 +397,8 @@ async def replay_telemetry_loop(websocket: WebSocket, update_rate: int, units: s
                             last_p_dist = curr_d
 
                         # Update packets in deterministic order (session & participants before lap_data & telemetry)
-                        for pid in (1, 4, 5, 7, 10, 11, 0, 6, 2):
+                        # 16 (2026 car telemetry 2: active aero / overtake) only feeds the TV overlay
+                        for pid in (1, 4, 5, 7, 10, 11, 0, 6, 16, 2):
                             key = f"packet_id_{pid}"
                             pkt_dict = data.get(key)
                             # recorder snapshots can hold stale packets from a previous session
@@ -315,7 +408,18 @@ async def replay_telemetry_loop(websocket: WebSocket, update_rate: int, units: s
                                 f_id = pkt_dict.get("m_header", {}).get("m_frameIdentifier")
                                 if f_id is None or last_frames.get(pid) != f_id or line_idx == 0:
                                     last_frames[pid] = f_id
-                                    replay_manager.update(pid, Dict2Obj(pkt_dict))
+                                    if pid != 16:
+                                        replay_manager.update(pid, Dict2Obj(pkt_dict))
+                                    if overlay_manager.forwarding:
+                                        overlay_manager.forward(encode_packet(pid, pkt_dict))
+                                        overlay_sent_at[pid] = time.time()
+                                elif (pid in (1, 4) and overlay_manager.forwarding
+                                      and time.time() - overlay_sent_at.get(pid, 0) > 2.0):
+                                    # Session / participants rarely change in a recording, so they would
+                                    # be sent once; an overlay started a moment later would never get
+                                    # driver names. Re-send them every 2 s, like the game does live.
+                                    overlay_manager.forward(encode_packet(pid, pkt_dict))
+                                    overlay_sent_at[pid] = time.time()
 
                         payload = replay_manager.get_frontend_payload(units=units)
                         if payload.get("status") == "live":
@@ -335,6 +439,7 @@ async def replay_telemetry_loop(websocket: WebSocket, update_rate: int, units: s
                                 "speed": speed,
                             }
                         await websocket.send_json(payload)
+                        sent_this_pass += 1
                         await asyncio.sleep(delay)
             except WebSocketDisconnect:
                 logger.info("WebSocket disconnected during replay")
@@ -343,6 +448,14 @@ async def replay_telemetry_loop(websocket: WebSocket, update_rate: int, units: s
                 logger.error(f"Error during replay of {fpath}: {e}")
                 return
 
+        if not sent_this_pass:
+            # e.g. a lap number the chosen session doesn't have: looping would spin forever
+            logger.error(f"Replay: no frames match session={session} lap={lap} in {circuit}; stopping")
+            try:
+                await websocket.close()
+            except Exception:
+                pass
+            return
         if not loop:
             break
         logger.info("Replay sequence finished, looping from beginning...")
@@ -372,7 +485,11 @@ async def websocket_endpoint(websocket: WebSocket):
 
     if replay:
         logger.info(f"Starting Replay Mode: circuit={circuit}, lap={lap}, speed={speed}x, loop={loop}")
-        await replay_telemetry_loop(websocket, update_rate, units, circuit=circuit, lap=lap, speed=speed, loop=loop, session=session)
+        global _active_replay_manager
+        try:
+            await replay_telemetry_loop(websocket, update_rate, units, circuit=circuit, lap=lap, speed=speed, loop=loop, session=session)
+        finally:
+            _active_replay_manager = None
         return
 
     if udp_listener is None or udp_listener.port != port:

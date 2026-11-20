@@ -1,0 +1,172 @@
+{
+  "track_name": "zandvoort_2020_racingline",
+  "track_id": 26,
+  "display_name": "Circuit Zandvoort",
+  "lap_length_m": 4257,
+  "official_turns": 14,
+  "unresolved_turns": [],
+  "calibration_params": {
+    "threshold": 0.007,
+    "min_length": 15
+  },
+  "mapping": {
+    "method": "Signed curvature of the game racing line (2 m resampling), one window per corner, matched to the official F1 turn order and direction.",
+    "reference_file": "tracks/zandvoort_2020_racingline.txt"
+  },
+  "corners": [
+    {
+      "turn": 1,
+      "name": "Tarzanbocht",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 313,
+      "apex_dist": 359,
+      "exit_dist": 449,
+      "apex_radius_m": 32,
+      "note": "Banked right after the start; main overtaking spot."
+    },
+    {
+      "turn": 2,
+      "name": "Gerlachbocht",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 655,
+      "apex_dist": 687,
+      "exit_dist": 767,
+      "apex_radius_m": 82,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 3,
+      "name": "Hugenholtzbocht",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 799,
+      "apex_dist": 847,
+      "exit_dist": 897,
+      "apex_radius_m": 26,
+      "note": "Steeply banked left."
+    },
+    {
+      "turn": 4,
+      "name": "Hunserug",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 1187,
+      "apex_dist": 1287,
+      "exit_dist": 1325,
+      "apex_radius_m": 159,
+      "note": "Flat-out left-hander."
+    },
+    {
+      "turn": 5,
+      "name": "Rob Slotemakerbocht",
+      "direction": "Right",
+      "type": "kink",
+      "entry_dist": 1371,
+      "apex_dist": 1401,
+      "exit_dist": 1499,
+      "apex_radius_m": 248,
+      "note": "Flat-out right-hander."
+    },
+    {
+      "turn": 6,
+      "name": "Scheivlak",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 1571,
+      "apex_dist": 1653,
+      "exit_dist": 1831,
+      "apex_radius_m": 102,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 7,
+      "name": "Turn 7",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 2001,
+      "apex_dist": 2065,
+      "exit_dist": 2141,
+      "apex_radius_m": 88,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 8,
+      "name": "Turn 8",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 2197,
+      "apex_dist": 2273,
+      "exit_dist": 2359,
+      "apex_radius_m": 41,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 9,
+      "name": "Turn 9",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 2427,
+      "apex_dist": 2523,
+      "exit_dist": 2605,
+      "apex_radius_m": 44,
+      "note": "Medium-speed left-hander."
+    },
+    {
+      "turn": 10,
+      "name": "Turn 10",
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 2935,
+      "apex_dist": 2949,
+      "exit_dist": 2963,
+      "apex_radius_m": 304,
+      "note": "Flat-out left-hander."
+    },
+    {
+      "turn": 11,
+      "name": "Hans Ernstbocht",
+      "direction": "Right",
+      "type": "chicane",
+      "entry_dist": 3061,
+      "apex_dist": 3105,
+      "exit_dist": 3121,
+      "apex_radius_m": 37,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 12,
+      "name": "Turn 12",
+      "direction": "Left",
+      "type": "chicane",
+      "entry_dist": 3133,
+      "apex_dist": 3169,
+      "exit_dist": 3229,
+      "apex_radius_m": 28,
+      "note": "Medium-speed left-hander."
+    },
+    {
+      "turn": 13,
+      "name": "Turn 13",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 3453,
+      "apex_dist": 3509,
+      "exit_dist": 3583,
+      "apex_radius_m": 69,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 14,
+      "name": "Arie Luyendijkbocht",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 3649,
+      "apex_dist": 3679,
+      "exit_dist": 3913,
+      "apex_radius_m": 105,
+      "note": "Banked final corner onto the start straight."
+    }
+  ]
+}

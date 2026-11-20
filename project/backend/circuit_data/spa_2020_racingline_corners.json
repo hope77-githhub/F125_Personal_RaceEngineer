@@ -1,0 +1,227 @@
+{
+  "track_name": "spa_2020_racingline",
+  "track_id": 10,
+  "display_name": "Circuit de Spa-Francorchamps",
+  "lap_length_m": 7001,
+  "official_turns": 19,
+  "unresolved_turns": [],
+  "calibration_params": {
+    "threshold": 0.007,
+    "min_length": 15
+  },
+  "mapping": {
+    "method": "Signed curvature of the game racing line (2 m resampling), one window per corner, matched to the official F1 turn order and direction.",
+    "reference_file": "tracks/spa_2020_racingline.txt"
+  },
+  "corners": [
+    {
+      "turn": 1,
+      "name": "La Source",
+      "direction": "Right",
+      "type": "hairpin",
+      "entry_dist": 347,
+      "apex_dist": 387,
+      "exit_dist": 421,
+      "apex_radius_m": 18,
+      "note": "Hairpin right after the start."
+    },
+    {
+      "turn": 2,
+      "name": "Eau Rouge",
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 959,
+      "apex_dist": 985,
+      "exit_dist": 1009,
+      "apex_radius_m": 376,
+      "note": "Compression at the bottom of the hill."
+    },
+    {
+      "turn": 3,
+      "name": "Raidillon",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 1089,
+      "apex_dist": 1163,
+      "exit_dist": 1233,
+      "apex_radius_m": 157,
+      "note": "Flat-out climb."
+    },
+    {
+      "turn": 4,
+      "name": "Raidillon (crest)",
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 1261,
+      "apex_dist": 1285,
+      "exit_dist": 1307,
+      "apex_radius_m": 292,
+      "note": "Flat-out left-hander."
+    },
+    {
+      "turn": 5,
+      "name": "Les Combes",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 2367,
+      "apex_dist": 2431,
+      "exit_dist": 2451,
+      "apex_radius_m": 65,
+      "note": "Braking zone at the end of the Kemmel straight."
+    },
+    {
+      "turn": 6,
+      "name": "Les Combes (L)",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 2465,
+      "apex_dist": 2511,
+      "exit_dist": 2567,
+      "apex_radius_m": 64,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 7,
+      "name": "Malmedy",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 2583,
+      "apex_dist": 2681,
+      "exit_dist": 2721,
+      "apex_radius_m": 90,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 8,
+      "name": "Rivage",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 2991,
+      "apex_dist": 3071,
+      "exit_dist": 3149,
+      "apex_radius_m": 34,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 9,
+      "name": "Turn 9",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 3223,
+      "apex_dist": 3273,
+      "exit_dist": 3369,
+      "apex_radius_m": 75,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 10,
+      "name": "Pouhon",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 3749,
+      "apex_dist": 3815,
+      "exit_dist": 3975,
+      "apex_radius_m": 122,
+      "note": "Fast double-apex left."
+    },
+    {
+      "turn": 11,
+      "name": "Pouhon (exit)",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 3977,
+      "apex_dist": 4017,
+      "exit_dist": 4193,
+      "apex_radius_m": 156,
+      "note": "Flat-out left-hander."
+    },
+    {
+      "turn": 12,
+      "name": "Les Fagnes",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 4437,
+      "apex_dist": 4499,
+      "exit_dist": 4583,
+      "apex_radius_m": 80,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 13,
+      "name": "Les Fagnes (L)",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 4597,
+      "apex_dist": 4671,
+      "exit_dist": 4761,
+      "apex_radius_m": 80,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 14,
+      "name": "Turn 14",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 4891,
+      "apex_dist": 4967,
+      "exit_dist": 5027,
+      "apex_radius_m": 64,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 15,
+      "name": "Stavelot",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 5081,
+      "apex_dist": 5141,
+      "exit_dist": 5295,
+      "apex_radius_m": 123,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 16,
+      "name": "Courbe Paul Frère",
+      "direction": "Right",
+      "type": "kink",
+      "entry_dist": 5345,
+      "apex_dist": 5411,
+      "exit_dist": 5441,
+      "apex_radius_m": 328,
+      "note": "Flat-out right-hander."
+    },
+    {
+      "turn": 17,
+      "name": "Blanchimont",
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 6109,
+      "apex_dist": 6199,
+      "exit_dist": 6281,
+      "apex_radius_m": 216,
+      "note": "Flat-out left."
+    },
+    {
+      "turn": 18,
+      "name": "Bus Stop (R)",
+      "direction": "Right",
+      "type": "chicane",
+      "entry_dist": 6711,
+      "apex_dist": 6743,
+      "exit_dist": 6759,
+      "apex_radius_m": 23,
+      "note": "Slow right-hander."
+    },
+    {
+      "turn": 19,
+      "name": "Bus Stop (L)",
+      "direction": "Left",
+      "type": "hairpin",
+      "entry_dist": 6777,
+      "apex_dist": 6807,
+      "exit_dist": 6825,
+      "apex_radius_m": 19,
+      "note": "Slow left-hander."
+    }
+  ]
+}

@@ -1,0 +1,216 @@
+{
+  "track_name": "suzuka_2020_racingline",
+  "track_id": 13,
+  "display_name": "Suzuka Circuit",
+  "lap_length_m": 5815,
+  "official_turns": 18,
+  "unresolved_turns": [],
+  "calibration_params": {
+    "threshold": 0.007,
+    "min_length": 15
+  },
+  "mapping": {
+    "method": "Signed curvature of the game racing line (2 m resampling), one window per corner, matched to the official F1 turn order and direction.",
+    "reference_file": "tracks/suzuka_2020_racingline.txt"
+  },
+  "corners": [
+    {
+      "turn": 1,
+      "name": "First Curve",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 619,
+      "apex_dist": 709,
+      "exit_dist": 769,
+      "apex_radius_m": 143,
+      "note": "Fast downhill right."
+    },
+    {
+      "turn": 2,
+      "name": "First Curve (T2)",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 771,
+      "apex_dist": 837,
+      "exit_dist": 955,
+      "apex_radius_m": 62,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 3,
+      "name": "S Curves",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 1051,
+      "apex_dist": 1127,
+      "exit_dist": 1159,
+      "apex_radius_m": 107,
+      "note": "Start of the S-curves: rhythm matters more than any single apex."
+    },
+    {
+      "turn": 4,
+      "name": "S Curves (R)",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 1183,
+      "apex_dist": 1223,
+      "exit_dist": 1305,
+      "apex_radius_m": 82,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 5,
+      "name": "S Curves (L)",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 1323,
+      "apex_dist": 1389,
+      "exit_dist": 1457,
+      "apex_radius_m": 82,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 6,
+      "name": "S Curves (R)",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 1483,
+      "apex_dist": 1579,
+      "exit_dist": 1659,
+      "apex_radius_m": 75,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 7,
+      "name": "Dunlop",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 1689,
+      "apex_dist": 1755,
+      "exit_dist": 1875,
+      "apex_radius_m": 88,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 8,
+      "name": "Degner 1",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 2255,
+      "apex_dist": 2291,
+      "exit_dist": 2373,
+      "apex_radius_m": 116,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 9,
+      "name": "Degner 2",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 2427,
+      "apex_dist": 2463,
+      "exit_dist": 2511,
+      "apex_radius_m": 47,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 10,
+      "name": "Turn 10",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 2727,
+      "apex_dist": 2761,
+      "exit_dist": 2837,
+      "apex_radius_m": 141,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 11,
+      "name": "Hairpin",
+      "direction": "Left",
+      "type": "hairpin",
+      "entry_dist": 2897,
+      "apex_dist": 2935,
+      "exit_dist": 2967,
+      "apex_radius_m": 18,
+      "note": "Slow left-hander."
+    },
+    {
+      "turn": 12,
+      "name": "200R",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 3091,
+      "apex_dist": 3185,
+      "exit_dist": 3317,
+      "apex_radius_m": 150,
+      "note": "Flat-out right-hander."
+    },
+    {
+      "turn": 13,
+      "name": "Spoon",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 3767,
+      "apex_dist": 3847,
+      "exit_dist": 3899,
+      "apex_radius_m": 85,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 14,
+      "name": "Spoon (exit)",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 3901,
+      "apex_dist": 3987,
+      "exit_dist": 4089,
+      "apex_radius_m": 66,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 15,
+      "name": "130R",
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 4931,
+      "apex_dist": 4977,
+      "exit_dist": 5077,
+      "apex_radius_m": 151,
+      "note": "Flat-out left."
+    },
+    {
+      "turn": 16,
+      "name": "Casio Triangle",
+      "direction": "Right",
+      "type": "chicane",
+      "entry_dist": 5379,
+      "apex_dist": 5411,
+      "exit_dist": 5425,
+      "apex_radius_m": 30,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 17,
+      "name": "Casio Triangle (L)",
+      "direction": "Left",
+      "type": "chicane",
+      "entry_dist": 5441,
+      "apex_dist": 5461,
+      "exit_dist": 5497,
+      "apex_radius_m": 37,
+      "note": "Medium-speed left-hander."
+    },
+    {
+      "turn": 18,
+      "name": "Final Curve",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 5521,
+      "apex_dist": 5549,
+      "exit_dist": 5711,
+      "apex_radius_m": 105,
+      "note": "Fast right-hander."
+    }
+  ]
+}

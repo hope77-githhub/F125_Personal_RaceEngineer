@@ -1,0 +1,172 @@
+{
+  "track_name": "montreal_2020_racingline",
+  "track_id": 6,
+  "display_name": "Circuit Gilles Villeneuve",
+  "lap_length_m": 4369,
+  "official_turns": 14,
+  "unresolved_turns": [],
+  "calibration_params": {
+    "threshold": 0.007,
+    "min_length": 15
+  },
+  "mapping": {
+    "method": "Signed curvature of the game racing line (2 m resampling), one window per corner, matched to the official F1 turn order and direction.",
+    "reference_file": "tracks/montreal_2020_racingline.txt"
+  },
+  "corners": [
+    {
+      "turn": 1,
+      "name": "Virage Senna",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 219,
+      "apex_dist": 261,
+      "exit_dist": 287,
+      "apex_radius_m": 46,
+      "note": "Medium-speed left-hander."
+    },
+    {
+      "turn": 2,
+      "name": "Virage Senna (R)",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 309,
+      "apex_dist": 351,
+      "exit_dist": 397,
+      "apex_radius_m": 23,
+      "note": "Slow right-hander."
+    },
+    {
+      "turn": 3,
+      "name": "Turn 3",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 691,
+      "apex_dist": 713,
+      "exit_dist": 763,
+      "apex_radius_m": 69,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 4,
+      "name": "Turn 4",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 777,
+      "apex_dist": 807,
+      "exit_dist": 879,
+      "apex_radius_m": 84,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 5,
+      "name": "Turn 5",
+      "direction": "Right",
+      "type": "kink",
+      "entry_dist": 973,
+      "apex_dist": 1003,
+      "exit_dist": 1123,
+      "apex_radius_m": 150,
+      "note": "Flat-out right-hander."
+    },
+    {
+      "turn": 6,
+      "name": "Turn 6",
+      "direction": "Left",
+      "type": "chicane",
+      "entry_dist": 1225,
+      "apex_dist": 1279,
+      "exit_dist": 1299,
+      "apex_radius_m": 37,
+      "note": "Medium-speed left-hander."
+    },
+    {
+      "turn": 7,
+      "name": "Turn 7",
+      "direction": "Right",
+      "type": "chicane",
+      "entry_dist": 1311,
+      "apex_dist": 1347,
+      "exit_dist": 1437,
+      "apex_radius_m": 67,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 8,
+      "name": "Turn 8",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 1977,
+      "apex_dist": 2025,
+      "exit_dist": 2045,
+      "apex_radius_m": 62,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 9,
+      "name": "Turn 9",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 2059,
+      "apex_dist": 2097,
+      "exit_dist": 2165,
+      "apex_radius_m": 89,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 10,
+      "name": "L'Épingle (Hairpin)",
+      "direction": "Right",
+      "type": "hairpin",
+      "entry_dist": 2679,
+      "apex_dist": 2719,
+      "exit_dist": 2749,
+      "apex_radius_m": 17,
+      "note": "Slowest corner of the lap, first gear."
+    },
+    {
+      "turn": 11,
+      "name": "Turn 11",
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 2829,
+      "apex_dist": 2845,
+      "exit_dist": 2873,
+      "apex_radius_m": 203,
+      "note": "Flat-out left-hander."
+    },
+    {
+      "turn": 12,
+      "name": "Turn 12",
+      "direction": "Right",
+      "type": "kink",
+      "entry_dist": 3101,
+      "apex_dist": 3213,
+      "exit_dist": 3279,
+      "apex_radius_m": 1348,
+      "note": "Flat-out right-hander."
+    },
+    {
+      "turn": 13,
+      "name": "Final chicane (R)",
+      "direction": "Right",
+      "type": "chicane",
+      "entry_dist": 3877,
+      "apex_dist": 3921,
+      "exit_dist": 3931,
+      "apex_radius_m": 61,
+      "note": "Heavy braking from top speed into the last chicane."
+    },
+    {
+      "turn": 14,
+      "name": "Wall of Champions",
+      "direction": "Left",
+      "type": "chicane",
+      "entry_dist": 3943,
+      "apex_dist": 3957,
+      "exit_dist": 4011,
+      "apex_radius_m": 62,
+      "note": "Chicane exit next to the wall."
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './styles/design-system.css';
+import CornerMapModal from './CornerMapModal';
 
 const i18n = {
   en: {
@@ -15,8 +16,8 @@ const i18n = {
     tts: "AI Engineer Voice (TTS)",
     ttsDesc: "Enable real-time voice briefings from your race engineer.",
     persona: "Engineer Persona",
-    overlay: "HUD Overlay Mode",
-    overlayDesc: "Enable transparent overlay rendering above the game window.",
+    overlay: "TV Overlay (broadcast graphics over the game)",
+    overlayDesc: "Timing tower, lap card, halo and flags on top of the game. Game must be in borderless / windowed-fullscreen. Needs Node.js; first start downloads Electron (~370 MB).",
     language: "Display Language",
     languageDesc: "Choose the interface language for the telemetry dashboard.",
     connect: "Connect & Start Session",
@@ -61,8 +62,8 @@ const i18n = {
     tts: "AI 엔지니어 음성 브리핑 (TTS)",
     ttsDesc: "레이스 엔지니어의 실시간 음성 브리핑을 활성화합니다.",
     persona: "엔지니어 페르소나 선택",
-    overlay: "오버레이 모드 (HUD)",
-    overlayDesc: "게임 화면 위에 표시되는 오버레이 모드를 설정합니다.",
+    overlay: "TV 오버레이 (게임 위 중계 그래픽)",
+    overlayDesc: "타이밍 타워, 랩 카드, 계기판, 깃발을 게임 화면 위에 띄웁니다. 게임은 '창 모드(전체 화면)'여야 하고 Node.js가 필요해요. 처음 켤 때 Electron(약 370MB)을 내려받습니다.",
     language: "언어 (Language)",
     languageDesc: "대시보드 표시 언어를 선택합니다.",
     connect: "세션 연결 및 시작",
@@ -622,6 +623,83 @@ const DEFAULT_MANIFEST_CLIPS = [
 ];
 
 
+// Driver -> engineer questions. Free text (Korean / English keywords) or one of the presets.
+function EngineerAskBox({ language, onAnswer }) {
+  const [presets, setPresets] = useState([]);
+  const [text, setText] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetch('http://localhost:8080/api/qa/presets')
+      .then((r) => r.json())
+      .then((d) => setPresets(d.presets || []))
+      .catch(() => {});
+  }, []);
+
+  const ask = async (question) => {
+    const q = (question || '').trim();
+    if (!q || busy) return;
+    setBusy(true);
+    setError('');
+    try {
+      const res = await fetch('http://localhost:8080/api/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: q }),
+      });
+      const data = await res.json();
+      if (data.event) onAnswer(data.event);
+      setText('');
+    } catch (e) {
+      setError(language === 'ko' ? '엔지니어와 연결되지 않았습니다.' : 'No connection to the engineer.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div style={{ marginBottom: '16px' }}>
+      <div style={{ fontSize: '12px', fontWeight: 600, color: '#ffffff', marginBottom: '8px' }}>
+        🎧 {language === 'ko' ? '엔지니어에게 질문' : 'Ask the engineer'}
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px' }}>
+        {presets.map((p) => (
+          <button
+            key={p.intent}
+            type="button"
+            disabled={busy}
+            onClick={() => ask(language === 'ko' ? p.ko : p.en)}
+            className="btn-secondary-light"
+            style={{ fontSize: '11px', padding: '4px 10px' }}
+          >
+            {language === 'ko' ? p.ko : p.en}
+          </button>
+        ))}
+      </div>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          ask(text);
+        }}
+        style={{ display: 'flex', gap: '6px' }}
+      >
+        <input
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder={language === 'ko' ? '예: 앞차 잡으려면 어떻게 해?' : 'e.g. How do I catch the car ahead?'}
+          className="cb-select"
+          style={{ flex: 1, minWidth: 0 }}
+        />
+        <button type="submit" disabled={busy || !text.trim()} className="btn-secondary-light" style={{ fontSize: '12px' }}>
+          {busy ? '…' : language === 'ko' ? '질문' : 'Ask'}
+        </button>
+      </form>
+      {error && <div style={{ fontSize: '11px', color: '#ff8a8a', marginTop: '6px' }}>{error}</div>}
+    </div>
+  );
+}
+
 function RadioTestConsole({
   manifestClips,
   isPlayingVoice,
@@ -824,11 +902,21 @@ function useVoicePlayer() {
     setCurrentVoiceClip(clip);
     setActiveVoiceTranscript({
       text: clip.text,
+      text_ko: clip.text_ko,
+      details: clip.details,
+      question: clip.question,
       scenario: clip.scenario,
       title: clip.title,
       badge: clip.badge || 'RADIO',
     });
     setIsPlayingVoice(true);
+
+    // Engineer answers / setup advice are built from pre-baked lines; if none of the files exist
+    // yet, show the text instead of falling back to an unrelated clip.
+    if ((clip.type === 'qa_answer' || clip.type === 'setup_advice') && !(clip.segments && clip.segments.length)) {
+      setTimeout(() => setIsPlayingVoice(false), 2500);
+      return;
+    }
 
     const ctx = getAudioContext();
 
@@ -964,9 +1052,34 @@ function Dashboard({ settings, setSettings, onExit }) {
     isPlayingVoice,
     currentVoiceClip,
     activeVoiceTranscript,
+    setActiveVoiceTranscript,
     playVoiceClip,
     stopVoiceClip,
   } = useVoicePlayer();
+
+  // ---- TV overlay (backend starts project/overlay: Node server + transparent Electron window)
+  const [tvOverlay, setTvOverlay] = useState(null);
+  const overlayApi = (path, method = 'GET') =>
+    fetch(`http://localhost:8080/api/overlay/${path}`, { method, headers: { 'Content-Type': 'application/json' }, body: method === 'POST' && path === 'start' ? JSON.stringify({ window: true }) : undefined })
+      .then((r) => r.json())
+      .then((st) => { setTvOverlay(st); return st; })
+      .catch(() => setTvOverlay({ error: 'Backend not reachable' }));
+  const toggleTvOverlay = () => {
+    const on = !settings.overlay;
+    setSettings({ ...settings, overlay: on });
+    overlayApi(on ? 'start' : 'stop', 'POST');
+  };
+  useEffect(() => {
+    if (settings.overlay) overlayApi('start', 'POST');
+    else overlayApi('status');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (!settings.overlay) return undefined;
+    const id = setInterval(() => overlayApi('status'), 3000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings.overlay]);
 
 
 
@@ -1378,10 +1491,16 @@ function Dashboard({ settings, setSettings, onExit }) {
               TTS {settings.tts ? `ON (${settings.voice.toUpperCase()})` : 'OFF'}
             </button>
             <button
-              onClick={() => setSettings({ ...settings, overlay: !settings.overlay })}
+              onClick={toggleTvOverlay}
               className={`btn-secondary-light ${settings.overlay ? 'active' : ''}`}
+              title={tvOverlay?.error || (tvOverlay?.server_running ? `Overlay ${tvOverlay.overlay_url} · Ctrl+Alt+H: show/hide · Ctrl+Alt+E: edit layout` : 'TV overlay off')}
+              style={tvOverlay?.error ? { borderColor: 'var(--color-semantic-down)', color: 'var(--color-semantic-down)' } : undefined}
             >
-              HUD {settings.overlay ? 'ON' : 'OFF'}
+              📺 TV {!settings.overlay ? 'OFF'
+                : tvOverlay?.error ? 'ERROR'
+                : tvOverlay?.installing ? 'INSTALLING…'
+                : tvOverlay?.window_running ? 'ON'
+                : 'STARTING…'}
             </button>
             <div
               className="badge-pill"
@@ -1412,7 +1531,13 @@ function Dashboard({ settings, setSettings, onExit }) {
               📻 <span>Team Radio</span>
               {isPlayingVoice && <span style={{ fontSize: '10px', color: 'var(--color-semantic-up)' }}>● LIVE</span>}
             </button>
-            <button onClick={onExit} className="btn-secondary-light">
+            <button
+              onClick={() => {
+                if (settings.overlay) overlayApi('stop', 'POST');
+                onExit();
+              }}
+              className="btn-secondary-light"
+            >
               EXIT
             </button>
           </div>
@@ -2419,12 +2544,46 @@ function Dashboard({ settings, setSettings, onExit }) {
                     )}
                   </div>
 
+                  {activeVoiceTranscript?.question && (
+                    <div style={{ fontSize: '12px', color: 'var(--color-muted)', marginBottom: '4px' }}>
+                      🙋 {activeVoiceTranscript.question}
+                    </div>
+                  )}
                   <div style={{ fontSize: '14px', lineHeight: 1.55, color: '#ffffff', fontWeight: 500 }}>
                     "{activeVoiceTranscript ? activeVoiceTranscript.text : strategy}"
                   </div>
-
-
+                  {activeVoiceTranscript?.text_ko && settings.language === 'ko' && (
+                    <div style={{ fontSize: '12px', lineHeight: 1.5, color: '#c7cbd6', marginTop: '6px' }}>
+                      {activeVoiceTranscript.text_ko}
+                    </div>
+                  )}
+                  {activeVoiceTranscript?.details && activeVoiceTranscript.details.length > 0 && (
+                    <ul style={{ margin: '8px 0 0', paddingLeft: '18px', fontSize: '11px', color: '#9aa1b2', lineHeight: 1.6 }}>
+                      {activeVoiceTranscript.details.map((d, i) => (
+                        <li key={i} className="mono-num">{d}</li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
+
+                <EngineerAskBox
+                  language={settings.language || 'ko'}
+                  onAnswer={(ev) => {
+                    if (settings.tts) {
+                      playVoiceClip(ev);
+                    } else {
+                      setActiveVoiceTranscript({
+                        text: ev.text,
+                        text_ko: ev.text_ko,
+                        details: ev.details,
+                        question: ev.question,
+                        scenario: ev.scenario,
+                        title: ev.title,
+                        badge: ev.badge,
+                      });
+                    }
+                  }}
+                />
 
                 {/* Engineer Radio Test Console (TTS / Voice Tester) */}
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '14px' }}>
@@ -3191,6 +3350,7 @@ function Dashboard({ settings, setSettings, onExit }) {
 
 function SetupPage({ onStart }) {
   const [port, setPort] = useState(20777);
+  const [cornerMapOpen, setCornerMapOpen] = useState(false);
   const [manifestClips, setManifestClips] = useState(DEFAULT_MANIFEST_CLIPS);
   useEffect(() => {
     fetch('http://localhost:8080/api/voice/clips')
@@ -3207,6 +3367,7 @@ function SetupPage({ onStart }) {
     isPlayingVoice,
     currentVoiceClip,
     activeVoiceTranscript,
+    setActiveVoiceTranscript,
     playVoiceClip,
     stopVoiceClip,
   } = useVoicePlayer();
@@ -3299,6 +3460,13 @@ function SetupPage({ onStart }) {
           <p style={{ color: 'var(--color-body)', fontSize: '16px', margin: 0 }}>
             {t.subtitle}
           </p>
+          <button
+            onClick={() => setCornerMapOpen(true)}
+            className="btn-secondary-light"
+            style={{ marginTop: '20px' }}
+          >
+            🗺 Corner Map
+          </button>
         </div>
 
         <div className="card" style={{ width: '100%', maxWidth: '600px', marginBottom: '24px' }}>
@@ -3513,6 +3681,31 @@ function SetupPage({ onStart }) {
               marginBottom: '12px',
             }}
           >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: '15px' }}>📺 {t.overlay}</div>
+                <div style={{ fontSize: '12px', color: 'var(--color-body)', marginTop: '2px' }}>
+                  {t.overlayDesc}
+                </div>
+              </div>
+              <button
+                onClick={() => setOverlay(!overlay)}
+                className={`btn-secondary-light ${overlay ? 'active' : ''}`}
+              >
+                {overlay ? 'ON' : 'OFF'}
+              </button>
+            </div>
+          </div>
+
+          <div
+            style={{
+              padding: '16px',
+              backgroundColor: 'var(--color-surface-soft)',
+              borderRadius: 'var(--rounded-md)',
+              border: '1px solid var(--color-hairline-soft)',
+              marginBottom: '12px',
+            }}
+          >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <div style={{ fontWeight: 600, fontSize: '15px' }}>{t.tts}</div>
@@ -3623,6 +3816,7 @@ function SetupPage({ onStart }) {
           {t.connect}
         </button>
       </div>
+      <CornerMapModal open={cornerMapOpen} onClose={() => setCornerMapOpen(false)} language={language} />
     </div>
   );
 }

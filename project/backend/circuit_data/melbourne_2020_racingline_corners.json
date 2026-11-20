@@ -1,0 +1,172 @@
+{
+  "track_name": "melbourne_2020_racingline",
+  "track_id": 0,
+  "display_name": "Albert Park Circuit",
+  "lap_length_m": 5274,
+  "official_turns": 14,
+  "unresolved_turns": [],
+  "calibration_params": {
+    "threshold": 0.007,
+    "min_length": 15
+  },
+  "mapping": {
+    "method": "Signed curvature of the game racing line (2 m resampling), one window per corner, matched to the official F1 turn order and direction.",
+    "reference_file": "tracks/melbourne_2020_racingline.txt"
+  },
+  "corners": [
+    {
+      "turn": 1,
+      "name": "Turn 1",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 332,
+      "apex_dist": 388,
+      "exit_dist": 422,
+      "apex_radius_m": 62,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 2,
+      "name": "Turn 2",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 438,
+      "apex_dist": 490,
+      "exit_dist": 588,
+      "apex_radius_m": 112,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 3,
+      "name": "Turn 3",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 1080,
+      "apex_dist": 1118,
+      "exit_dist": 1166,
+      "apex_radius_m": 31,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 4,
+      "name": "Turn 4",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 1192,
+      "apex_dist": 1248,
+      "exit_dist": 1330,
+      "apex_radius_m": 64,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 5,
+      "name": "Turn 5",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 1400,
+      "apex_dist": 1496,
+      "exit_dist": 1544,
+      "apex_radius_m": 85,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 6,
+      "name": "Turn 6",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 1840,
+      "apex_dist": 1902,
+      "exit_dist": 1956,
+      "apex_radius_m": 81,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 7,
+      "name": "Turn 7",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 1968,
+      "apex_dist": 1982,
+      "exit_dist": 2038,
+      "apex_radius_m": 143,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 8,
+      "name": "Turn 8",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 2070,
+      "apex_dist": 2210,
+      "exit_dist": 2304,
+      "apex_radius_m": 173,
+      "note": "Flat-out right-hander."
+    },
+    {
+      "turn": 9,
+      "name": "Turn 9",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 3260,
+      "apex_dist": 3338,
+      "exit_dist": 3380,
+      "apex_radius_m": 111,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 10,
+      "name": "Turn 10",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 3390,
+      "apex_dist": 3434,
+      "exit_dist": 3528,
+      "apex_radius_m": 127,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 11,
+      "name": "Turn 11",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 4118,
+      "apex_dist": 4158,
+      "exit_dist": 4196,
+      "apex_radius_m": 37,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 12,
+      "name": "Turn 12",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 4348,
+      "apex_dist": 4458,
+      "exit_dist": 4510,
+      "apex_radius_m": 100,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 13,
+      "name": "Turn 13",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 4632,
+      "apex_dist": 4672,
+      "exit_dist": 4708,
+      "apex_radius_m": 27,
+      "note": "Medium-speed left-hander."
+    },
+    {
+      "turn": 14,
+      "name": "Turn 14",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 4732,
+      "apex_dist": 4750,
+      "exit_dist": 4896,
+      "apex_radius_m": 70,
+      "note": "Fast right-hander."
+    }
+  ]
+}

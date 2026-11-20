@@ -1,0 +1,219 @@
+{
+  "track_name": "baku_2020_racingline",
+  "track_id": 20,
+  "display_name": "Baku City Circuit",
+  "lap_length_m": 5993,
+  "official_turns": 20,
+  "unresolved_turns": [
+    15,
+    20
+  ],
+  "calibration_params": {
+    "threshold": 0.007,
+    "min_length": 15
+  },
+  "mapping": {
+    "method": "Signed curvature of the game racing line (2 m resampling), one window per corner, matched to the official F1 turn order and direction.",
+    "reference_file": "tracks/baku_2020_racingline.txt"
+  },
+  "corners": [
+    {
+      "turn": 1,
+      "name": "Turn 1",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 279,
+      "apex_dist": 323,
+      "exit_dist": 361,
+      "apex_radius_m": 41,
+      "note": "Medium-speed left-hander."
+    },
+    {
+      "turn": 2,
+      "name": "Turn 2",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 635,
+      "apex_dist": 665,
+      "exit_dist": 691,
+      "apex_radius_m": 28,
+      "note": "Medium-speed left-hander."
+    },
+    {
+      "turn": 3,
+      "name": "Turn 3",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 1499,
+      "apex_dist": 1531,
+      "exit_dist": 1561,
+      "apex_radius_m": 32,
+      "note": "Medium-speed left-hander."
+    },
+    {
+      "turn": 4,
+      "name": "Turn 4",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 1731,
+      "apex_dist": 1759,
+      "exit_dist": 1789,
+      "apex_radius_m": 29,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 5,
+      "name": "Turn 5",
+      "direction": "Left",
+      "type": "chicane",
+      "entry_dist": 2061,
+      "apex_dist": 2109,
+      "exit_dist": 2121,
+      "apex_radius_m": 32,
+      "note": "Medium-speed left-hander."
+    },
+    {
+      "turn": 6,
+      "name": "Turn 6",
+      "direction": "Right",
+      "type": "chicane",
+      "entry_dist": 2129,
+      "apex_dist": 2175,
+      "exit_dist": 2189,
+      "apex_radius_m": 37,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 7,
+      "name": "Turn 7",
+      "direction": "Right",
+      "type": "hairpin",
+      "entry_dist": 2531,
+      "apex_dist": 2551,
+      "exit_dist": 2585,
+      "apex_radius_m": 21,
+      "note": "Slow right-hander."
+    },
+    {
+      "turn": 8,
+      "name": "Castle",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 2735,
+      "apex_dist": 2759,
+      "exit_dist": 2807,
+      "apex_radius_m": 42,
+      "note": "Narrowest part of the track, by the old city wall."
+    },
+    {
+      "turn": 9,
+      "name": "Turn 9",
+      "direction": "Right",
+      "type": "chicane",
+      "entry_dist": 2825,
+      "apex_dist": 2863,
+      "exit_dist": 2879,
+      "apex_radius_m": 41,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 10,
+      "name": "Turn 10",
+      "direction": "Left",
+      "type": "chicane",
+      "entry_dist": 2891,
+      "apex_dist": 2921,
+      "exit_dist": 2961,
+      "apex_radius_m": 39,
+      "note": "Medium-speed left-hander."
+    },
+    {
+      "turn": 11,
+      "name": "Turn 11",
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 3257,
+      "apex_dist": 3335,
+      "exit_dist": 3355,
+      "apex_radius_m": 141,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 12,
+      "name": "Turn 12",
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 3497,
+      "apex_dist": 3517,
+      "exit_dist": 3557,
+      "apex_radius_m": 265,
+      "note": "Flat-out left-hander."
+    },
+    {
+      "turn": 13,
+      "name": "Turn 13",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 3747,
+      "apex_dist": 3767,
+      "exit_dist": 3791,
+      "apex_radius_m": 34,
+      "note": "Medium-speed left-hander."
+    },
+    {
+      "turn": 14,
+      "name": "Turn 14",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 4083,
+      "apex_dist": 4119,
+      "exit_dist": 4179,
+      "apex_radius_m": 44,
+      "note": "Medium-speed left-hander."
+    },
+    {
+      "turn": 16,
+      "name": "Turn 16",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 4261,
+      "apex_dist": 4327,
+      "exit_dist": 4367,
+      "apex_radius_m": 189,
+      "note": "Last real corner before the 2 km flat-out run."
+    },
+    {
+      "turn": 17,
+      "name": "Turn 17",
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 4499,
+      "apex_dist": 4583,
+      "exit_dist": 4617,
+      "apex_radius_m": 185,
+      "note": "Flat-out left-hander."
+    },
+    {
+      "turn": 18,
+      "name": "Turn 18",
+      "direction": "Right",
+      "type": "kink",
+      "entry_dist": 4639,
+      "apex_dist": 4735,
+      "exit_dist": 4771,
+      "apex_radius_m": 178,
+      "note": "Flat-out right-hander."
+    },
+    {
+      "turn": 19,
+      "name": "Turn 19",
+      "direction": "Right",
+      "type": "kink",
+      "entry_dist": 5009,
+      "apex_dist": 5063,
+      "exit_dist": 5099,
+      "apex_radius_m": 555,
+      "note": "Flat-out right-hander."
+    }
+  ]
+}

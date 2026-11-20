@@ -1,58 +1,128 @@
 {
   "track_name": "austria_2020_racingline",
+  "track_id": 17,
+  "display_name": "Red Bull Ring",
+  "lap_length_m": 4322,
+  "official_turns": 10,
+  "unresolved_turns": [],
   "calibration_params": {
-    "threshold": 0.008,
-    "min_length": 40
+    "threshold": 0.007,
+    "min_length": 15
+  },
+  "mapping": {
+    "method": "Signed curvature of the game racing line (2 m resampling), one window per corner, matched to the official F1 turn order and direction.",
+    "reference_file": "tracks/austria_2020_racingline.txt"
   },
   "corners": [
     {
       "turn": 1,
-      "name": "Turn 1",
-      "entry_dist": 425,
-      "apex_dist": 463,
-      "exit_dist": 493
+      "name": "Niki Lauda",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 422,
+      "apex_dist": 464,
+      "exit_dist": 494,
+      "apex_radius_m": 46,
+      "note": "Medium-speed right-hander."
     },
     {
       "turn": 2,
       "name": "Turn 2",
-      "entry_dist": 1371,
-      "apex_dist": 1411,
-      "exit_dist": 1447
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 1024,
+      "apex_dist": 1054,
+      "exit_dist": 1226,
+      "apex_radius_m": 527,
+      "note": "Flat-out left-hander."
     },
     {
       "turn": 3,
-      "name": "Turn 3",
-      "entry_dist": 2172,
-      "apex_dist": 2223,
-      "exit_dist": 2274
+      "name": "Remus",
+      "direction": "Right",
+      "type": "hairpin",
+      "entry_dist": 1382,
+      "apex_dist": 1406,
+      "exit_dist": 1428,
+      "apex_radius_m": 16,
+      "note": "Uphill hairpin; main overtaking spot."
     },
     {
       "turn": 4,
-      "name": "Turn 4",
-      "entry_dist": 2677,
-      "apex_dist": 2731,
-      "exit_dist": 2852
+      "name": "Schlossgold",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 2174,
+      "apex_dist": 2222,
+      "exit_dist": 2274,
+      "apex_radius_m": 37,
+      "note": "Medium-speed right-hander."
     },
     {
       "turn": 5,
       "name": "Turn 5",
-      "entry_dist": 2979,
-      "apex_dist": 3064,
-      "exit_dist": 3138
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 2640,
+      "apex_dist": 2730,
+      "exit_dist": 2862,
+      "apex_radius_m": 79,
+      "note": "Fast left-hander."
     },
     {
       "turn": 6,
       "name": "Turn 6",
-      "entry_dist": 3748,
-      "apex_dist": 3759,
-      "exit_dist": 3823
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 2964,
+      "apex_dist": 3064,
+      "exit_dist": 3148,
+      "apex_radius_m": 78,
+      "note": "Fast left-hander."
     },
     {
       "turn": 7,
       "name": "Turn 7",
-      "entry_dist": 3965,
-      "apex_dist": 4014,
-      "exit_dist": 4063
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 3172,
+      "apex_dist": 3224,
+      "exit_dist": 3304,
+      "apex_radius_m": 194,
+      "note": "Flat-out right-hander."
+    },
+    {
+      "turn": 8,
+      "name": "Turn 8",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 3306,
+      "apex_dist": 3338,
+      "exit_dist": 3350,
+      "apex_radius_m": 172,
+      "note": "Flat-out right-hander."
+    },
+    {
+      "turn": 9,
+      "name": "Jochen Rindt",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 3724,
+      "apex_dist": 3760,
+      "exit_dist": 3880,
+      "apex_radius_m": 96,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 10,
+      "name": "Red Bull Mobile",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 3962,
+      "apex_dist": 4012,
+      "exit_dist": 4084,
+      "apex_radius_m": 60,
+      "note": "Fast right-hander."
     }
   ]
 }
