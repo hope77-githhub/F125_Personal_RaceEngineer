@@ -2941,7 +2941,7 @@ function Dashboard({ settings, setSettings, onExit }) {
                           {isLiveLapSelected ? `LIVE Lap ${current_lap}` : `Lap ${selectedLap?.lap}`}
                         </div>
                         <div className="mono-num" style={{ fontSize: '12px', color: 'var(--color-body)' }}>
-                          Braking Point: {selectedCornerDetail.brake_point}m · Apex: {selectedCornerDetail.apex_dist}m · Throttle On: {selectedCornerDetail.throttle_on_dist}m
+                          Braking Point: {selectedCornerDetail.brake_point ? `${selectedCornerDetail.brake_point}m` : '-'} · Apex: {selectedCornerDetail.apex_dist}m · Throttle On: {selectedCornerDetail.throttle_on_dist}m
                         </div>
                       </div>
                     </div>
@@ -3209,7 +3209,7 @@ function Dashboard({ settings, setSettings, onExit }) {
                             {isLiveLapSelected ? `LIVE Lap ${current_lap}` : `Lap ${selectedLap?.lap}`}
                           </span>
                           <span className="mono-num" style={{ fontSize: '12px', color: 'var(--color-on-dark-soft)' }}>
-                            Brake @ {selectedCornerDetail.brake_point}m · Max {selectedCornerDetail.max_g_lat}G
+                            Brake @ {selectedCornerDetail.brake_point ? `${selectedCornerDetail.brake_point}m` : '-'} · Max {selectedCornerDetail.max_g_lat}G
                           </span>
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', fontSize: '12px' }}>

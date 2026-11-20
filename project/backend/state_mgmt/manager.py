@@ -416,6 +416,7 @@ class StateManager:
                 rpm = safe_int(tele.m_engineRPM, speed_and_gear_to_rpm(spd, gear))
                 thr = clamp_percent(tele.m_throttle)
                 brk = clamp_percent(tele.m_brake)
+                brk_est = False
                 steer = round(safe_float(tele.m_steer, 0.0), 3)
             elif prev and abs(curr_dist - prev["dist"]) > 0.3 and curr_dist > prev["dist"]:
                 dd = curr_dist - prev["dist"]
@@ -428,6 +429,9 @@ class StateManager:
                 accel = dv_ms / max(0.08, dt)
                 gear = speed_to_gear(spd)
                 rpm = speed_and_gear_to_rpm(spd, gear)
+                # No fresh CarTelemetry: brake is guessed from deceleration, which also fires on a
+                # plain lift at high speed (drag), so it is flagged and never used for braking calls.
+                brk_est = True
                 if accel < -2.0:
                     brk = max(5, min(100, int(round((-accel - 1.5) / 28.0 * 100))))
                     thr = 0
@@ -445,6 +449,7 @@ class StateManager:
                 rpm = prev["rpm"]
                 thr = prev["throttle"]
                 brk = prev["brake"]
+                brk_est = prev.get("brk_est", False)
                 steer = prev["steer"]
             else:
                 spd = safe_int(tele.m_speed, 0) if tele else 0
@@ -452,6 +457,7 @@ class StateManager:
                 rpm = safe_int(tele.m_engineRPM, 4500) if tele else 4500
                 thr = clamp_percent(tele.m_throttle) if tele else 0
                 brk = clamp_percent(tele.m_brake) if tele else 0
+                brk_est = False
                 steer = round(safe_float(tele.m_steer, 0.0), 3) if tele else 0.0
 
             if p0_fresh and mot and (abs(safe_float(mot.m_worldPositionX)) > 1.0 or abs(safe_float(mot.m_worldPositionZ)) > 1.0):
@@ -480,6 +486,7 @@ class StateManager:
                     "rpm": rpm,
                     "throttle": thr,
                     "brake": brk,
+                    "brk_est": brk_est,
                     "steer": steer,
                     "x": x,
                     "z": z,
@@ -532,9 +539,11 @@ class StateManager:
                     gear = speed_to_gear(spd)
                 thr = clamp_percent(item["td"].get("m_throttle", 0))
                 brk = clamp_percent(item["td"].get("m_brake", 0))
+                brk_est = False
                 steer = round(safe_float(item["td"].get("m_steer", 0)), 3)
             else:
                 gear = speed_to_gear(spd)
+                brk_est = True
                 if accel < -2.0:
                     brk = max(5, min(100, int(round((-accel - 1.5) / 28.0 * 100))))
                     thr = 0
@@ -561,7 +570,7 @@ class StateManager:
                 v_ms = spd / 3.6
                 g_lat = round(max(-5.5, min(5.5, (v_ms * v_ms * curv) / 9.81)), 2)
 
-            points.append({
+            pt = {
                 "distance_m": round(dist, 1),
                 "sector": self._get_sector_name(dist, track_len),
                 "speed": spd,
@@ -572,7 +581,10 @@ class StateManager:
                 "x": x,
                 "z": z,
                 "g_lat": g_lat,
-            })
+            }
+            if brk_est and brk > 0:
+                pt["brk_est"] = True
+            points.append(pt)
         return points
 
     def preload_circuit_laps(self, circuit_folder_or_name, player_idx=None, session_uid=None):
@@ -1186,19 +1198,14 @@ class StateManager:
                 p for p in valid_points
                 if search_start <= p.get("distance_m", 0) <= search_end and p.get("brake", 0) > 5
             ]
+            # brake_source: "pedal" = the game reported brake pressure; "estimated" = guessed from
+            # deceleration (can be a lift); None = no braking at all, so there is no braking point.
             if brake_cands:
                 brake_point = round(brake_cands[0].get("distance_m", entry_t), 1)
+                brake_source = "estimated" if brake_cands[0].get("brk_est") else "pedal"
             else:
-                # Check if speed drops into the corner (lift/deceleration zone)
-                approach_pts = [p for p in valid_points if search_start <= p.get("distance_m", 0) <= search_end]
-                if len(approach_pts) >= 2:
-                    peak_pt = max(approach_pts, key=lambda p: p.get("speed", 0))
-                    if peak_pt.get("speed", 0) >= apex_pt.get("speed", 0) + 6:
-                        brake_point = round(peak_pt.get("distance_m", entry_t), 1)
-                    else:
-                        brake_point = round(entry_pt.get("distance_m", entry_t), 1)
-                else:
-                    brake_point = round(entry_pt.get("distance_m", entry_t), 1)
+                brake_point = None
+                brake_source = None
 
             # Throttle re-application point at/after apex
             thr_cands = [
@@ -1233,7 +1240,7 @@ class StateManager:
                         r_bc = [p for p in r_valid if search_start <= p.get("distance_m", 0) <= search_end and p.get("brake", 0) > 5]
                         r_brk = max((p.get("brake", 0) for p in r_bc), default=safe_int(re_pt.get("brake", 0)))
                         r_thr = safe_int(rx_pt.get("throttle", 80))
-                        r_bp = round(r_bc[0].get("distance_m", entry_t), 1) if r_bc else round(re_pt.get("distance_m", entry_t), 1)
+                        r_bp = round(r_bc[0].get("distance_m", entry_t), 1) if r_bc else None
                         return {
                             "entry_speed": safe_int(re_pt.get("speed", e_spd)),
                             "apex_speed": safe_int(ra_pt.get("speed", a_spd)),
@@ -1252,7 +1259,7 @@ class StateManager:
                     "gear": safe_int(apex_pt.get("gear", 3)),
                     "brake": max(0, min(100, e_brk + delta_s * 2)),
                     "throttle": max(0, min(100, safe_int(exit_pt.get("throttle", 80)) - delta_s * 2)),
-                    "brake_point": round(brake_point - delta_s * 1.8, 1) if brake_point else round(entry_t, 1),
+                    "brake_point": round(brake_point - delta_s * 1.8, 1) if brake_point else None,
                 }
 
             ahead_comp = eval_rival(ahead_points, offset_seed=1)
@@ -1294,6 +1301,7 @@ class StateManager:
                 "exit_throttle": safe_int(exit_pt.get("throttle", 0)),
                 "exit_brake": safe_int(exit_pt.get("brake", 0)),
                 "brake_point": brake_point,
+                "brake_source": brake_source,
                 "throttle_on_dist": throttle_on_dist,
                 "max_g_lat": max_g,
                 "passed": True,
@@ -1388,6 +1396,8 @@ class StateManager:
                     "g_lat": round(g_lat, 3),
                     "g_lon": round(g_lon, 3),
                 }
+                if kin and kin.get("brk_est") and brake_pct > 0:
+                    point["brk_est"] = True
                 self.telemetry_buffer[i].append(point)
                 self.last_recorded_distance[i] = curr_dist
 
@@ -1477,7 +1487,8 @@ class StateManager:
                 slowest = min(c_list, key=lambda c: safe_int(c.get("apex_speed", 999), 999))
                 corner_tip = (
                     f" Peak lateral load at {hardest['name']} ({hardest['max_g_lat']}G, Apex {hardest['apex_speed']} km/h). "
-                    f"Focus exit traction out of {slowest['name']} (Apex {slowest['apex_speed']} km/h, Brake @ {slowest['brake_point']}m)."
+                    f"Focus exit traction out of {slowest['name']} (Apex {slowest['apex_speed']} km/h"
+                    + (f", Brake @ {slowest['brake_point']}m)." if slowest.get("brake_point") else ").")
                 )
 
         if max_w > 45:
@@ -1766,6 +1777,13 @@ class StateManager:
             return hist
         return [h for h in hist if safe_int(h.get("lap", 0)) < cur_lap]
 
+    def _brake_comparable(self, idx, a, b):
+        """True when corner idx can get a braking early/late call: not a kink, both laps passed it
+        and both braked there with real brake pressure (not a lift or an estimated value)."""
+        if idx < len(self.circuit_corners) and self.circuit_corners[idx].get("type") == "kink":
+            return False
+        return all(c.get("passed") and c.get("brake_point") and c.get("brake_source") == "pedal" for c in (a, b))
+
     def _corner_exit_voice_event(self, emit=True, min_diff=5.0):
         """When the player crosses a corner's exit, compare that corner's braking point on this lap
         with the reference (fastest other) lap and return a braking radio event if it differs by >= 5 m.
@@ -1814,16 +1832,15 @@ class StateManager:
                      "corners": self._analyze_corners(pts, is_player=True) if pts else ref_lap.get("corners", [])}
             self._ref_corner_cache = cache
         ref_corners = cache["corners"]
-        if crossed >= len(ref_corners) or not ref_corners[crossed].get("passed"):
+        live = self._analyze_corners(self.telemetry_buffer.get(p, []), is_player=True)
+        if crossed >= len(ref_corners) or crossed >= len(live):
+            return None
+        # Only compare when the player really braked in this corner on BOTH laps; a lift, a
+        # flat-out pass or a kink has no braking point to be early or late with.
+        if not self._brake_comparable(crossed, live[crossed], ref_corners[crossed]):
             return None
         ref_bp = safe_float(ref_corners[crossed].get("brake_point", 0))
-
-        live = self._analyze_corners(self.telemetry_buffer.get(p, []), is_player=True)
-        if crossed >= len(live) or not live[crossed].get("passed"):
-            return None
         cur_bp = safe_float(live[crossed].get("brake_point", 0))
-        if ref_bp <= 0 or cur_bp <= 0:
-            return None
 
         diff = cur_bp - ref_bp  # positive = braked later (deeper) than the reference lap
         corner_name = self.circuit_corners[crossed].get("name", f"Turn {crossed + 1}")
@@ -2044,7 +2061,7 @@ class StateManager:
             c_best = self._analyze_corners(best["telemetry_points"], is_player=True)
             worst = None
             for i, (a, b) in enumerate(zip(c_last, c_best)):
-                if a.get("passed") and b.get("passed") and a.get("brake_point") and b.get("brake_point"):
+                if self._brake_comparable(i, a, b):
                     d = safe_float(a["brake_point"]) - safe_float(b["brake_point"])
                     if 5 <= abs(d) <= 40 and (worst is None or abs(d) > abs(worst["diff_m"])):
                         worst = {"turn": safe_int(a.get("turn", i + 1), i + 1), "diff_m": d}
