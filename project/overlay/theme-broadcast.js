@@ -228,6 +228,7 @@
     // gears on the curve of the halo, RPM bar under them
     const GEAR = [[916, 410], [935, 418], [956, 428], [975, 437], [995, 448], [1015, 460], [1034, 473], [1052, 485], [1070, 502]];
     const RPM = [[904, 420], [936, 432], [980, 454], [1020, 476], [1050, 497], [1076, 520]];
+    const GEAR_LIFT = 3;
     const rpmPath = smooth(RPM);
     add('path', { class: 'rf-rpmbg', d: rpmPath, pathLength: 100 });
     const rpmFill = add('path', { class: 'rf-rpmfill', d: rpmPath, pathLength: 100, 'stroke-dasharray': '0 100' });
@@ -247,11 +248,15 @@
     watch(keep.rpm, drawRpm);
     if (keep.gears) {
       [...keep.gears.children].forEach((t, i) => {
-        const k = Math.min(i, GEAR.length - 1), [x, y] = GEAR[k];
+        const k = Math.min(i, GEAR.length - 1);
         const a = GEAR[Math.max(0, k - 1)], b = GEAR[Math.min(GEAR.length - 1, k + 1)];
+        const ang = Math.atan2(b[1] - a[1], b[0] - a[0]);
+        // lift each digit GEAR_LIFT units off the RPM bar (along the curve's normal) so even the enlarged
+        // active gear never touches it
+        const x = +(GEAR[k][0] + GEAR_LIFT * Math.sin(ang)).toFixed(1), y = +(GEAR[k][1] - GEAR_LIFT * Math.cos(ang)).toFixed(1);
         t.setAttribute('x', x); t.setAttribute('y', y);
         t.setAttribute('text-anchor', 'middle'); t.setAttribute('dominant-baseline', 'central');
-        t.setAttribute('transform', rot((Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI).toFixed(1), x, y));
+        t.setAttribute('transform', rot((ang * 180 / Math.PI).toFixed(1), x, y));
       });
       layer.appendChild(keep.gears);
     }

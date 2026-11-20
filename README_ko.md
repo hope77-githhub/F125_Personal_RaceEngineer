@@ -72,7 +72,7 @@ python project/run_app.py
 * 답변 음성은 모두 미리 생성한 문장(숫자별 포함)을 이어서 재생합니다. TTS가 꺼져 있으면 글로만 보여 줘요.
 
 ### 4-2. TV 오버레이 (게임 위 중계 그래픽)
-[f1-25-tv-overlay](https://github.com/thenotrealuser/f1-25-tv-overlay)(MIT)를 `project/overlay/`에 포함했어요. 타이밍 타워, 예선 탈락권, 랩 카드(S1/S2 실시간), 온보드 카드, 계기판(속도·기어·RPM·ERS), 깃발·SC/VSC, 패스티스트 랩 배너를 게임 화면 위에 투명하게 띄웁니다.
+[f1-25-tv-overlay](https://github.com/thenotrealuser/f1-25-tv-overlay)(MIT)를 `project/overlay/`에 포함했어요. 타이밍 타워, 예선 탈락권, 랩 카드(S1/S2 실시간 — 연습·예선은 화면 상단 가운데 최대 3장, 레이스는 내 랩타임과 내 베스트 랩만 보여 주는 카드 1장), 온보드 카드, 계기판(속도·기어·RPM·ERS), 깃발·SC/VSC, 패스티스트 랩 배너를 게임 화면 위에 투명하게 띄웁니다.
 
 1. **Node.js 18 이상**을 설치합니다([nodejs.org](https://nodejs.org)).
 2. 게임 그래픽 설정에서 디스플레이 모드를 **"창 모드(전체 화면)"(테두리 없는 창)** 으로 바꿉니다. 독점 전체 화면에서는 위에 띄울 수 없어요.

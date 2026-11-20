@@ -511,7 +511,7 @@
       q.big.textContent = { 0: 'BOXES', 2: 'IN LAP', 3: 'OUT LAP', 4: 'ON TRACK' }[c.status] || 'BOXES';
       q.big.className = 'qbig txt';
       q.refTime.textContent = c.bestLap ? fmtLap(c.bestLap) : '';
-      q.refName.textContent = c.bestLap ? 'MELHOR VOLTA' : '';
+      q.refName.textContent = c.bestLap ? 'BEST LAP' : '';
       q.bars.forEach(b => { b.className = ''; });
       q.labels.forEach((l, j) => { l.textContent = 'S' + (j + 1); l.classList.remove('sel'); });
       return;
@@ -575,7 +575,9 @@
     return result(c.lastLap, c.bestLap, s.best?.lap);
   }
 
-  // cartao da volta: o mesmo formato, so para o piloto do jogador, em corrida
+  // cartao da volta: o mesmo formato, so para o piloto do jogador, em corrida.
+  // So os tempos do jogador: deltas de setor contra a propria melhor volta, e a coluna da direita
+  // mostra a melhor volta dele (nunca o nome/tempo de outro piloto).
   function renderLapCard(s, list, cut, timed) {
     const mine = s.cars[s.player];
     const ok = mine && (mine.name || mine.pos);
@@ -594,7 +596,9 @@
       raceFinish.until = now + 5000;
     }
     const finished = mine.completedLapNum > 0 && now < raceFinish.until;
-    fillCard(lapCardView, mine, s, refFor(mine, s, list, cut, timed), now, true);
+    fillCard(lapCardView, mine, s, mine.bestLap ? mine : null, now, true);
+    lapCardView.refTime.textContent = mine.bestLap ? fmtLap(mine.bestLap) : '';
+    lapCardView.refName.textContent = mine.bestLap ? 'BEST LAP' : '';
     if (finished) {
       lapCardView.big.textContent = fmtLap(mine.lastLap);
       lapCardView.big.className = 'qbig';
@@ -686,7 +690,7 @@
 
     // treino/qualy (tipos 1-14 e time trial): ordena pelo melhor tempo. Corrida: pela posicao.
     const timed = ui.mode === 'quali' || (ui.mode !== 'race' && ((s.sessionType >= 1 && s.sessionType <= 14) || s.sessionType === 18));
-    el.lapCard.style.display = ui.lap && ([15, 16, 17].includes(s.sessionType) || edit) ? 'block' : 'none';
+    el.lapCard.style.display = ui.lap && (!timed || edit) ? 'block' : 'none';   // corrida: so o cartao do jogador
     root.classList.toggle('timed', timed);
     el.brandEvent.textContent = s.isSprintRace ? 'SPRINT' : timed ? 'FIA Formula 1\nWorld Championship' : 'RACE';
     const limit = s.numActive > 0 ? s.numActive : s.cars.length;

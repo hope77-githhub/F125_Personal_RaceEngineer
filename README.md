@@ -74,7 +74,7 @@ In the radio panel's **"🎧 Ask the engineer"** box, tap a preset or type a que
 * Answers are stitched from pre-baked sentences (including per-number variants). With TTS off they are shown as text only.
 
 ### 4-2. TV overlay (broadcast graphics over the game)
-[f1-25-tv-overlay](https://github.com/thenotrealuser/f1-25-tv-overlay) (MIT) is included in `project/overlay/`. It draws a timing tower, qualifying cut-off, lap card (live S1/S2), onboard card, halo instruments (speed, gear, RPM, ERS), flags / SC / VSC and a fastest-lap banner transparently over the game.
+[f1-25-tv-overlay](https://github.com/thenotrealuser/f1-25-tv-overlay) (MIT) is included in `project/overlay/`. It draws a timing tower, qualifying cut-off, lap cards (live S1/S2 — up to 3 at the top centre in practice and qualifying; in a race a single card with only my lap time and my best lap), onboard card, halo instruments (speed, gear, RPM, ERS), flags / SC / VSC and a fastest-lap banner transparently over the game.
 
 1. Install **Node.js 18+** ([nodejs.org](https://nodejs.org)).
 2. Set the game's display mode to **borderless / windowed fullscreen** — exclusive fullscreen can't be drawn over.

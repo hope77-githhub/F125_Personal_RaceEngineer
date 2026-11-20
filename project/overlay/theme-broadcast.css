@@ -121,7 +121,15 @@ body.has-logo #brand::before {
 }
 /* upstream "JOGO EM PAUSA · DADOS CONGELADOS" banner (game paused / no new packets): not wanted on screen */
 #pauseBadge { display: none !important; }
-/* bottom driver cards: never more than 3 */
+/* upstream never styled these two, so they printed as loose text over the tower / top cards:
+   the connection debug line stays off screen (it is on /control), the hotkey toast is a small pill at the bottom */
+#status { display: none !important; }
+#toast { display: none; position: fixed; left: 50%; bottom: 1.2vh; transform: translateX(-50%); z-index: 6;
+  padding: .2rem .7rem; background: #0b0c0fe6; border: 1px solid #ffffff2a; border-radius: .2rem; color: #e8ebef;
+  font: 600 .62rem/1.2 var(--font); font-stretch: var(--font-stretch); letter-spacing: .05em; white-space: nowrap; pointer-events: none; }
+#toast.show { display: block; }
+/* practice / qualifying lap cards: never more than 3, at the top centre of the screen */
+#qCards { top: 3vh; bottom: auto; transform-origin: center top; }
 #qCards .qc:nth-child(n+4) { display: none !important; }
 #haloGauge .rf-arc { fill: none; stroke: #fff; stroke-width: 1.3; opacity: .85; }
 #haloGauge .rf-box { fill: #07152c; fill-opacity: .55; stroke-opacity: .55; }
@@ -147,4 +155,4 @@ body.has-logo #brand::before {
 #haloGauge .rf-aero[data-state="ready"] { stroke: #4be59a; opacity: 1; }
 #haloGauge .rf-aero[data-state="on"] { stroke: #22d97a; opacity: 1; filter: drop-shadow(0 0 2px #2dff94); }
 #haloGauge #rfHalo .gear { font-size: 15px; font-weight: 700; fill: #d6e2ec; filter: none; }
-#haloGauge #rfHalo .gear.active { font-size: 19px; font-weight: 900; fill: #fff; filter: drop-shadow(0 0 2px #8fe0ff); }
+#haloGauge #rfHalo .gear.active { font-size: 18px; font-weight: 900; fill: #fff; filter: drop-shadow(0 0 2px #8fe0ff); }
