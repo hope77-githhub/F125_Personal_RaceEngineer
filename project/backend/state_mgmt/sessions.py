@@ -23,6 +23,30 @@ SESSION_TYPE_NAMES = {
 INDEX_FILE = "_sessions_index_v1.json"
 
 
+def recorded_circuits(data_dir):
+    """circuit_* folders that still hold recorded lap files, most recently recorded first."""
+    out = []
+    try:
+        names = os.listdir(data_dir)
+    except OSError:
+        return out
+    for name in names:
+        path = os.path.join(data_dir, name)
+        if not (name.startswith("circuit_") and name != "circuit_unknown" and os.path.isdir(path)):
+            continue
+        laps = [os.path.join(path, f) for f in os.listdir(path)
+                if f.startswith("lap") and f.endswith(".jsonl") and os.path.getsize(os.path.join(path, f)) > 1_000_000]
+        if laps:
+            out.append((max(os.path.getmtime(f) for f in laps), name))
+    return [name for _, name in sorted(out, reverse=True)]
+
+
+def latest_recorded_circuit(data_dir):
+    """Folder name of the most recently recorded circuit that still exists, or None."""
+    found = recorded_circuits(data_dir)
+    return found[0] if found else None
+
+
 def session_group(session_type):
     """'practice' | 'qualifying' | 'race' — drives which radio calls the engineer makes."""
     t = int(session_type or 0)

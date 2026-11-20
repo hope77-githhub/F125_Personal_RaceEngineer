@@ -1,5 +1,5 @@
 from circuit_data.manager import CircuitDataManager
-from state_mgmt.sessions import frame_session_uid, packet_session_uid, session_name, session_group
+from state_mgmt.sessions import frame_session_uid, packet_session_uid, session_name, session_group, latest_recorded_circuit
 from state_mgmt import engineer_brain
 import math
 import logging
@@ -200,7 +200,9 @@ class StateManager:
 
         if auto_preload:
             try:
-                self.preload_circuit_laps("circuit_Catalunya")
+                # Whatever was recorded last and is still on disk (a deleted circuit folder is skipped).
+                data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
+                self.preload_circuit_laps(latest_recorded_circuit(data_dir))
             except Exception as e:
                 logger.warning(f"Initial preload skipped: {e}")
 

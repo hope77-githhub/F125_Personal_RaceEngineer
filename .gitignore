@@ -7,3 +7,6 @@ venv/
 
 # build output (cx_Freeze exe, ~1GB)
 project/build/
+
+# recording retention setting + ledger (state_mgmt/recordings.py)
+project/backend/data/_recordings.json

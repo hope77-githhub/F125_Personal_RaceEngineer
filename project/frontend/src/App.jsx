@@ -44,7 +44,12 @@ const i18n = {
     selectLapPrompt: "Click any lap to inspect corner-by-corner telemetry",
     useRawReplay: "Recorded Telemetry Replay",
     useRawReplayDesc: "Simulate and analyze accumulated circuit lap telemetry from backend /data.",
+    keepRec: "Keep recordings",
+    keepRecOff: "OFF: a session's recording (about 200 MB) is deleted when the next session starts and when the app closes.",
+    keepRecOn: "ON: recordings stay on disk so you can replay them.",
+    keepRecDisk: "On disk now",
     replayCircuit: "Circuit Dataset",
+    replayNone: "No recorded sessions",
     replayLap: "Target Lap",
     replaySession: "Session",
     replaySpeed: "Playback Speed",
@@ -98,7 +103,12 @@ const i18n = {
     selectLapPrompt: "랩을 클릭하면 해당 랩의 코너별 상세 텔레메트리를 확인할 수 있습니다",
     useRawReplay: "Raw Data 리플레이 모드",
     useRawReplayDesc: "백엔드 /data에 기록된 서킷별 랩 주행 데이터를 불러와 시뮬레이션 및 코너 분석을 수행합니다.",
+    keepRec: "녹화 보관",
+    keepRecOff: "OFF: 다음 세션이 시작되거나 앱을 끄면 그 세션 녹화(약 200MB)를 자동으로 지워요.",
+    keepRecOn: "ON: 리플레이로 다시 볼 수 있게 녹화를 남겨 둬요.",
+    keepRecDisk: "현재 녹화 용량",
     replayCircuit: "리플레이 서킷 선택",
+    replayNone: "녹화된 세션 없음",
     replayLap: "재생할 랩",
     replaySession: "리플레이 세션",
     replaySpeed: "재생 배속",
@@ -1260,7 +1270,7 @@ function Dashboard({ settings, setSettings, onExit }) {
   useEffect(() => {
     let wsUrl = `ws://localhost:8080/ws?port=${settings.port}&rate=${settings.updateRate}&units=${settings.units}&replay=${settings.useRawReplay}`;
     if (settings.useRawReplay) {
-      wsUrl += `&circuit=${encodeURIComponent(settings.replayCircuit || 'circuit_Catalunya')}&lap=${encodeURIComponent(settings.replayLap || 'all')}&speed=${settings.replaySpeed || 2.0}&loop=true`;
+      wsUrl += `&circuit=${encodeURIComponent(settings.replayCircuit || '')}&lap=${encodeURIComponent(settings.replayLap || 'all')}&speed=${settings.replaySpeed || 2.0}&loop=true`;
       if (settings.replaySession) wsUrl += `&session=${encodeURIComponent(settings.replaySession)}`;
     }
     const ws = new WebSocket(wsUrl);
@@ -3483,11 +3493,31 @@ function SetupPage({ onStart }) {
   const [language, setLanguage] = useState('ko');
   const [useRawReplay, setUseRawReplay] = useState(true);
   const [availableReplays, setAvailableReplays] = useState([]);
-  const [replayCircuit, setReplayCircuit] = useState('circuit_Catalunya');
+  const [replayCircuit, setReplayCircuit] = useState('');
   const [replayLap, setReplayLap] = useState('all');
   const [replaySession, setReplaySession] = useState('');
   const [replaySpeed, setReplaySpeed] = useState(2.0);
+  // "Keep recordings" (backend state_mgmt/recordings.py): OFF deletes a session's recording when it ends
+  const [rec, setRec] = useState(null);   // { keep, total_mb } — null when the backend has no /api/recordings
   const t = i18n[language];
+
+  useEffect(() => {
+    fetch('http://localhost:8080/api/recordings')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => data && setRec(data))
+      .catch(() => {});
+  }, []);
+  const toggleKeepRecordings = () => {
+    if (!rec) return;
+    fetch('http://localhost:8080/api/recordings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ keep: !rec.keep }),
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => data && setRec(data))
+      .catch(() => {});
+  };
 
   useEffect(() => {
     fetch('http://localhost:8080/api/replays')
@@ -3495,12 +3525,8 @@ function SetupPage({ onStart }) {
       .then((data) => {
         if (data.circuits && data.circuits.length > 0) {
           setAvailableReplays(data.circuits);
-          const cat = data.circuits.find((c) => c.name.toLowerCase().includes('catalunya'));
-          if (cat) {
-            setReplayCircuit(cat.id);
-          } else {
-            setReplayCircuit(data.circuits[0].id);
-          }
+          // the backend lists the most recently recorded circuit first
+          setReplayCircuit(data.circuits[0].id);
         }
       })
       .catch(() => {});
@@ -3641,10 +3667,7 @@ function SetupPage({ onStart }) {
                         </option>
                       ))
                     ) : (
-                      <>
-                        <option value="circuit_Catalunya">Catalunya (9 Laps)</option>
-                        <option value="circuit_Austria">Austria (1 Lap)</option>
-                      </>
+                      <option value="">{t.replayNone}</option>
                     )}
                   </select>
                 </div>
@@ -3727,6 +3750,37 @@ function SetupPage({ onStart }) {
               </div>
             )}
           </div>
+
+          {/* Keep recordings: OFF (default) deletes a session's recording when the next session starts / the app closes */}
+          {rec && (
+            <div
+              style={{
+                padding: '16px 20px',
+                backgroundColor: 'var(--color-surface-soft)',
+                borderRadius: 'var(--rounded-lg)',
+                border: rec.keep ? '1.5px solid var(--color-primary)' : '1px solid var(--color-hairline)',
+                marginBottom: '20px',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: '15px', color: 'var(--color-ink)' }}>{t.keepRec}</div>
+                  <div style={{ fontSize: '13px', color: 'var(--color-body)', marginTop: '4px' }}>
+                    {rec.keep ? t.keepRecOn : t.keepRecOff}
+                  </div>
+                  <div className="mono-num" style={{ fontSize: '12px', color: 'var(--color-muted)', marginTop: '4px' }}>
+                    {t.keepRecDisk}: {rec.total_mb} MB
+                  </div>
+                </div>
+                <button
+                  onClick={toggleKeepRecordings}
+                  className={`btn-secondary-light ${rec.keep ? 'active' : ''}`}
+                >
+                  {rec.keep ? 'ON' : 'OFF'}
+                </button>
+              </div>
+            </div>
+          )}
 
           <div style={{ marginBottom: '20px' }}>
             <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, fontSize: '14px' }}>
@@ -3933,7 +3987,7 @@ export default function App() {
     voice: 'redbull',
     language: 'ko',
     useRawReplay: true,
-    replayCircuit: 'circuit_Catalunya',
+    replayCircuit: '',
     replaySession: '',
     replayLap: 'all',
     replaySpeed: 2.0,

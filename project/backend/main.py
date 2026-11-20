@@ -11,8 +11,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from telemetry.listener import F1UDPListener
 from telemetry.f1_types.router import parse_packet
 from state_mgmt.manager import StateManager, TRACK_MAP, ENGINEER_VOICE_CLIPS
-from state_mgmt.sessions import list_sessions, session_frame_refs, frame_session_uid, packet_session_uid
+from state_mgmt.sessions import (list_sessions, session_frame_refs, frame_session_uid, packet_session_uid,
+                                 recorded_circuits, latest_recorded_circuit)
 from state_mgmt import engineer_brain
+from state_mgmt.recordings import Recordings
 from pydantic import BaseModel
 from overlay_manager import OverlayManager
 from telemetry.encoder import encode_packet
@@ -73,14 +75,18 @@ if os.path.exists(DEBUG_FILE_PATH):
             if key.startswith("packet_id_") and isinstance(pkt_dict, dict):
                 pid = int(key.replace("packet_id_", ""))
                 state_manager.update(pid, Dict2Obj(pkt_dict))
-        state_manager.preload_circuit_laps("circuit_Catalunya")
-        logger.info("Seeded state_manager from debug_payload.json and preloaded Catalunya laps.")
+        _seed_circuit = latest_recorded_circuit(os.path.join(BASE_DIR, "backend", "data"))
+        state_manager.preload_circuit_laps(_seed_circuit)
+        logger.info(f"Seeded state_manager from debug_payload.json and preloaded {_seed_circuit or 'no'} laps.")
     except Exception as e:
         logger.warning(f"Failed to seed state_manager from debug_payload.json: {e}")
 
 latest_raw_packet_objs = {}
 _last_raw_dump_time = 0.0
 _live_clients = 0   # open live dashboards; raw packets are recorded to lapN.jsonl only while one is open
+# Recording retention: a session's recording is kept only while it is the one being recorded (unless the
+# "keep recordings" setting is on); see state_mgmt/recordings.py
+recordings = Recordings(os.path.join(BASE_DIR, "backend", "data"))
 
 
 def ensure_udp_listener(port=20777, update_rate=60):
@@ -164,8 +170,8 @@ def on_udp_packet_received(data: bytes):
                     "timestamp": current_time,
                     "data": snapshot_dict,
                 }
-                with open(log_path, "a", encoding="utf-8") as f:
-                    f.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
+                recordings.note_frame(circuit_folder, snapshot_dict)   # a new session clears the earlier ones
+                recordings.append(log_path, json.dumps(log_entry, ensure_ascii=False) + "\n")
             except Exception as e:
                 logger.error(f"Failed to dump raw payload: {e}")
 
@@ -177,9 +183,10 @@ def get_available_replays():
         return []
 
     circuits = []
-    for item in sorted(os.listdir(data_dir)):
+    # most recently recorded circuit first, so the setup page defaults to the latest data on disk
+    for item in recorded_circuits(data_dir):
         item_path = os.path.join(data_dir, item)
-        if os.path.isdir(item_path) and item.startswith("circuit_") and item != "circuit_unknown":
+        if os.path.isdir(item_path):
             raw_circuit_name = item.replace("circuit_", "")
             # Check if pre-parsed cache exists to know which laps are complete
             valid_lap_nums = None
@@ -322,14 +329,36 @@ def overlay_stop_endpoint():
     return overlay_manager.set_enabled(False)
 
 
+class RecordingsBody(BaseModel):
+    keep: bool
+
+
+@app.get("/api/recordings")
+def recordings_status_endpoint():
+    """Recorded telemetry on disk and the "keep recordings" setting."""
+    return recordings.status()
+
+
+@app.post("/api/recordings")
+def recordings_keep_endpoint(body: RecordingsBody):
+    """keep = false (default): a session's recording is deleted when the next session starts recording and
+    when the app closes. keep = true: recordings stay, for replays."""
+    return recordings.set_keep(body.keep)
+
+
 @app.on_event("startup")
 async def _listen_for_game_on_launch():
     ensure_udp_listener()
+    recordings.purge_in_background()   # recordings left by a run that did not close normally
 
 
 @app.on_event("shutdown")
 def _stop_overlay_on_shutdown():
     overlay_manager.stop()
+    try:
+        recordings.purge()             # the session just played is not needed once the app closes
+    except Exception as e:
+        logger.warning(f"Could not remove recordings on exit: {e}")
 
 
 @app.get("/api/qa/presets")
@@ -376,16 +405,18 @@ def _overlay_car_telemetry(template, car_idx, kin, frame_id):
         return None
 
 
-async def replay_telemetry_loop(websocket: WebSocket, update_rate: int, units: str, circuit: str = "circuit_Catalunya", lap: str = "all", speed: float = 1.0, loop: bool = True, session: str = None):
+async def replay_telemetry_loop(websocket: WebSocket, update_rate: int, units: str, circuit: str = None, lap: str = "all", speed: float = 1.0, loop: bool = True, session: str = None):
     data_dir = os.path.join(BASE_DIR, "backend", "data")
-    target_dir = os.path.join(data_dir, circuit)
-    if not os.path.exists(target_dir):
-        avail = [d for d in os.listdir(data_dir) if os.path.isdir(os.path.join(data_dir, d)) and d.startswith("circuit_")]
+    avail = recorded_circuits(data_dir)
+    if not circuit or circuit not in avail:
+        # asked-for circuit was deleted (or none given): play the most recently recorded one left
         if not avail:
             logger.error("No replay data directories found.")
             return
-        target_dir = os.path.join(data_dir, avail[0])
-        circuit = avail[0]
+        if circuit:
+            logger.warning(f"Replay: {circuit} has no recorded laps any more, using {avail[0]}")
+        circuit, session, lap = avail[0], (None if circuit else session), ("all" if circuit else lap)
+    target_dir = os.path.join(data_dir, circuit)
 
     # One session at a time: default to the session with the most recorded frames
     sessions = list_sessions(target_dir)
@@ -569,7 +600,7 @@ async def websocket_endpoint(websocket: WebSocket):
     update_rate = int(query_params.get("rate", 60))
     units = query_params.get("units", "metric")
     replay = query_params.get("replay", "false").lower() == "true"
-    circuit = query_params.get("circuit", "circuit_Catalunya")
+    circuit = query_params.get("circuit") or None
     lap = query_params.get("lap", "all")
     try:
         speed = float(query_params.get("speed", 1.0))
