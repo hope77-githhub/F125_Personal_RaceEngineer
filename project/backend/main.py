@@ -556,6 +556,46 @@ if os.path.exists(FRONTEND_DIST):
     app.mount("/", StaticFiles(directory=FRONTEND_DIST, html=True), name="frontend")
     logger.info(f"Mounted static frontend distribution from {FRONTEND_DIST}")
 
-if __name__ == "__main__":
+def _open_browser_when_ready(server, url, timeout=30.0):
+    """Open the web UI once *this* server is listening (never on a bind failure)."""
+    import webbrowser
+    deadline = time.monotonic() + timeout
+    while not server.started:
+        if server.should_exit or time.monotonic() > deadline:
+            return
+        time.sleep(0.1)
+    if not os.path.exists(FRONTEND_DIST):
+        logger.warning(f"Web UI not built ({FRONTEND_DIST} missing): run `npm run build` in "
+                       "project/frontend, or use `npm run dev` and open http://localhost:5173")
+        return
+    try:
+        webbrowser.open(url)
+    except Exception as e:
+        logger.warning(f"Could not open a browser ({e}); open {url} yourself")
+
+
+def run(host="0.0.0.0", port=8080, open_browser=True):
+    """Start the API + web UI on one port and open the browser when it is up.
+    Set F1_NO_BROWSER=1 (or pass --no-browser) to skip opening the browser."""
+    import threading
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8080)
+    url = f"http://localhost:{port}"
+    print("=" * 65)
+    print("  F1 AI Race Engineer - Real-time Pit Wall Telemetry & Radio")
+    print(f"  Web UI: {url}")
+    print("  Listening for F1 UDP Telemetry on 20777")
+    print("=" * 65)
+    server = uvicorn.Server(uvicorn.Config(app, host=host, port=port, log_level="info"))
+    if open_browser and os.environ.get("F1_NO_BROWSER", "").strip() not in ("1", "true", "yes"):
+        threading.Thread(target=_open_browser_when_ready, args=(server, url), daemon=True).start()
+    server.run()
+
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description="F1 AI Race Engineer server (API + web UI)")
+    parser.add_argument("--port", type=int, default=8080)
+    parser.add_argument("--host", default="0.0.0.0")
+    parser.add_argument("--no-browser", action="store_true", help="don't open the web UI in a browser")
+    args = parser.parse_args()
+    run(host=args.host, port=args.port, open_browser=not args.no_browser)

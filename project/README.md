@@ -323,8 +323,10 @@ C:\Users\jahjang\python\venv\Scripts\activate
 # 의존성 설치 (최초 1회)
 pip install -r ../requirements.txt
 
-# FastAPI 서버 구동 (포트 8080)
+# FastAPI 서버 구동 (포트 8080) — 서버가 뜨면 빌드된 웹 UI(http://localhost:8080)가 브라우저로 열림
 python main.py
+# Vite 개발 서버(5173)로 작업할 때는 브라우저 자동 열기 끄기
+python main.py --no-browser
 ```
 > 서버 기동 시 사전 파싱된 서킷 캐시(`_parsed_laps_cache_v3.json`)를 통해 **약 28ms 만에 전체 랩 데이터가 즉시 로드**됩니다.
 

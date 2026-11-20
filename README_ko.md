@@ -15,7 +15,7 @@ pip install -r project/requirements.txt
 python project/run_app.py
 ```
 
-브라우저가 `http://localhost:8080`으로 자동으로 열립니다.
+서버가 뜨면 브라우저가 `http://localhost:8080`으로 자동으로 열립니다(`python project/backend/main.py`도 동일). 열지 않으려면 `--no-browser`를 붙이거나 `F1_NO_BROWSER=1`을 설정하세요.
 
 ### 2. 게임 설정 (설정 → 텔레메트리)
 | 항목 | 값 |
@@ -213,9 +213,9 @@ flowchart LR
 ```bash
 cd project/backend
 # 가상환경 활성화 후
-python main.py
+python main.py --no-browser
 ```
-* 서버는 `http://localhost:8080`에서 실행되며, 사전 파싱된 서킷 캐시(`_parsed_laps_cache_v3.json`) 덕분에 약 28ms 만에 즉시 기동됩니다.
+* 서버는 `http://localhost:8080`에서 실행됩니다. `--no-browser` 없이 실행하면 빌드된 UI가 브라우저로 열리니, 아래 Vite 개발 서버로 작업할 때는 붙여 두세요. 사전 파싱된 서킷 캐시(`_parsed_laps_cache_v3.json`) 덕분에 약 28ms 만에 즉시 기동됩니다.
 
 ### 2. 프론트엔드 실행
 ```bash

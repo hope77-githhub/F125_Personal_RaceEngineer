@@ -17,7 +17,7 @@ pip install -r project/requirements.txt
 python project/run_app.py
 ```
 
-Your browser opens at `http://localhost:8080`.
+Your browser opens at `http://localhost:8080` as soon as the server is up (`python project/backend/main.py` does the same). Add `--no-browser` (or set `F1_NO_BROWSER=1`) to skip it.
 
 ### 2. In-game settings (Settings → Telemetry)
 | Setting | Value |
@@ -215,9 +215,9 @@ Training takes a few minutes on an RTX 3070 8 GB.
 ```bash
 cd project/backend
 # Activate your python virtual environment
-python main.py
+python main.py --no-browser
 ```
-* Runs at `http://localhost:8080`. With the pre-parsed disk cache (`_parsed_laps_cache_v3.json`), server startup and lap preloading take only ~28ms.
+* Runs at `http://localhost:8080`. Without `--no-browser` it opens the built UI there; skip that while you work on the Vite dev server below. With the pre-parsed disk cache (`_parsed_laps_cache_v3.json`), server startup and lap preloading take only ~28ms.
 
 ### 2. Frontend
 ```bash
