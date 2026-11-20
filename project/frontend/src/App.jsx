@@ -902,6 +902,48 @@ const loadRadioIntro = (ctx) => {
   return radioIntroPromise;
 };
 
+// The engineer lines were synthesised at 0.9x (GPT-SoVITS speed_factor 0.9, see project/README.md). Play them at
+// 1/0.9 so they come out at the voice's natural pace; the pitch is kept (browser time-stretch, preservesPitch).
+const VOICE_SPEED = 1.11;
+
+// Cut leading/trailing silence (below about -44 dBFS), keeping short pads so words are not clipped.
+// Used on every decoded line and on each segment before stitching, so joined segments do not leave
+// long pauses between words.
+const trimSilence = (ctx, buf, padStart = 0.03, padEnd = 0.06, thr = 0.006) => {
+  let on = buf.length, off = 0;
+  for (let ch = 0; ch < buf.numberOfChannels; ch++) {
+    const d = buf.getChannelData(ch);
+    let i = 0; while (i < d.length && Math.abs(d[i]) < thr) i++;
+    let j = d.length - 1; while (j > i && Math.abs(d[j]) < thr) j--;
+    if (i < d.length) { on = Math.min(on, i); off = Math.max(off, j); }
+  }
+  if (on >= off) return buf;
+  const sr = buf.sampleRate;
+  const a = Math.max(0, on - Math.round(padStart * sr)), b = Math.min(buf.length, off + Math.round(padEnd * sr));
+  if (a === 0 && b === buf.length) return buf;
+  const out = ctx.createBuffer(buf.numberOfChannels, b - a, sr);
+  for (let ch = 0; ch < buf.numberOfChannels; ch++) out.copyToChannel(buf.getChannelData(ch).subarray(a, b), ch);
+  return out;
+};
+
+// AudioBuffer -> 16-bit PCM WAV object URL, so the line can play through an <audio> element (pitch-kept speed-up).
+const bufferToWavUrl = (buf) => {
+  const ch = buf.numberOfChannels, n = buf.length, bytes = 44 + n * ch * 2;
+  const view = new DataView(new ArrayBuffer(bytes));
+  const str = (o, s) => { for (let i = 0; i < s.length; i++) view.setUint8(o + i, s.charCodeAt(i)); };
+  str(0, 'RIFF'); view.setUint32(4, bytes - 8, true); str(8, 'WAVEfmt ');
+  view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, ch, true);
+  view.setUint32(24, buf.sampleRate, true); view.setUint32(28, buf.sampleRate * ch * 2, true);
+  view.setUint16(32, ch * 2, true); view.setUint16(34, 16, true); str(36, 'data'); view.setUint32(40, n * ch * 2, true);
+  const data = Array.from({ length: ch }, (_, c) => buf.getChannelData(c));
+  let o = 44;
+  for (let i = 0; i < n; i++) for (let c = 0; c < ch; c++, o += 2) {
+    const s = Math.max(-1, Math.min(1, data[c][i]));
+    view.setInt16(o, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+  }
+  return URL.createObjectURL(new Blob([view.buffer], { type: 'audio/wav' }));
+};
+
 function useVoicePlayer() {
   const [isPlayingVoice, setIsPlayingVoice] = useState(false);
   const [currentVoiceClip, setCurrentVoiceClip] = useState(null);
@@ -910,30 +952,40 @@ function useVoicePlayer() {
   const activeSourcesRef = useRef([]);   // chime + voice nodes of the line now playing
   const playTokenRef = useRef(0);        // a newer line cancels one still loading
 
-  // Chime first, then the voice through the radio filter. Returns the voice node.
+  // Chime first, then the voice through the radio filter at VOICE_SPEED with the pitch kept.
   const startWithRadioIntro = async (ctx, voiceBuffer, token) => {
     const intro = await loadRadioIntro(ctx);
     if (token !== playTokenRef.current) return null;
-    const voice = ctx.createBufferSource();
-    voice.buffer = voiceBuffer;
-    voice.connect(createF1RadioFX(ctx, ctx.destination));
-    const t0 = ctx.currentTime + 0.02;
-    const nodes = [voice];
-    let voiceAt = t0;
+    const nodes = [];
+    let voiceDelayS = 0.02;
     if (intro) {
       const chime = ctx.createBufferSource();
       chime.buffer = intro.buffer;
       chime.connect(ctx.destination);
-      chime.start(t0, intro.start, intro.duration);
+      chime.start(ctx.currentTime + 0.02, intro.start, intro.duration);
       nodes.push(chime);
-      voiceAt = t0 + intro.duration + RADIO_INTRO_GAP_S;
+      voiceDelayS = 0.02 + intro.duration + RADIO_INTRO_GAP_S;
     }
-    voice.onended = () => {
+    const url = bufferToWavUrl(trimSilence(ctx, voiceBuffer));
+    const voice = new Audio(url);
+    voice.preservesPitch = true;
+    voice.defaultPlaybackRate = VOICE_SPEED;
+    voice.playbackRate = VOICE_SPEED;
+    ctx.createMediaElementSource(voice).connect(createF1RadioFX(ctx, ctx.destination));
+    let released = false;
+    const release = () => { if (!released) { released = true; URL.revokeObjectURL(url); } };
+    const finish = () => {
+      release();
       if (token !== playTokenRef.current) return;
       setIsPlayingVoice(false);
       activeSourcesRef.current = [];
     };
-    voice.start(voiceAt);
+    voice.onended = finish;
+    voice.onerror = finish;
+    const timer = setTimeout(() => {
+      if (token === playTokenRef.current) voice.play().catch(finish);
+    }, voiceDelayS * 1000);
+    nodes.push({ stop: () => { clearTimeout(timer); voice.pause(); release(); } });
     activeSourcesRef.current = nodes;
     return voice;
   };
@@ -988,7 +1040,7 @@ function useVoicePlayer() {
             if (res.ok) {
               const arrayBuf = await res.arrayBuffer();
               const decoded = await ctx.decodeAudioData(arrayBuf);
-              decodedBuffers.push(decoded);
+              decodedBuffers.push(trimSilence(ctx, decoded, 0.02, 0.05));   // no long pauses at the joins
             } else {
               console.warn(`Segment 404: ${fullUrl}, skipping segment`);
             }
@@ -1037,6 +1089,9 @@ function useVoicePlayer() {
     }
 
     const audio = new Audio(audioUrl);
+    audio.preservesPitch = true;
+    audio.defaultPlaybackRate = VOICE_SPEED;
+    audio.playbackRate = VOICE_SPEED;
     audioRef.current = audio;
 
     audio.onended = () => {

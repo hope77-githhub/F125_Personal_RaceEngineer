@@ -201,6 +201,7 @@ backend/data/voice/
 #### 생성(추론) 설정
 * 기준 음성(prompt): `GP_1` 첫 문장 *"Braking was about thirteen meters early into turn one…"*
 * `temperature 0.6`, `top_k 5`, `top_p 0.8`, `repetition_penalty 1.35`, **`speed_factor 0.9`** (원본이 빨라서 10% 감속)
+  → 들어 보니 무전으로는 느려서, **앱이 1/0.9 = 1.11배로 재생**(음높이 유지, `VOICE_SPEED` in `frontend/src/App.jsx`). 파일 앞뒤 무음과 조각 이음매 무음도 재생할 때 잘라 냄. 다시 생성한다면 `speed_factor 1.0`으로 만들고 `VOICE_SPEED`를 1로 돌리면 됨
 * 숫자는 단어로 바꿔 입력 (`13` → *thirteen*, `0.8` → *zero point eight*)
 * **문장마다 최대 6번 생성 → Whisper가 원문과 가장 일치하게 알아들은 take를 채택** (일치율 0.95 이상이면 조기 종료). 결과는 `GPT-SoVITS\output\f125_bake_report.csv`에 문장별 점수로 기록.
 * 무음 트리밍 + RMS −18 dBFS 정규화 후 mp3 저장
