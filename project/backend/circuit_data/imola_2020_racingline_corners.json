@@ -1,0 +1,227 @@
+{
+  "track_name": "imola_2020_racingline",
+  "track_id": 27,
+  "display_name": "Imola (Enzo e Dino Ferrari)",
+  "lap_length_m": 4908,
+  "official_turns": 19,
+  "unresolved_turns": [],
+  "calibration_params": {
+    "threshold": 0.007,
+    "min_length": 15
+  },
+  "mapping": {
+    "method": "Signed curvature of the game racing line (2 m resampling), one window per corner, matched to the official F1 turn order and direction.",
+    "reference_file": "tracks/imola_2020_racingline.txt"
+  },
+  "corners": [
+    {
+      "turn": 1,
+      "name": "Turn 1",
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 442,
+      "apex_dist": 566,
+      "exit_dist": 632,
+      "apex_radius_m": 820,
+      "note": "Flat-out left-hander."
+    },
+    {
+      "turn": 2,
+      "name": "Tamburello",
+      "direction": "Left",
+      "type": "chicane",
+      "entry_dist": 870,
+      "apex_dist": 924,
+      "exit_dist": 952,
+      "apex_radius_m": 69,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 3,
+      "name": "Tamburello (R)",
+      "direction": "Right",
+      "type": "chicane",
+      "entry_dist": 962,
+      "apex_dist": 988,
+      "exit_dist": 1046,
+      "apex_radius_m": 83,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 4,
+      "name": "Tamburello (exit)",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 1066,
+      "apex_dist": 1112,
+      "exit_dist": 1182,
+      "apex_radius_m": 119,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 5,
+      "name": "Villeneuve",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 1490,
+      "apex_dist": 1540,
+      "exit_dist": 1588,
+      "apex_radius_m": 130,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 6,
+      "name": "Villeneuve (R)",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 1598,
+      "apex_dist": 1672,
+      "exit_dist": 1700,
+      "apex_radius_m": 77,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 7,
+      "name": "Tosa",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 1882,
+      "apex_dist": 1934,
+      "exit_dist": 1994,
+      "apex_radius_m": 33,
+      "note": "Hairpin; best overtaking chance."
+    },
+    {
+      "turn": 8,
+      "name": "Turn 8",
+      "direction": "Right",
+      "type": "kink",
+      "entry_dist": 2248,
+      "apex_dist": 2354,
+      "exit_dist": 2418,
+      "apex_radius_m": 457,
+      "note": "Flat-out right-hander."
+    },
+    {
+      "turn": 9,
+      "name": "Piratella",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 2496,
+      "apex_dist": 2572,
+      "exit_dist": 2656,
+      "apex_radius_m": 84,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 10,
+      "name": "Turn 10",
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 2702,
+      "apex_dist": 2762,
+      "exit_dist": 2808,
+      "apex_radius_m": 252,
+      "note": "Flat-out left-hander."
+    },
+    {
+      "turn": 11,
+      "name": "Acque Minerali",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 2888,
+      "apex_dist": 2960,
+      "exit_dist": 3010,
+      "apex_radius_m": 155,
+      "note": "Flat-out right-hander."
+    },
+    {
+      "turn": 12,
+      "name": "Acque Minerali (R)",
+      "direction": "Right",
+      "type": "chicane",
+      "entry_dist": 3032,
+      "apex_dist": 3076,
+      "exit_dist": 3110,
+      "apex_radius_m": 41,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 13,
+      "name": "Turn 13",
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 3130,
+      "apex_dist": 3144,
+      "exit_dist": 3180,
+      "apex_radius_m": 214,
+      "note": "Flat-out left-hander."
+    },
+    {
+      "turn": 14,
+      "name": "Variante Alta",
+      "direction": "Right",
+      "type": "chicane",
+      "entry_dist": 3540,
+      "apex_dist": 3580,
+      "exit_dist": 3590,
+      "apex_radius_m": 59,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 15,
+      "name": "Variante Alta (L)",
+      "direction": "Left",
+      "type": "chicane",
+      "entry_dist": 3600,
+      "apex_dist": 3616,
+      "exit_dist": 3652,
+      "apex_radius_m": 37,
+      "note": "Medium-speed left-hander."
+    },
+    {
+      "turn": 16,
+      "name": "Turn 16",
+      "direction": "Right",
+      "type": "kink",
+      "entry_dist": 4122,
+      "apex_dist": 4160,
+      "exit_dist": 4210,
+      "apex_radius_m": 275,
+      "note": "Flat-out right-hander."
+    },
+    {
+      "turn": 17,
+      "name": "Rivazza",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 4324,
+      "apex_dist": 4372,
+      "exit_dist": 4408,
+      "apex_radius_m": 44,
+      "note": "Medium-speed left-hander."
+    },
+    {
+      "turn": 18,
+      "name": "Rivazza (exit)",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 4440,
+      "apex_dist": 4466,
+      "exit_dist": 4554,
+      "apex_radius_m": 62,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 19,
+      "name": "Turn 19",
+      "direction": "Right",
+      "type": "kink",
+      "entry_dist": 4760,
+      "apex_dist": 4790,
+      "exit_dist": 4900,
+      "apex_radius_m": 428,
+      "note": "Flat-out right-hander."
+    }
+  ]
+}

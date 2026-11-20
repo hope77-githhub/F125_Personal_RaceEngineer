@@ -1,0 +1,183 @@
+{
+  "track_name": "brazil_2020_racingline",
+  "track_id": 16,
+  "display_name": "Interlagos (José Carlos Pace)",
+  "lap_length_m": 4292,
+  "official_turns": 15,
+  "unresolved_turns": [],
+  "calibration_params": {
+    "threshold": 0.007,
+    "min_length": 15
+  },
+  "mapping": {
+    "method": "Signed curvature of the game racing line (2 m resampling), one window per corner, matched to the official F1 turn order and direction.",
+    "reference_file": "tracks/brazil_2020_racingline.txt"
+  },
+  "corners": [
+    {
+      "turn": 1,
+      "name": "S do Senna",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 270,
+      "apex_dist": 350,
+      "exit_dist": 372,
+      "apex_radius_m": 39,
+      "note": "Downhill left-right after the start."
+    },
+    {
+      "turn": 2,
+      "name": "S do Senna (R)",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 382,
+      "apex_dist": 428,
+      "exit_dist": 474,
+      "apex_radius_m": 62,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 3,
+      "name": "Curva do Sol",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 494,
+      "apex_dist": 564,
+      "exit_dist": 774,
+      "apex_radius_m": 118,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 4,
+      "name": "Descida do Lago",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 1326,
+      "apex_dist": 1382,
+      "exit_dist": 1458,
+      "apex_radius_m": 63,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 5,
+      "name": "Descida do Lago (exit)",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 1460,
+      "apex_dist": 1600,
+      "exit_dist": 1678,
+      "apex_radius_m": 156,
+      "note": "Flat-out left-hander."
+    },
+    {
+      "turn": 6,
+      "name": "Ferradura",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 1940,
+      "apex_dist": 2090,
+      "exit_dist": 2118,
+      "apex_radius_m": 93,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 7,
+      "name": "Ferradura (exit)",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 2120,
+      "apex_dist": 2150,
+      "exit_dist": 2206,
+      "apex_radius_m": 111,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 8,
+      "name": "Laranjinha",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 2270,
+      "apex_dist": 2308,
+      "exit_dist": 2352,
+      "apex_radius_m": 26,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 9,
+      "name": "Pinheirinho",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 2380,
+      "apex_dist": 2452,
+      "exit_dist": 2506,
+      "apex_radius_m": 35,
+      "note": "Medium-speed left-hander."
+    },
+    {
+      "turn": 10,
+      "name": "Bico de Pato",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 2686,
+      "apex_dist": 2740,
+      "exit_dist": 2786,
+      "apex_radius_m": 26,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 11,
+      "name": "Mergulho",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 2826,
+      "apex_dist": 2928,
+      "exit_dist": 3072,
+      "apex_radius_m": 98,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 12,
+      "name": "Junção",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 3188,
+      "apex_dist": 3212,
+      "exit_dist": 3288,
+      "apex_radius_m": 43,
+      "note": "Exit sets up the long climb to the line."
+    },
+    {
+      "turn": 13,
+      "name": "Subida dos Boxes",
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 3300,
+      "apex_dist": 3358,
+      "exit_dist": 3416,
+      "apex_radius_m": 198,
+      "note": "Flat-out left-hander."
+    },
+    {
+      "turn": 14,
+      "name": "Turn 14",
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 3520,
+      "apex_dist": 3630,
+      "exit_dist": 3740,
+      "apex_radius_m": 211,
+      "note": "Flat-out left-hander."
+    },
+    {
+      "turn": 15,
+      "name": "Arquibancadas",
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 3878,
+      "apex_dist": 3950,
+      "exit_dist": 4060,
+      "apex_radius_m": 446,
+      "note": "Flat-out left-hander."
+    }
+  ]
+}

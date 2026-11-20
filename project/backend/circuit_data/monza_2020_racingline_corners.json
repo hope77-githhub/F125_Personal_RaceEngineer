@@ -1,0 +1,139 @@
+{
+  "track_name": "monza_2020_racingline",
+  "track_id": 11,
+  "display_name": "Autodromo Nazionale Monza",
+  "lap_length_m": 5796,
+  "official_turns": 11,
+  "unresolved_turns": [],
+  "calibration_params": {
+    "threshold": 0.007,
+    "min_length": 15
+  },
+  "mapping": {
+    "method": "Signed curvature of the game racing line (2 m resampling), one window per corner, matched to the official F1 turn order and direction.",
+    "reference_file": "tracks/monza_2020_racingline.txt"
+  },
+  "corners": [
+    {
+      "turn": 1,
+      "name": "Variante del Rettifilo",
+      "direction": "Right",
+      "type": "chicane",
+      "entry_dist": 908,
+      "apex_dist": 930,
+      "exit_dist": 942,
+      "apex_radius_m": 23,
+      "note": "Braking from top speed into the first chicane."
+    },
+    {
+      "turn": 2,
+      "name": "Variante del Rettifilo (L)",
+      "direction": "Left",
+      "type": "chicane",
+      "entry_dist": 954,
+      "apex_dist": 980,
+      "exit_dist": 996,
+      "apex_radius_m": 23,
+      "note": "Slow left-hander."
+    },
+    {
+      "turn": 3,
+      "name": "Curva Grande",
+      "direction": "Right",
+      "type": "kink",
+      "entry_dist": 1340,
+      "apex_dist": 1414,
+      "exit_dist": 1598,
+      "apex_radius_m": 264,
+      "note": "Flat-out right-hander."
+    },
+    {
+      "turn": 4,
+      "name": "Variante della Roggia",
+      "direction": "Left",
+      "type": "chicane",
+      "entry_dist": 2114,
+      "apex_dist": 2146,
+      "exit_dist": 2160,
+      "apex_radius_m": 39,
+      "note": "Medium-speed left-hander."
+    },
+    {
+      "turn": 5,
+      "name": "Variante della Roggia (R)",
+      "direction": "Right",
+      "type": "chicane",
+      "entry_dist": 2170,
+      "apex_dist": 2186,
+      "exit_dist": 2228,
+      "apex_radius_m": 61,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 6,
+      "name": "Lesmo 1",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 2476,
+      "apex_dist": 2552,
+      "exit_dist": 2648,
+      "apex_radius_m": 75,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 7,
+      "name": "Lesmo 2",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 2832,
+      "apex_dist": 2894,
+      "exit_dist": 2932,
+      "apex_radius_m": 68,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 8,
+      "name": "Variante Ascari",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 3910,
+      "apex_dist": 3958,
+      "exit_dist": 3992,
+      "apex_radius_m": 82,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 9,
+      "name": "Variante Ascari (R)",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 4008,
+      "apex_dist": 4056,
+      "exit_dist": 4098,
+      "apex_radius_m": 112,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 10,
+      "name": "Variante Ascari (exit)",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 4118,
+      "apex_dist": 4160,
+      "exit_dist": 4228,
+      "apex_radius_m": 152,
+      "note": "Flat-out left-hander."
+    },
+    {
+      "turn": 11,
+      "name": "Curva Alboreto (Parabolica)",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 5100,
+      "apex_dist": 5186,
+      "exit_dist": 5428,
+      "apex_radius_m": 89,
+      "note": "Long right onto the start straight; exit speed is everything."
+    }
+  ]
+}

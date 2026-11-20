@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './styles/design-system.css';
+import CornerMapModal from './CornerMapModal';
 
 const i18n = {
   en: {
@@ -3191,6 +3192,7 @@ function Dashboard({ settings, setSettings, onExit }) {
 
 function SetupPage({ onStart }) {
   const [port, setPort] = useState(20777);
+  const [cornerMapOpen, setCornerMapOpen] = useState(false);
   const [manifestClips, setManifestClips] = useState(DEFAULT_MANIFEST_CLIPS);
   useEffect(() => {
     fetch('http://localhost:8080/api/voice/clips')
@@ -3299,6 +3301,13 @@ function SetupPage({ onStart }) {
           <p style={{ color: 'var(--color-body)', fontSize: '16px', margin: 0 }}>
             {t.subtitle}
           </p>
+          <button
+            onClick={() => setCornerMapOpen(true)}
+            className="btn-secondary-light"
+            style={{ marginTop: '20px' }}
+          >
+            🗺 Corner Map
+          </button>
         </div>
 
         <div className="card" style={{ width: '100%', maxWidth: '600px', marginBottom: '24px' }}>
@@ -3623,6 +3632,7 @@ function SetupPage({ onStart }) {
           {t.connect}
         </button>
       </div>
+      <CornerMapModal open={cornerMapOpen} onClose={() => setCornerMapOpen(false)} language={language} />
     </div>
   );
 }

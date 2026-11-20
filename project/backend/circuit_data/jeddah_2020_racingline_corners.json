@@ -1,0 +1,266 @@
+{
+  "track_name": "jeddah_2020_racingline",
+  "track_id": 29,
+  "display_name": "Jeddah Corniche Circuit",
+  "lap_length_m": 6175,
+  "official_turns": 27,
+  "unresolved_turns": [
+    22,
+    23,
+    24,
+    25,
+    26
+  ],
+  "calibration_params": {
+    "threshold": 0.007,
+    "min_length": 15
+  },
+  "mapping": {
+    "method": "Signed curvature of the game racing line (2 m resampling), one window per corner, matched to the official F1 turn order and direction.",
+    "reference_file": "tracks/jeddah_2020_racingline.txt"
+  },
+  "corners": [
+    {
+      "turn": 1,
+      "name": "Turn 1",
+      "direction": "Left",
+      "type": "chicane",
+      "entry_dist": 477,
+      "apex_dist": 519,
+      "exit_dist": 535,
+      "apex_radius_m": 34,
+      "note": "Medium-speed left-hander."
+    },
+    {
+      "turn": 2,
+      "name": "Turn 2",
+      "direction": "Right",
+      "type": "chicane",
+      "entry_dist": 547,
+      "apex_dist": 585,
+      "exit_dist": 631,
+      "apex_radius_m": 33,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 3,
+      "name": "Turn 3",
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 685,
+      "apex_dist": 721,
+      "exit_dist": 779,
+      "apex_radius_m": 174,
+      "note": "Flat-out left-hander."
+    },
+    {
+      "turn": 4,
+      "name": "Turn 4",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 995,
+      "apex_dist": 1029,
+      "exit_dist": 1063,
+      "apex_radius_m": 57,
+      "note": "Medium-speed left-hander."
+    },
+    {
+      "turn": 5,
+      "name": "Turn 5",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 1079,
+      "apex_dist": 1169,
+      "exit_dist": 1257,
+      "apex_radius_m": 97,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 6,
+      "name": "Turn 6",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 1273,
+      "apex_dist": 1355,
+      "exit_dist": 1447,
+      "apex_radius_m": 109,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 7,
+      "name": "Turn 7",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 1461,
+      "apex_dist": 1633,
+      "exit_dist": 1693,
+      "apex_radius_m": 101,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 8,
+      "name": "Turn 8",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 1711,
+      "apex_dist": 1755,
+      "exit_dist": 1809,
+      "apex_radius_m": 99,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 9,
+      "name": "Turn 9",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 2357,
+      "apex_dist": 2479,
+      "exit_dist": 2633,
+      "apex_radius_m": 57,
+      "note": "Medium-speed left-hander."
+    },
+    {
+      "turn": 10,
+      "name": "Turn 10",
+      "direction": "Right",
+      "type": "kink",
+      "entry_dist": 2701,
+      "apex_dist": 2733,
+      "exit_dist": 2945,
+      "apex_radius_m": 228,
+      "note": "Flat-out right-hander."
+    },
+    {
+      "turn": 11,
+      "name": "Turn 11",
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 2997,
+      "apex_dist": 3031,
+      "exit_dist": 3051,
+      "apex_radius_m": 241,
+      "note": "Flat-out left-hander."
+    },
+    {
+      "turn": 12,
+      "name": "Turn 12",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 3071,
+      "apex_dist": 3131,
+      "exit_dist": 3165,
+      "apex_radius_m": 81,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 13,
+      "name": "Turn 13",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 3177,
+      "apex_dist": 3237,
+      "exit_dist": 3351,
+      "apex_radius_m": 106,
+      "note": "Banked left."
+    },
+    {
+      "turn": 14,
+      "name": "Turn 14",
+      "direction": "Right",
+      "type": "kink",
+      "entry_dist": 3565,
+      "apex_dist": 3635,
+      "exit_dist": 3661,
+      "apex_radius_m": 318,
+      "note": "Flat-out right-hander."
+    },
+    {
+      "turn": 15,
+      "name": "Turn 15",
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 3721,
+      "apex_dist": 3819,
+      "exit_dist": 3897,
+      "apex_radius_m": 328,
+      "note": "Flat-out left-hander."
+    },
+    {
+      "turn": 16,
+      "name": "Turn 16",
+      "direction": "Right",
+      "type": "kink",
+      "entry_dist": 3953,
+      "apex_dist": 4085,
+      "exit_dist": 4235,
+      "apex_radius_m": 348,
+      "note": "Flat-out right-hander."
+    },
+    {
+      "turn": 17,
+      "name": "Turn 17",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 4273,
+      "apex_dist": 4331,
+      "exit_dist": 4383,
+      "apex_radius_m": 98,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 18,
+      "name": "Turn 18",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 4397,
+      "apex_dist": 4485,
+      "exit_dist": 4611,
+      "apex_radius_m": 137,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 19,
+      "name": "Turn 19",
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 4739,
+      "apex_dist": 4795,
+      "exit_dist": 4949,
+      "apex_radius_m": 253,
+      "note": "Flat-out left-hander."
+    },
+    {
+      "turn": 20,
+      "name": "Turn 20",
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 5053,
+      "apex_dist": 5073,
+      "exit_dist": 5277,
+      "apex_radius_m": 415,
+      "note": "Flat-out left-hander."
+    },
+    {
+      "turn": 21,
+      "name": "Turn 21",
+      "direction": "Left",
+      "type": "kink",
+      "entry_dist": 5361,
+      "apex_dist": 5385,
+      "exit_dist": 5413,
+      "apex_radius_m": 370,
+      "note": "Flat-out left-hander."
+    },
+    {
+      "turn": 27,
+      "name": "Turn 27",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 5529,
+      "apex_dist": 5621,
+      "exit_dist": 5661,
+      "apex_radius_m": 43,
+      "note": "Final hairpin; main overtaking spot."
+    }
+  ]
+}

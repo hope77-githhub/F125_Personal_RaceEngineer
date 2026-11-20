@@ -1,0 +1,205 @@
+{
+  "track_name": "mexico_2020_racingline",
+  "track_id": 19,
+  "display_name": "Autódromo Hermanos Rodríguez",
+  "lap_length_m": 4523,
+  "official_turns": 17,
+  "unresolved_turns": [],
+  "calibration_params": {
+    "threshold": 0.007,
+    "min_length": 15
+  },
+  "mapping": {
+    "method": "Signed curvature of the game racing line (2 m resampling), one window per corner, matched to the official F1 turn order and direction.",
+    "reference_file": "tracks/mexico_2020_racingline.txt"
+  },
+  "corners": [
+    {
+      "turn": 1,
+      "name": "Turn 1",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 1241,
+      "apex_dist": 1285,
+      "exit_dist": 1329,
+      "apex_radius_m": 40,
+      "note": "Braking at the end of the very long start straight."
+    },
+    {
+      "turn": 2,
+      "name": "Turn 2",
+      "direction": "Left",
+      "type": "chicane",
+      "entry_dist": 1343,
+      "apex_dist": 1359,
+      "exit_dist": 1397,
+      "apex_radius_m": 40,
+      "note": "Medium-speed left-hander."
+    },
+    {
+      "turn": 3,
+      "name": "Turn 3",
+      "direction": "Right",
+      "type": "chicane",
+      "entry_dist": 1409,
+      "apex_dist": 1427,
+      "exit_dist": 1491,
+      "apex_radius_m": 46,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 4,
+      "name": "Turn 4",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 2135,
+      "apex_dist": 2181,
+      "exit_dist": 2201,
+      "apex_radius_m": 28,
+      "note": "Medium-speed left-hander."
+    },
+    {
+      "turn": 5,
+      "name": "Turn 5",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 2225,
+      "apex_dist": 2251,
+      "exit_dist": 2285,
+      "apex_radius_m": 23,
+      "note": "Slow right-hander."
+    },
+    {
+      "turn": 6,
+      "name": "Turn 6",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 2367,
+      "apex_dist": 2395,
+      "exit_dist": 2455,
+      "apex_radius_m": 29,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 7,
+      "name": "Turn 7",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 2709,
+      "apex_dist": 2761,
+      "exit_dist": 2807,
+      "apex_radius_m": 66,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 8,
+      "name": "Turn 8",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 2831,
+      "apex_dist": 2861,
+      "exit_dist": 2893,
+      "apex_radius_m": 119,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 9,
+      "name": "Turn 9",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 2911,
+      "apex_dist": 2961,
+      "exit_dist": 3043,
+      "apex_radius_m": 96,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 10,
+      "name": "Turn 10",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 3077,
+      "apex_dist": 3185,
+      "exit_dist": 3209,
+      "apex_radius_m": 108,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 11,
+      "name": "Turn 11",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 3225,
+      "apex_dist": 3285,
+      "exit_dist": 3323,
+      "apex_radius_m": 125,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 12,
+      "name": "Foro Sol",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 3807,
+      "apex_dist": 3857,
+      "exit_dist": 3911,
+      "apex_radius_m": 51,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 13,
+      "name": "Foro Sol (L)",
+      "direction": "Left",
+      "type": "hairpin",
+      "entry_dist": 4007,
+      "apex_dist": 4043,
+      "exit_dist": 4065,
+      "apex_radius_m": 19,
+      "note": "Slow left-hander."
+    },
+    {
+      "turn": 14,
+      "name": "Foro Sol (R)",
+      "direction": "Right",
+      "type": "chicane",
+      "entry_dist": 4085,
+      "apex_dist": 4105,
+      "exit_dist": 4133,
+      "apex_radius_m": 50,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 15,
+      "name": "Foro Sol (exit)",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 4197,
+      "apex_dist": 4231,
+      "exit_dist": 4269,
+      "apex_radius_m": 39,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 16,
+      "name": "Peraltada",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 4271,
+      "apex_dist": 4313,
+      "exit_dist": 4433,
+      "apex_radius_m": 96,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 17,
+      "name": "Peraltada (exit)",
+      "direction": "Right",
+      "type": "kink",
+      "entry_dist": 4441,
+      "apex_dist": 4477,
+      "exit_dist": 4497,
+      "apex_radius_m": 245,
+      "note": "Flat-out right-hander."
+    }
+  ]
+}

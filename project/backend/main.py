@@ -193,6 +193,26 @@ def get_available_replays():
 @app.get("/api/replays")
 def get_replays_endpoint():
     return {"circuits": get_available_replays()}
+@app.get("/api/corner_map/tracks")
+def corner_map_tracks_endpoint():
+    """Tracks that have a corner definition file in backend/circuit_data."""
+    cdm = state_manager.circuit_data_manager
+    return {"tracks": [
+        {"track_id": tid, "name": TRACK_MAP.get(tid, f"Track {tid}"),
+         "corners": len(cdm.get_corners(tid)), "file": cdm.corner_file_map[tid]}
+        for tid in cdm.corner_track_ids()
+    ]}
+
+
+@app.get("/api/corner_map/{track_id}")
+def corner_map_endpoint(track_id: int):
+    data = state_manager.circuit_data_manager.get_corner_map(track_id)
+    if data is None:
+        return {"error": f"No corner data for track {track_id}"}
+    data["name"] = TRACK_MAP.get(track_id, f"Track {track_id}")
+    return data
+
+
 @app.get("/api/voice/clips")
 def get_voice_clips_endpoint():
     return {

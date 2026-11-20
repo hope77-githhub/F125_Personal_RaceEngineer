@@ -1,0 +1,172 @@
+{
+  "track_name": "hungaroring_2020_racingline",
+  "track_id": 9,
+  "display_name": "Hungaroring",
+  "lap_length_m": 4377,
+  "official_turns": 14,
+  "unresolved_turns": [],
+  "calibration_params": {
+    "threshold": 0.007,
+    "min_length": 15
+  },
+  "mapping": {
+    "method": "Signed curvature of the game racing line (2 m resampling), one window per corner, matched to the official F1 turn order and direction.",
+    "reference_file": "tracks/hungaroring_2020_racingline.txt"
+  },
+  "corners": [
+    {
+      "turn": 1,
+      "name": "Turn 1",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 575,
+      "apex_dist": 615,
+      "exit_dist": 673,
+      "apex_radius_m": 28,
+      "note": "Downhill braking into a long right."
+    },
+    {
+      "turn": 2,
+      "name": "Turn 2",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 1059,
+      "apex_dist": 1129,
+      "exit_dist": 1219,
+      "apex_radius_m": 41,
+      "note": "Medium-speed left-hander."
+    },
+    {
+      "turn": 3,
+      "name": "Turn 3",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 1255,
+      "apex_dist": 1323,
+      "exit_dist": 1403,
+      "apex_radius_m": 110,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 4,
+      "name": "Turn 4",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 1763,
+      "apex_dist": 1813,
+      "exit_dist": 1871,
+      "apex_radius_m": 98,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 5,
+      "name": "Turn 5",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 1963,
+      "apex_dist": 2055,
+      "exit_dist": 2157,
+      "apex_radius_m": 55,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 6,
+      "name": "Turn 6",
+      "direction": "Right",
+      "type": "chicane",
+      "entry_dist": 2341,
+      "apex_dist": 2379,
+      "exit_dist": 2395,
+      "apex_radius_m": 37,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 7,
+      "name": "Turn 7",
+      "direction": "Left",
+      "type": "chicane",
+      "entry_dist": 2405,
+      "apex_dist": 2423,
+      "exit_dist": 2459,
+      "apex_radius_m": 70,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 8,
+      "name": "Turn 8",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 2543,
+      "apex_dist": 2603,
+      "exit_dist": 2639,
+      "apex_radius_m": 65,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 9,
+      "name": "Turn 9",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 2665,
+      "apex_dist": 2735,
+      "exit_dist": 2801,
+      "apex_radius_m": 58,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 10,
+      "name": "Turn 10",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 2847,
+      "apex_dist": 2919,
+      "exit_dist": 2989,
+      "apex_radius_m": 130,
+      "note": "Fast left-hander."
+    },
+    {
+      "turn": 11,
+      "name": "Turn 11",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 3041,
+      "apex_dist": 3099,
+      "exit_dist": 3187,
+      "apex_radius_m": 91,
+      "note": "Fast right-hander."
+    },
+    {
+      "turn": 12,
+      "name": "Turn 12",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 3483,
+      "apex_dist": 3527,
+      "exit_dist": 3573,
+      "apex_radius_m": 43,
+      "note": "Medium-speed right-hander."
+    },
+    {
+      "turn": 13,
+      "name": "Turn 13",
+      "direction": "Left",
+      "type": "corner",
+      "entry_dist": 3725,
+      "apex_dist": 3799,
+      "exit_dist": 3877,
+      "apex_radius_m": 35,
+      "note": "Medium-speed left-hander."
+    },
+    {
+      "turn": 14,
+      "name": "Turn 14",
+      "direction": "Right",
+      "type": "corner",
+      "entry_dist": 3973,
+      "apex_dist": 4097,
+      "exit_dist": 4201,
+      "apex_radius_m": 53,
+      "note": "Medium-speed right-hander."
+    }
+  ]
+}
