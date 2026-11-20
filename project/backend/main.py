@@ -70,6 +70,27 @@ if os.path.exists(DEBUG_FILE_PATH):
 
 latest_raw_packet_objs = {}
 _last_raw_dump_time = 0.0
+_live_clients = 0   # open live dashboards; raw packets are recorded to lapN.jsonl only while one is open
+
+
+def ensure_udp_listener(port=20777, update_rate=60):
+    """One app-wide listener for the game's UDP stream, started at launch, so the TV overlay can come up on
+    the first game packet even before a dashboard is opened. Dashboards reuse it; it is not stopped when a
+    dashboard closes."""
+    global udp_listener
+    if udp_listener is not None and udp_listener.port == port and udp_listener.is_listening:
+        return udp_listener
+    if udp_listener:
+        udp_listener.stop()
+    udp_listener = F1UDPListener(port=port, update_rate=update_rate)
+    try:
+        udp_listener.start()
+    except OSError as e:
+        logger.warning(f"UDP {port} not available: {e}")
+        udp_listener = None
+        return None
+    asyncio.create_task(udp_listener.listen(on_udp_packet_received))
+    return udp_listener
 
 
 def ctypes_to_dict(obj):
@@ -93,11 +114,12 @@ def on_udp_packet_received(data: bytes):
     overlay_manager.forward(data)
     packet_id, parsed_packet = parse_packet(data)
     if parsed_packet:
+        overlay_manager.on_game_packet()   # TV overlay switch ON: starts the overlay on the first game packet
         state_manager.update(packet_id, parsed_packet)
         latest_raw_packet_objs[f"packet_id_{packet_id}"] = parsed_packet
 
         current_time = time.time()
-        if current_time - _last_raw_dump_time > 0.2:  # Save log at 5Hz max
+        if _live_clients > 0 and current_time - _last_raw_dump_time > 0.2:  # record at 5Hz max, dashboard open
             _last_raw_dump_time = current_time
             try:
                 os.makedirs(os.path.dirname(DEBUG_FILE_PATH), exist_ok=True)
@@ -254,26 +276,45 @@ def overlay_status_endpoint():
     return overlay_manager.status()
 
 
+class OverlayEnableBody(BaseModel):
+    enabled: bool
+
+
+@app.post("/api/overlay/enable")
+async def overlay_enable_endpoint(body: OverlayEnableBody):
+    """The TV overlay ON/OFF switch (remembered). ON = armed: the overlay starts by itself on the first game
+    packet and only draws while game data flows. OFF = stopped."""
+    if body.enabled:
+        ensure_udp_listener()
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(None, overlay_manager.set_enabled, body.enabled)
+
+
+@app.post("/api/overlay/install")
+def overlay_install_endpoint():
+    """One-time Electron download for the overlay window (only on an explicit click)."""
+    overlay_manager.install_window(wait=False)
+    return overlay_manager.status()
+
+
 @app.post("/api/overlay/start")
 async def overlay_start_endpoint(body: OverlayStartBody = OverlayStartBody()):
-    """Start the TV overlay (server + transparent window). Also makes sure our UDP listener runs so
-    live packets reach the overlay even before a live dashboard session is opened."""
-    global udp_listener
-    if udp_listener is None:
-        udp_listener = F1UDPListener(port=20777, update_rate=60)
-        try:
-            udp_listener.start()
-            asyncio.create_task(udp_listener.listen(on_udp_packet_received))
-        except OSError as e:
-            logger.warning(f"UDP 20777 not available for the overlay feed: {e}")
-            udp_listener = None
+    """Switch ON and start right now, without waiting for game data (e.g. to place HUDs in edit mode)."""
+    ensure_udp_listener()
+    overlay_manager.enabled = True
+    overlay_manager._save_enabled()
     loop = asyncio.get_running_loop()
     return await loop.run_in_executor(None, overlay_manager.start, body.window, body.halo)
 
 
 @app.post("/api/overlay/stop")
 def overlay_stop_endpoint():
-    return overlay_manager.stop()
+    return overlay_manager.set_enabled(False)
+
+
+@app.on_event("startup")
+async def _listen_for_game_on_launch():
+    ensure_udp_listener()
 
 
 @app.on_event("shutdown")
@@ -421,6 +462,7 @@ async def replay_telemetry_loop(websocket: WebSocket, update_rate: int, units: s
                                     overlay_manager.forward(encode_packet(pid, pkt_dict))
                                     overlay_sent_at[pid] = time.time()
 
+                        overlay_manager.on_game_packet()   # a replay counts as game data for the TV overlay
                         payload = replay_manager.get_frontend_payload(units=units)
                         if payload.get("status") == "live":
                             # Contextual voice evaluation during recorded replay
@@ -492,13 +534,9 @@ async def websocket_endpoint(websocket: WebSocket):
             _active_replay_manager = None
         return
 
-    if udp_listener is None or udp_listener.port != port:
-        if udp_listener:
-            udp_listener.stop()
-        udp_listener = F1UDPListener(port=port, update_rate=update_rate)
-        udp_listener.start()
-        asyncio.create_task(udp_listener.listen(on_udp_packet_received))
-
+    global _live_clients
+    ensure_udp_listener(port, update_rate)   # app-wide listener (also feeds the TV overlay); kept on close
+    _live_clients += 1
     try:
         while True:
             payload = state_manager.get_frontend_payload(units=units)
@@ -509,9 +547,7 @@ async def websocket_endpoint(websocket: WebSocket):
     except Exception as e:
         logger.error(f"WebSocket error: {e}")
     finally:
-        if udp_listener:
-            udp_listener.stop()
-            udp_listener = None
+        _live_clients -= 1
 
 
 

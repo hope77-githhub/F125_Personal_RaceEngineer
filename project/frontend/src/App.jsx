@@ -17,7 +17,7 @@ const i18n = {
     ttsDesc: "Enable real-time voice briefings from your race engineer.",
     persona: "Engineer Persona",
     overlay: "TV Overlay (broadcast graphics over the game)",
-    overlayDesc: "Timing tower, lap card, halo and flags on top of the game. Game must be in borderless / windowed-fullscreen. Needs Node.js; first start downloads Electron (~370 MB).",
+    overlayDesc: "Timing tower, lap cards and the TV-pod halo on top of the game. When ON it appears by itself as soon as the game sends telemetry (nothing shows before that). Game must be in borderless / windowed-fullscreen. Needs Node.js; the overlay window is a one-time download (Electron, ~370 MB).",
     language: "Display Language",
     languageDesc: "Choose the interface language for the telemetry dashboard.",
     connect: "Connect & Start Session",
@@ -63,7 +63,7 @@ const i18n = {
     ttsDesc: "레이스 엔지니어의 실시간 음성 브리핑을 활성화합니다.",
     persona: "엔지니어 페르소나 선택",
     overlay: "TV 오버레이 (게임 위 중계 그래픽)",
-    overlayDesc: "타이밍 타워, 랩 카드, 계기판, 깃발을 게임 화면 위에 띄웁니다. 게임은 '창 모드(전체 화면)'여야 하고 Node.js가 필요해요. 처음 켤 때 Electron(약 370MB)을 내려받습니다.",
+    overlayDesc: "타이밍 타워, 랩 카드, TV-pod 할로 계기판을 게임 화면 위에 띄워요. ON이면 게임이 텔레메트리를 보내는 순간 자동으로 나타나요(그 전에는 아무것도 표시되지 않아요). 게임은 '창 모드(전체 화면)'여야 하고 Node.js가 필요해요. 오버레이 창은 처음 한 번만 내려받아요(Electron, 약 370MB).",
     language: "언어 (Language)",
     languageDesc: "대시보드 표시 언어를 선택합니다.",
     connect: "세션 연결 및 시작",
@@ -1029,6 +1029,76 @@ function useVoicePlayer() {
   };
 }
 
+// ---- TV overlay switch. The backend owns the ON/OFF state (remembered, default ON): when ON, the overlay starts
+// by itself on the first game packet it parses and draws only while game data flows; OFF stops it.
+const TV_TEXT = {
+  en: {
+    off: ['📺 TV OFF', 'TV overlay is off. Click to turn it on.'],
+    needs_install: ['📺 TV INSTALL', 'The overlay window is not installed yet. Click to download it once (Electron, ~370 MB).'],
+    installing: ['📺 TV INSTALLING…', 'Downloading the overlay window (one time). It starts by itself when game data arrives.'],
+    waiting: ['📺 TV READY', 'ON: waiting for game data. The overlay appears by itself as soon as the game sends telemetry. Click to turn off.'],
+    starting: ['📺 TV STARTING…', 'Game data detected: starting the overlay.'],
+    ready: ['📺 TV READY', 'ON: overlay running, no game data right now. Click to turn off.'],
+    live: ['📺 TV ON', 'ON: showing live game data. Ctrl+Alt+H show/hide, Ctrl+Alt+E edit layout. Click to turn off.'],
+    error: ['📺 TV ERROR', 'TV overlay error'],
+  },
+  ko: {
+    off: ['📺 TV OFF', 'TV 오버레이가 꺼져 있어요. 누르면 켜집니다.'],
+    needs_install: ['📺 TV 설치', '오버레이 창이 아직 설치되지 않았어요. 누르면 한 번만 내려받아요 (Electron, 약 370MB).'],
+    installing: ['📺 TV 설치 중…', '오버레이 창을 내려받는 중이에요 (최초 1회). 끝나면 게임 데이터가 들어올 때 자동으로 켜져요.'],
+    waiting: ['📺 TV 대기', 'ON: 게임 데이터를 기다리는 중이에요. 게임이 텔레메트리를 보내는 순간 오버레이가 자동으로 나타나요. 누르면 꺼집니다.'],
+    starting: ['📺 TV 시작 중…', '게임 데이터 감지: 오버레이를 켜는 중이에요.'],
+    ready: ['📺 TV 대기', 'ON: 오버레이는 켜져 있고 지금은 게임 데이터가 없어요. 누르면 꺼집니다.'],
+    live: ['📺 TV ON', 'ON: 실시간 게임 데이터를 표시 중이에요. Ctrl+Alt+H 표시/숨김, Ctrl+Alt+E 배치 편집. 누르면 꺼집니다.'],
+    error: ['📺 TV 오류', 'TV 오버레이 오류'],
+  },
+};
+const TV_DOT = { live: 'var(--color-semantic-up)', error: 'var(--color-semantic-down)' };
+
+function useTvOverlay() {
+  const [st, setSt] = useState(null);
+  const call = (path, method = 'GET', body) =>
+    fetch(`http://localhost:8080/api/overlay/${path}`, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: body ? JSON.stringify(body) : undefined,
+    })
+      .then((r) => r.json())
+      .then((s) => { setSt(s); return s; })
+      .catch(() => setSt({ enabled: false, state: 'error', error: 'Backend not reachable' }));
+  useEffect(() => {
+    call('status');
+    const id = setInterval(() => call('status'), 2500);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const setEnabled = (on) => call('enable', 'POST', { enabled: on });
+  const install = () => call('install', 'POST');
+  // one-button form (dashboard header): install when needed, otherwise ON <-> OFF
+  const toggle = () => (st?.state === 'needs_install' ? install() : setEnabled(!st?.enabled));
+  return { st, state: st?.state || 'off', setEnabled, install, toggle };
+}
+
+function tvText(language, state) {
+  return (TV_TEXT[language] || TV_TEXT.en)[state] || TV_TEXT.en.off;
+}
+
+function TvOverlayButton({ tv, language }) {
+  const [label, tip] = tvText(language, tv.state);
+  const dot = TV_DOT[tv.state] || (tv.st?.enabled ? '#f5a623' : null);
+  return (
+    <button
+      onClick={tv.toggle}
+      className={`btn-secondary-light ${tv.st?.enabled ? 'active' : ''}`}
+      title={tv.state === 'error' && tv.st?.error ? `${tip}: ${tv.st.error}` : tip}
+      style={tv.state === 'error' ? { borderColor: 'var(--color-semantic-down)', color: 'var(--color-semantic-down)' } : undefined}
+    >
+      {label}
+      {dot && <span style={{ color: dot, marginLeft: '6px' }}>●</span>}
+    </button>
+  );
+}
+
 function Dashboard({ settings, setSettings, onExit }) {
   const t = i18n[settings.language || 'ko'];
   const [data, setData] = useState(null);
@@ -1057,29 +1127,8 @@ function Dashboard({ settings, setSettings, onExit }) {
     stopVoiceClip,
   } = useVoicePlayer();
 
-  // ---- TV overlay (backend starts project/overlay: Node server + transparent Electron window)
-  const [tvOverlay, setTvOverlay] = useState(null);
-  const overlayApi = (path, method = 'GET') =>
-    fetch(`http://localhost:8080/api/overlay/${path}`, { method, headers: { 'Content-Type': 'application/json' }, body: method === 'POST' && path === 'start' ? JSON.stringify({ window: true }) : undefined })
-      .then((r) => r.json())
-      .then((st) => { setTvOverlay(st); return st; })
-      .catch(() => setTvOverlay({ error: 'Backend not reachable' }));
-  const toggleTvOverlay = () => {
-    const on = !settings.overlay;
-    setSettings({ ...settings, overlay: on });
-    overlayApi(on ? 'start' : 'stop', 'POST');
-  };
-  useEffect(() => {
-    if (settings.overlay) overlayApi('start', 'POST');
-    else overlayApi('status');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  useEffect(() => {
-    if (!settings.overlay) return undefined;
-    const id = setInterval(() => overlayApi('status'), 3000);
-    return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings.overlay]);
+  // ---- TV overlay switch (state lives in the backend; see useTvOverlay)
+  const tv = useTvOverlay();
 
 
 
@@ -1490,18 +1539,7 @@ function Dashboard({ settings, setSettings, onExit }) {
             >
               TTS {settings.tts ? `ON (${settings.voice.toUpperCase()})` : 'OFF'}
             </button>
-            <button
-              onClick={toggleTvOverlay}
-              className={`btn-secondary-light ${settings.overlay ? 'active' : ''}`}
-              title={tvOverlay?.error || (tvOverlay?.server_running ? `Overlay ${tvOverlay.overlay_url} · Ctrl+Alt+H: show/hide · Ctrl+Alt+E: edit layout` : 'TV overlay off')}
-              style={tvOverlay?.error ? { borderColor: 'var(--color-semantic-down)', color: 'var(--color-semantic-down)' } : undefined}
-            >
-              📺 TV {!settings.overlay ? 'OFF'
-                : tvOverlay?.error ? 'ERROR'
-                : tvOverlay?.installing ? 'INSTALLING…'
-                : tvOverlay?.window_running ? 'ON'
-                : 'STARTING…'}
-            </button>
+            <TvOverlayButton tv={tv} language={settings.language} />
             <div
               className="badge-pill"
               style={{
@@ -1532,10 +1570,7 @@ function Dashboard({ settings, setSettings, onExit }) {
               {isPlayingVoice && <span style={{ fontSize: '10px', color: 'var(--color-semantic-up)' }}>● LIVE</span>}
             </button>
             <button
-              onClick={() => {
-                if (settings.overlay) overlayApi('stop', 'POST');
-                onExit();
-              }}
+              onClick={onExit}
               className="btn-secondary-light"
             >
               EXIT
@@ -3372,7 +3407,7 @@ function SetupPage({ onStart }) {
     stopVoiceClip,
   } = useVoicePlayer();
   const [tts, setTts] = useState(true);
-  const [overlay, setOverlay] = useState(false);
+  const tv = useTvOverlay();
   const [units, setUnits] = useState('metric');
   const [updateRate, setUpdateRate] = useState(60);
   const [voice, setVoice] = useState('redbull');
@@ -3687,13 +3722,30 @@ function SetupPage({ onStart }) {
                 <div style={{ fontSize: '12px', color: 'var(--color-body)', marginTop: '2px' }}>
                   {t.overlayDesc}
                 </div>
+                <div
+                  style={{
+                    fontSize: '12px',
+                    marginTop: '6px',
+                    color: TV_DOT[tv.state] || (tv.st?.enabled ? '#f5a623' : 'var(--color-body)'),
+                  }}
+                >
+                  ● {tvText(language, tv.state)[1]}
+                  {tv.state === 'error' && tv.st?.error ? ` (${tv.st.error})` : ''}
+                </div>
               </div>
-              <button
-                onClick={() => setOverlay(!overlay)}
-                className={`btn-secondary-light ${overlay ? 'active' : ''}`}
-              >
-                {overlay ? 'ON' : 'OFF'}
-              </button>
+              <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                {tv.state === 'needs_install' && (
+                  <button onClick={tv.install} className="btn-secondary-light">
+                    {language === 'ko' ? '설치' : 'Install'}
+                  </button>
+                )}
+                <button
+                  onClick={() => tv.setEnabled(!tv.st?.enabled)}
+                  className={`btn-secondary-light ${tv.st?.enabled ? 'active' : ''}`}
+                >
+                  {tv.st?.enabled ? 'ON' : 'OFF'}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -3798,7 +3850,6 @@ function SetupPage({ onStart }) {
             onStart({
               port,
               tts,
-              overlay,
               units,
               updateRate,
               voice,
@@ -3851,7 +3902,6 @@ export default function App() {
   const [settings, setSettings] = useState({
     port: 20777,
     tts: true,
-    overlay: false,
     units: 'metric',
     updateRate: 60,
     voice: 'redbull',

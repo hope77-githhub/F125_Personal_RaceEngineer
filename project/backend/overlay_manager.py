@@ -130,6 +130,27 @@ class OverlayManager:
         self._fwd_sock.setblocking(False)
         self._log_path = os.path.join(self.dir, "overlay-run.log")
         self._job = _KillOnExitJob()
+        # ON/OFF switch, remembered between runs (default ON). When ON the overlay is "armed": it starts by
+        # itself on the first game packet we parse and only draws while game data flows.
+        self._settings_path = os.path.join(self.dir, "engineer-overlay.json")
+        self.enabled = self._load_enabled()
+        self.last_game_packet = 0.0
+        self._starting = False
+        self._retry_at = 0.0
+
+    def _load_enabled(self):
+        try:
+            with open(self._settings_path, encoding="utf-8") as f:
+                return bool(json.load(f).get("enabled", True))
+        except Exception:
+            return True
+
+    def _save_enabled(self):
+        try:
+            with open(self._settings_path, "w", encoding="utf-8") as f:
+                json.dump({"enabled": self.enabled}, f)
+        except Exception as e:
+            logger.warning(f"Overlay switch not saved: {e}")
 
     # ------------------------------------------------------------------ helpers
     @property
@@ -175,9 +196,72 @@ class OverlayManager:
         self._job.add(proc)  # dies with this app, however it exits
         return proc
 
+    # ------------------------------------------------------------------ switch / auto-start
+    def set_enabled(self, on):
+        """User switch. ON arms the overlay (and installs the window once, if needed - an explicit click);
+        OFF stops it right away."""
+        self.enabled = bool(on)
+        self._save_enabled()
+        if not self.enabled:
+            return self.stop()
+        self.last_error = None
+        self._retry_at = 0.0
+        if not self.electron_installed:
+            self.install_window(wait=False)
+        elif time.time() - self.last_game_packet < 5:
+            self._auto_start_async()          # the game is already sending: show it now
+        return self.status()
+
+    def on_game_packet(self):
+        """Called for every parsed game packet (live UDP or replay). Cheap; starts the overlay once."""
+        now = time.time()
+        self.last_game_packet = now
+        if not self.enabled or self._starting or now < self._retry_at or self.installing:
+            return
+        if self.server_running and (self.window_running or not self.electron_installed):
+            return
+        if not self.electron_installed:
+            return                            # never download Electron without a click
+        self._auto_start_async()
+
+    def _auto_start_async(self):
+        if self._starting:
+            return
+        self._starting = True
+
+        def run():
+            try:
+                st = self.start(window=True, halo=True)
+                if st.get("error"):
+                    self._retry_at = time.time() + 15
+                else:
+                    logger.info("TV overlay auto-started on game data")
+            finally:
+                self._starting = False
+        threading.Thread(target=run, daemon=True).start()
+
+    def state(self):
+        """One word for the UI: off | needs_install | installing | waiting | starting | ready | live | error."""
+        if not self.enabled:
+            return "off"
+        if self.installing:
+            return "installing"
+        if not self.node or (self.last_error and not self.server_running):
+            return "error"
+        if not self.electron_installed:
+            return "needs_install"
+        if self._starting:
+            return "starting"
+        if self.server_running and self.window_running:
+            return "live" if time.time() - self.last_game_packet < 3 else "ready"
+        return "waiting"
+
     # ------------------------------------------------------------------ status
     def status(self):
         st = {
+            "enabled": self.enabled,
+            "state": self.state(),
+            "game_data_age_s": round(time.time() - self.last_game_packet, 1) if self.last_game_packet else None,
             "node": bool(self.node),
             "electron_installed": self.electron_installed,
             "installing": self.installing,
