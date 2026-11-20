@@ -79,7 +79,7 @@ const state = {
   numActive: 0,
   dbg: { counts: {}, sizes: {}, parsed: {} },   // diagnostics: how many packets of each id arrived
   ui: { all: true, tower: true, lap: true, onboard: false, halo: false, flags: true, fastest: true,
-    mode: 'auto', cards: true, edit: false, toast: '', toastUntil: 0 },
+    mode: 'auto', cards: true, edit: false, toast: '', toastUntil: 0, autofit: 0 },
   turn: turns.state,
   haloLayouts,
   hudScales,
@@ -555,6 +555,9 @@ function updateUi(action) {
   } else if (UI_KEYS.includes(action.set) && typeof action.value === 'boolean') {   // F1 AI Race Engineer: set, not toggle
     ui[action.set] = action.value;
     label = `${action.set.toUpperCase()}: ${action.value ? 'ON' : 'OFF'}`;
+  } else if (action.autofit === true) {   // halo auto-fit request: the overlay window (janela/main.js) runs it
+    ui.autofit = (ui.autofit || 0) + 1;
+    label = 'HALO AUTO-FIT...';
   } else if (typeof action.toast === 'string') {
     label = action.toast.slice(0, 90);
   } else if (action.cycleMode === true) {

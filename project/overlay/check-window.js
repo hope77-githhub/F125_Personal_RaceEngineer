@@ -24,19 +24,23 @@ class Window {
   isDestroyed() { return false; }
   isMinimized() { return minimized; }
   isVisible() { return !minimized; }
+  getOpacity() { return 1; }
+  setOpacity() {}
 }
 const electron = {
   app: { whenReady: () => ({ then: callback => callback() }), on() {} },
   BrowserWindow: Window,
   screen: { getPrimaryDisplay: () => ({ bounds: { x: 0, y: 0, width: 1920, height: 1080 } }) },
   globalShortcut: { register: key => { shortcuts.push(key); return true; }, unregisterAll() {} },
+  desktopCapturer: { getSources: async () => [] },
 };
 const source = fs.readFileSync(path.join(__dirname, 'janela', 'main.js'), 'utf8');
 vm.runInNewContext(source, { require: name => name === 'electron' ? electron : require(name),
-  process, Buffer, console, URL, setTimeout: () => 0, setInterval: (fn, ms) => { intervals.push([fn, ms]); return 0; } });
+  process, Buffer, console, URL, __dirname: path.join(__dirname, 'janela'), setTimeout: () => 0, setInterval: (fn, ms) => { intervals.push([fn, ms]); return 0; } });
 assert.strictEqual(loadedUrl, 'http://127.0.0.1:8080/');
 assert(shortcuts.length >= 9 && shortcuts.includes('Control+Alt+H') && shortcuts.includes('Control+Shift+H') && shortcuts.includes('Control+Alt+E'));
-console.log('Window starts and registers the hotkeys (whole HUD has 3 alternatives).');
+assert(shortcuts.includes('Control+Alt+A') && shortcuts.includes('Control+Alt+F9'), 'no halo auto-fit hotkey');
+console.log('Window starts and registers the hotkeys (whole HUD has 3 alternatives, halo auto-fit Ctrl+Alt+A).');
 
 // stays above the game: a short repeating timer re-raises it, and a minimise brings it straight back
 const raise = intervals.find(([, ms]) => ms <= 1000 && ms !== 400);

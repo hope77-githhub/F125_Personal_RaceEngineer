@@ -39,12 +39,13 @@ or show-desktop it takes the top again within half a second, without ever taking
   - *Race:* one card at the bottom right with **only your own times** — live lap time, sector delta against your own
     best lap, `BEST LAP`, and sector colours. S3 is worked out when you cross the line (last lap − S1 − S2) and the
     closed lap stays on screen for 5 s.
-- **Halo HUD** (centred TV-pod camera) — speed in km/h and mph, gear, an RPM bar scaled to the car's max RPM,
+- **Halo HUD** (fitted to F1 25's TV Pod camera: the arc traces the car's halo, the dial hangs under its top bar,
+  gears and RPM run down its right leg, names down its left leg) — speed in km/h and mph, gear, an RPM bar scaled to the car's max RPM,
   brake (left) and throttle (right) gauges around the dial, ERS, Boost / Overtake / Active Aero states
   (DRS in the 2025 format), the official turn number, and the names of your car and the car ahead.
   Pill states: grey = unavailable, pulsing green outline = ready, solid green = in use, yellow = active-aero zone ahead.
 - **Race control** — yellow flag, Safety Car, VSC and red flag in the tower header; a VSC/SC delta panel only while the
-  game sends a recent delta; an 8-second purple fastest-lap banner.
+  game sends a recent delta; an 8-second purple fastest-lap banner near the top of the screen.
 - **Onboard card** — name, team and number of the viewed driver (off by default; the game does not report the camera).
 
 ## Control panel and hotkeys
@@ -65,6 +66,7 @@ Open `http://127.0.0.1:8090/control` (standalone: port `8080`). Every HUD can be
 | `Ctrl+Alt+V` | Fastest-lap banner |
 | `Ctrl+Alt+M` | Cycle Automatic → Qualifying → Race |
 | `Ctrl+Alt+E` or `Ctrl+Shift+E` | Edit mode |
+| `Ctrl+Alt+A` or `Ctrl+Alt+F9` | Halo auto-fit (see below) |
 
 Each action has a second hotkey in case another program has taken one; a short notice at the bottom of the screen
 says whether they all registered. With the overlay page focused in a browser, the keys `H T K L G O F V M` do the same.
@@ -72,6 +74,13 @@ says whether they all registered. With the overlay page focused in a browser, th
 **Edit mode:** pause the game from its own menu, press `Ctrl+Alt+E`, drag a HUD to move it, use the yellow corner or
 the mouse wheel to resize it, double-click to reset, and leave with `Esc`. Data stays frozen while you edit. Positions
 and sizes are saved in `hud-offsets.json`, `hud-scales.json` and `halo-layouts.json` (personal, never committed).
+
+**Halo auto-fit:** the overlay can find your car's halo on screen by itself. The first time you drive a team that
+has no halo profile yet (halo HUD on, 80+ km/h), the window hides its HUD for a quarter of a second, captures the
+screen, finds the halo's top bar (`halo-fit.js`) and saves the HUD's position and size for that team. Press
+`Ctrl+Alt+A` (or the **Auto-fit to my car** button in `/control`) to do it again, e.g. after changing the camera or
+monitor. It needs a clear view of the halo: with a menu or another window over it nothing is changed and a notice
+says so. The result is a normal per-team profile, so edit mode and `/control` can still fine-tune it.
 
 Page options: `?gap=leader` shows the gap to the leader instead of the car ahead, `?rows=10` limits the tower to ten
 rows, `?theme=original` turns the broadcast theme off.
@@ -120,6 +129,7 @@ stays at exactly zero for over a second can hide it even if it is still required
 | `diagnose.bat` | Records one packet per type to `dump/id*-size*.bin` and samples your car every 500 ms to `dump/player-samples.jsonl`. `dump/` is local and git-ignored — it can contain your session data, so review it before sharing. |
 | `node check-dump.js` | Checks parsing of the packets recorded in `dump/` |
 | `node check-turns.js` | Tests turn learning on a synthetic track |
+| `node check-halo-fit.js` | Tests the halo auto-fit on synthetic TV Pod frames (positions, sizes, ultrawide, covered halo) |
 | `node check-window.js` | Checks that the window starts and registers its hotkeys, without opening it |
 | `node server.js` + `node replay-dump.js` | Replays the recorded packets to a local server (a frozen sample, not a moving lap) |
 
