@@ -873,36 +873,77 @@ function RadioTestConsole({
   );
 }
 
+// Team-radio chime played in front of every engineer line (backend/data/voice/f1_radio.mp3, served at /voice).
+// Decoded once; its leading/trailing silence is trimmed so the voice follows right after the chime.
+// It plays as recorded (not through the radio filter). If the file is missing, lines play without it.
+const RADIO_INTRO_URL = 'http://localhost:8080/voice/f1_radio.mp3';
+const RADIO_INTRO_GAP_S = 0.08;   // pause between the chime and the voice
+let radioIntroPromise = null;
+const loadRadioIntro = (ctx) => {
+  if (!radioIntroPromise) {
+    radioIntroPromise = (async () => {
+      const res = await fetch(RADIO_INTRO_URL);
+      if (!res.ok) return null;
+      const buffer = await ctx.decodeAudioData(await res.arrayBuffer());
+      const thr = 0.01;   // -40 dBFS
+      let on = buffer.length, off = 0;
+      for (let ch = 0; ch < buffer.numberOfChannels; ch++) {
+        const d = buffer.getChannelData(ch);
+        let i = 0; while (i < d.length && Math.abs(d[i]) < thr) i++;
+        let j = d.length - 1; while (j > i && Math.abs(d[j]) < thr) j--;
+        if (i < d.length) { on = Math.min(on, i); off = Math.max(off, j); }
+      }
+      if (on >= off) return null;
+      const start = Math.max(0, on / buffer.sampleRate - 0.01);
+      const end = Math.min(buffer.duration, off / buffer.sampleRate + 0.03);
+      return { buffer, start, duration: end - start };
+    })().catch(() => { radioIntroPromise = null; return null; });
+  }
+  return radioIntroPromise;
+};
+
 function useVoicePlayer() {
   const [isPlayingVoice, setIsPlayingVoice] = useState(false);
   const [currentVoiceClip, setCurrentVoiceClip] = useState(null);
   const [activeVoiceTranscript, setActiveVoiceTranscript] = useState(null);
   const audioRef = useRef(null);
-  const activeSourceNodeRef = useRef(null);
+  const activeSourcesRef = useRef([]);   // chime + voice nodes of the line now playing
+  const playTokenRef = useRef(0);        // a newer line cancels one still loading
 
-  const playRadioBleep = () => {
-    try {
-      const ctx = getAudioContext();
-      if (!ctx) return;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(1750, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(1350, ctx.currentTime + 0.07);
-      gain.gain.setValueAtTime(0.06, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.07);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.08);
-    } catch (e) {}
+  // Chime first, then the voice through the radio filter. Returns the voice node.
+  const startWithRadioIntro = async (ctx, voiceBuffer, token) => {
+    const intro = await loadRadioIntro(ctx);
+    if (token !== playTokenRef.current) return null;
+    const voice = ctx.createBufferSource();
+    voice.buffer = voiceBuffer;
+    voice.connect(createF1RadioFX(ctx, ctx.destination));
+    const t0 = ctx.currentTime + 0.02;
+    const nodes = [voice];
+    let voiceAt = t0;
+    if (intro) {
+      const chime = ctx.createBufferSource();
+      chime.buffer = intro.buffer;
+      chime.connect(ctx.destination);
+      chime.start(t0, intro.start, intro.duration);
+      nodes.push(chime);
+      voiceAt = t0 + intro.duration + RADIO_INTRO_GAP_S;
+    }
+    voice.onended = () => {
+      if (token !== playTokenRef.current) return;
+      setIsPlayingVoice(false);
+      activeSourcesRef.current = [];
+    };
+    voice.start(voiceAt);
+    activeSourcesRef.current = nodes;
+    return voice;
   };
 
   const stopVoiceClip = () => {
-    if (activeSourceNodeRef.current) {
-      try { activeSourceNodeRef.current.stop(); } catch (e) {}
-      activeSourceNodeRef.current = null;
+    playTokenRef.current += 1;
+    for (const node of activeSourcesRef.current) {
+      try { node.stop(); } catch (e) {}
     }
+    activeSourcesRef.current = [];
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
@@ -913,7 +954,7 @@ function useVoicePlayer() {
   const playVoiceClip = async (clip) => {
     if (!clip) return;
     stopVoiceClip();
-    playRadioBleep();
+    const token = playTokenRef.current;
 
     setCurrentVoiceClip(clip);
     setActiveVoiceTranscript({
@@ -956,24 +997,12 @@ function useVoicePlayer() {
           }
         }
 
+        if (token !== playTokenRef.current) return;
         if (decodedBuffers.length > 0) {
           const stitchedBuffer = stitchAudioBuffers(ctx, decodedBuffers, 35);
           if (stitchedBuffer) {
-            const source = ctx.createBufferSource();
-            source.buffer = stitchedBuffer;
-            activeSourceNodeRef.current = source;
-
-            // Route through F1 Radio Bandpass & Saturation FX
-            const radioFX = createF1RadioFX(ctx, ctx.destination);
-            source.connect(radioFX);
-
-            source.onended = () => {
-              setIsPlayingVoice(false);
-              activeSourceNodeRef.current = null;
-              playRadioBleep();
-            };
-
-            source.start();
+            // radio chime, then the stitched line through the F1 radio bandpass & saturation FX
+            await startWithRadioIntro(ctx, stitchedBuffer, token);
             return;
           }
         }
@@ -993,17 +1022,8 @@ function useVoicePlayer() {
         if (res.ok) {
           const arrayBuf = await res.arrayBuffer();
           const decoded = await ctx.decodeAudioData(arrayBuf);
-          const source = ctx.createBufferSource();
-          source.buffer = decoded;
-          activeSourceNodeRef.current = source;
-          const radioFX = createF1RadioFX(ctx, ctx.destination);
-          source.connect(radioFX);
-          source.onended = () => {
-            setIsPlayingVoice(false);
-            activeSourceNodeRef.current = null;
-            playRadioBleep();
-          };
-          source.start();
+          if (token !== playTokenRef.current) return;
+          await startWithRadioIntro(ctx, decoded, token);
           return;
         } else {
           // File not yet present on disk: display transcript and reset after 3s
@@ -1021,7 +1041,6 @@ function useVoicePlayer() {
 
     audio.onended = () => {
       setIsPlayingVoice(false);
-      playRadioBleep();
     };
 
     audio.onerror = () => {
@@ -1041,7 +1060,6 @@ function useVoicePlayer() {
     setActiveVoiceTranscript,
     playVoiceClip,
     stopVoiceClip,
-    playRadioBleep,
   };
 }
 

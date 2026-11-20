@@ -152,7 +152,7 @@ ightarrow$ `[Braking was about]` + `[13]` + `[meters early on entry.]`를 35ms �
 * **F1 Team Radio FX Chain**:
   * **BiquadFilter (Bandpass 350Hz ~ 3400Hz)**: 실제 F1 중계 팀 라디오의 좁은 주파수 대역 통과.
   * **Waveshaper (Tanh 1.25)**: 무전기 특유의 따뜻하고 바삭한 아날로그 새츄레이션/디스토션.
-  * **Team Radio Bleep FX**: 무전 시작/종료 시 F1 무전 비프음 연출.
+  * **Team Radio 차임**: 모든 무전 앞에 `backend/data/voice/f1_radio.mp3` 무전 차임을 그대로 재생(앞뒤 무음은 잘라서 바로 음성이 이어짐). 예전의 합성 비프음("피융")은 제거. 파일이 없으면 차임 없이 음성만 재생.
 
 ---
 
