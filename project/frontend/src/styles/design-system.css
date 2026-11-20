@@ -473,3 +473,57 @@ body {
 .cb-table tbody tr.selected-row {
   background-color: rgba(0, 82, 255, 0.06);
 }
+
+/* F1 Radio Transmission & Audio Equalizer Effects */
+@keyframes radioWave {
+  0% { height: 4px; }
+  50% { height: 16px; }
+  100% { height: 4px; }
+}
+
+.radio-wave-bar {
+  width: 3px;
+  background-color: var(--color-semantic-up);
+  border-radius: 2px;
+  display: inline-block;
+  animation: radioWave 0.8s ease-in-out infinite;
+}
+
+.radio-wave-bar:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.radio-wave-bar:nth-child(3) {
+  animation-delay: 0.3s;
+}
+.radio-wave-bar:nth-child(4) {
+  animation-delay: 0.45s;
+}
+
+.voice-test-btn {
+  background-color: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: var(--rounded-sm);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-align: left;
+}
+
+.voice-test-btn:hover {
+  background-color: rgba(0, 82, 255, 0.25);
+  border-color: var(--color-primary);
+  transform: translateY(-1px);
+}
+
+.voice-test-btn.active {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(0, 82, 255, 0.5);
+}

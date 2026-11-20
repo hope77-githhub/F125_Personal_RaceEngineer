@@ -37,9 +37,16 @@ const i18n = {
     useRawReplayDesc: "Simulate and analyze accumulated circuit lap telemetry from backend /data.",
     replayCircuit: "Circuit Dataset",
     replayLap: "Target Lap",
+    replaySession: "Session",
     replaySpeed: "Playback Speed",
     replayAllLaps: "All Completed Laps (Sequential)",
     replayModeBadge: "REPLAY",
+    radioTitle: "Red Bull Engineer Team Radio",
+    radioActive: "RADIO ACTIVE",
+    radioTestConsole: "Engineer Radio Test Console (TTS/Voice Tester)",
+    radioTestDesc: "Click any button to test the Red Bull engineer's pit-wall voice clips and verify telemetry sync.",
+    autoRadio: "Auto Radio",
+    stopRadio: "Stop Radio",
   },
   ko: {
     title: "F1 AI 레이스 엔지니어",
@@ -76,15 +83,905 @@ const i18n = {
     useRawReplayDesc: "백엔드 /data에 기록된 서킷별 랩 주행 데이터를 불러와 시뮬레이션 및 코너 분석을 수행합니다.",
     replayCircuit: "리플레이 서킷 선택",
     replayLap: "재생할 랩",
+    replaySession: "리플레이 세션",
     replaySpeed: "재생 배속",
     replayAllLaps: "전체 완주 랩 순차 재생 (권장)",
     replayModeBadge: "리플레이",
+    radioTitle: "레드불 엔지니어 팀 라디오",
+    radioActive: "무전 송출 중 (RADIO ACTIVE)",
+    radioTestConsole: "엔지니어 보이스 테스트 콘솔 (Voice/TTS Tester)",
+    radioTestDesc: "각 버튼을 클릭하여 레드불 엔지니어의 무전 음성과 대시보드 싱크를 테스트하세요.",
+    autoRadio: "자동 무전 브리핑",
+    stopRadio: "무전 중지",
   },
 };
+
+// Web Audio Context singleton & F1 Team Radio Audio Stitcher Engine
+let globalAudioCtx = null;
+const getAudioContext = () => {
+  if (!globalAudioCtx) {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (AudioContextClass) globalAudioCtx = new AudioContextClass();
+  }
+  if (globalAudioCtx && globalAudioCtx.state === 'suspended') {
+    globalAudioCtx.resume();
+  }
+  return globalAudioCtx;
+};
+
+// F1 Team Radio Filter Chain (Bandpass 350Hz-3400Hz + Waveshaper Saturation)
+const createF1RadioFX = (ctx, destination) => {
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.frequency.value = 1750;
+  filter.Q.value = 1.0;
+
+  const shaper = ctx.createWaveShaper();
+  const curve = new Float32Array(256);
+  for (let i = 0; i < 256; i++) {
+    const x = (i * 2) / 256 - 1;
+    curve[i] = Math.tanh(x * 1.25);
+  }
+  shaper.curve = curve;
+
+  filter.connect(shaper);
+  shaper.connect(destination);
+  return filter;
+};
+
+// Seamless 35ms Equal-Power Crossfade Audio Buffer Stitching
+const stitchAudioBuffers = (ctx, buffers, crossfadeMs = 35) => {
+  if (!buffers || buffers.length === 0) return null;
+  if (buffers.length === 1) return buffers[0];
+
+  const sampleRate = buffers[0].sampleRate;
+  const crossfadeSamples = Math.floor((crossfadeMs / 1000) * sampleRate);
+
+  let totalLength = 0;
+  for (let i = 0; i < buffers.length; i++) {
+    totalLength += buffers[i].length;
+    if (i > 0) totalLength -= crossfadeSamples;
+  }
+  totalLength = Math.max(1, totalLength);
+
+  const numChannels = buffers[0].numberOfChannels;
+  const stitched = ctx.createBuffer(numChannels, totalLength, sampleRate);
+
+  for (let ch = 0; ch < numChannels; ch++) {
+    const outData = stitched.getChannelData(ch);
+    let writeOffset = 0;
+
+    for (let bIdx = 0; bIdx < buffers.length; bIdx++) {
+      const inData = buffers[bIdx].getChannelData(Math.min(ch, buffers[bIdx].numberOfChannels - 1));
+      const inLen = inData.length;
+
+      if (bIdx === 0) {
+        outData.set(inData, 0);
+        writeOffset = inLen - crossfadeSamples;
+      } else {
+        for (let i = 0; i < crossfadeSamples; i++) {
+          const fadeOut = Math.cos((i / crossfadeSamples) * 0.5 * Math.PI);
+          const fadeIn = Math.sin((i / crossfadeSamples) * 0.5 * Math.PI);
+          const existing = outData[writeOffset + i];
+          const incoming = i < inLen ? inData[i] : 0;
+          outData[writeOffset + i] = existing * fadeOut + incoming * fadeIn;
+        }
+
+        const rem = inLen - crossfadeSamples;
+        if (rem > 0) {
+          outData.set(inData.subarray(crossfadeSamples), writeOffset + crossfadeSamples);
+        }
+        writeOffset += inLen - crossfadeSamples;
+      }
+    }
+  }
+
+  return stitched;
+};
+
+const DEFAULT_MANIFEST_CLIPS = [
+  {
+    "id": "radio_check",
+    "category": "system",
+    "title": "Radio Check",
+    "filename": "radio_check.mp3",
+    "scenario": "Session Start & Radio Check",
+    "badge": "RADIO CHECK",
+    "text": "Radio check, Max. Telemetry stream is active, tyres looking good.",
+    "trigger": "session_start",
+    "url": "/voice/clips/radio_check.mp3"
+  },
+  {
+    "id": "brake_early_5m",
+    "category": "braking",
+    "title": "Brake 5m Early",
+    "filename": "brake_early_5m.mp3",
+    "scenario": "Early Braking by 5m",
+    "badge": "BRAKE -5M",
+    "delta_m": -5,
+    "text": "Braking was about 5 meters early. You can carry slightly more speed on entry.",
+    "url": "/voice/clips/brake_early_5m.mp3"
+  },
+  {
+    "id": "brake_early_10m",
+    "category": "braking",
+    "title": "Brake 10m Early",
+    "filename": "brake_early_10m.mp3",
+    "scenario": "Early Braking by 10m",
+    "badge": "BRAKE -10M",
+    "delta_m": -10,
+    "text": "Braked roughly 10 meters early. Entry speed was compromised.",
+    "url": "/voice/clips/brake_early_10m.mp3"
+  },
+  {
+    "id": "brake_early_15m",
+    "category": "braking",
+    "title": "Brake 15m Early",
+    "filename": "brake_early_15m.mp3",
+    "scenario": "Early Braking by 15m",
+    "badge": "BRAKE -15M",
+    "delta_m": -15,
+    "text": "That was about 15 meters early on the brakes. We are giving away too much speed on entry.",
+    "url": "/voice/clips/brake_early_15m.mp3"
+  },
+  {
+    "id": "brake_early_20m",
+    "category": "braking",
+    "title": "Brake 20m Early",
+    "filename": "brake_early_20m.mp3",
+    "scenario": "Early Braking by 20m",
+    "badge": "BRAKE -20M",
+    "delta_m": -20,
+    "text": "Braking point was 20 meters early. You have plenty of margin to brake later.",
+    "url": "/voice/clips/brake_early_20m.mp3"
+  },
+  {
+    "id": "brake_early_25m",
+    "category": "braking",
+    "title": "Brake 25m Early",
+    "filename": "brake_early_25m.mp3",
+    "scenario": "Early Braking by 25m",
+    "badge": "BRAKE -25M",
+    "delta_m": -25,
+    "text": "Braked 25 meters early into the corner. Push that braking marker further.",
+    "url": "/voice/clips/brake_early_25m.mp3"
+  },
+  {
+    "id": "brake_early_30m",
+    "category": "braking",
+    "title": "Brake 30m Early",
+    "filename": "brake_early_30m.mp3",
+    "scenario": "Early Braking by 30m",
+    "badge": "BRAKE -30M",
+    "delta_m": -30,
+    "text": "Way too conservative on the brakes, 30 meters early. Commit more on entry.",
+    "url": "/voice/clips/brake_early_30m.mp3"
+  },
+  {
+    "id": "brake_late_5m",
+    "category": "braking",
+    "title": "Brake 5m Late",
+    "filename": "brake_late_5m.mp3",
+    "scenario": "Late Braking by 5m",
+    "badge": "BRAKE +5M",
+    "delta_m": 5,
+    "text": "Slightly deep on the brakes, roughly 5 meters late. Apex missed slightly.",
+    "url": "/voice/clips/brake_late_5m.mp3"
+  },
+  {
+    "id": "brake_late_10m",
+    "category": "braking",
+    "title": "Brake 10m Late",
+    "filename": "brake_late_10m.mp3",
+    "scenario": "Late Braking by 10m",
+    "badge": "BRAKE +10M",
+    "delta_m": 10,
+    "text": "Braking was 10 meters late. We missed the optimal apex.",
+    "url": "/voice/clips/brake_late_10m.mp3"
+  },
+  {
+    "id": "brake_late_15m",
+    "category": "braking",
+    "title": "Brake 15m Late",
+    "filename": "brake_late_15m.mp3",
+    "scenario": "Late Braking by 15m",
+    "badge": "BRAKE +15M",
+    "delta_m": 15,
+    "text": "Braked roughly 15 meters late into the turn. Struggling to rotate the car.",
+    "url": "/voice/clips/brake_late_15m.mp3"
+  },
+  {
+    "id": "brake_late_20m",
+    "category": "braking",
+    "title": "Brake 20m Late",
+    "filename": "brake_late_20m.mp3",
+    "scenario": "Late Braking by 20m",
+    "badge": "BRAKE +20M",
+    "delta_m": 20,
+    "text": "That was 20 meters too deep on the brakes. Front tyres scrubbed wide.",
+    "url": "/voice/clips/brake_late_20m.mp3"
+  },
+  {
+    "id": "brake_late_25m",
+    "category": "braking",
+    "title": "Brake 25m Late",
+    "filename": "brake_late_25m.mp3",
+    "scenario": "Late Braking by 25m",
+    "badge": "BRAKE +25M",
+    "delta_m": 25,
+    "text": "25 meters late on the brakes. Serious lockup risk, reset your reference marker.",
+    "url": "/voice/clips/brake_late_25m.mp3"
+  },
+  {
+    "id": "brake_late_30m",
+    "category": "braking",
+    "title": "Brake 30m Late",
+    "filename": "brake_late_30m.mp3",
+    "scenario": "Late Braking by 30m",
+    "badge": "BRAKE +30M",
+    "delta_m": 30,
+    "text": "Massive overshoot, 30 meters late on the brakes. Bring the braking point back.",
+    "url": "/voice/clips/brake_late_30m.mp3"
+  },
+  {
+    "id": "traction_prev_lap",
+    "category": "traction",
+    "title": "Traction Down vs Prev Lap",
+    "filename": "traction_prev_lap.mp3",
+    "scenario": "Exit Traction Down vs Previous Lap",
+    "badge": "TRACTION LOSS",
+    "text": "Exit traction was down compared to last lap. Modulate the throttle smoother on exit.",
+    "url": "/voice/clips/traction_prev_lap.mp3"
+  },
+  {
+    "id": "traction_snap_wheelspin",
+    "category": "traction",
+    "title": "Wheelspin on Exit",
+    "filename": "traction_snap_wheelspin.mp3",
+    "scenario": "Rear Slip & Wheelspin on Exit Kerb",
+    "badge": "WHEELSPIN",
+    "text": "Noticeable rear slip and wheelspin on exit. Be gentle on the kerbs on throttle application.",
+    "url": "/voice/clips/traction_snap_wheelspin.mp3"
+  },
+  {
+    "id": "traction_stint_drop",
+    "category": "traction",
+    "title": "Stint Traction Loss",
+    "filename": "traction_stint_drop.mp3",
+    "scenario": "Stint Cumulative Traction Loss",
+    "badge": "REAR DEGRADATION",
+    "text": "We are losing exit traction throughout this stint. Rear tyres are overheating, manage throttle.",
+    "url": "/voice/clips/traction_stint_drop.mp3"
+  },
+  {
+    "id": "traction_delayed_throttle",
+    "category": "traction",
+    "title": "Delayed Throttle Pickup",
+    "filename": "traction_delayed_throttle.mp3",
+    "scenario": "Delayed Throttle Application",
+    "badge": "THROTTLE ON",
+    "text": "Throttle pickup was delayed on exit. Trust the rear grip and get on power earlier.",
+    "url": "/voice/clips/traction_delayed_throttle.mp3"
+  },
+  {
+    "id": "tyre_soft_deg_5pct",
+    "category": "tyre_deg",
+    "title": "Soft Deg > 5%",
+    "filename": "tyre_soft_deg_5pct.mp3",
+    "scenario": "Soft Tyre High Degradation (>5%/lap)",
+    "badge": "SOFT DEG > 5%",
+    "compound": "Soft",
+    "wear_rate": 5,
+    "text": "Soft tyre degradation is high, over 5 percent per lap. Protect the rear traction.",
+    "url": "/voice/clips/tyre_soft_deg_5pct.mp3"
+  },
+  {
+    "id": "tyre_soft_deg_10pct",
+    "category": "tyre_deg",
+    "title": "Soft Deg > 10% (Critical)",
+    "filename": "tyre_soft_deg_10pct.mp3",
+    "scenario": "Soft Tyre Critical Degradation (>10%/lap)",
+    "badge": "SOFT CRITICAL",
+    "compound": "Soft",
+    "wear_rate": 10,
+    "text": "Critical degradation on the Softs, dropping 10 percent a lap. Tyres are falling off a cliff.",
+    "url": "/voice/clips/tyre_soft_deg_10pct.mp3"
+  },
+  {
+    "id": "tyre_med_deg_5pct",
+    "category": "tyre_deg",
+    "title": "Medium Deg > 5%",
+    "filename": "tyre_med_deg_5pct.mp3",
+    "scenario": "Medium Tyre High Degradation (>5%/lap)",
+    "badge": "MED DEG > 5%",
+    "compound": "Medium",
+    "wear_rate": 5,
+    "text": "Degradation on the Medium is higher than expected, roughly 5 percent a lap. Manage high speed loads.",
+    "url": "/voice/clips/tyre_med_deg_5pct.mp3"
+  },
+  {
+    "id": "tyre_med_deg_10pct",
+    "category": "tyre_deg",
+    "title": "Medium Deg > 10% (Critical)",
+    "filename": "tyre_med_deg_10pct.mp3",
+    "scenario": "Medium Tyre Critical Degradation (>10%/lap)",
+    "badge": "MED CRITICAL",
+    "compound": "Medium",
+    "wear_rate": 10,
+    "text": "Severe degradation on Mediums, nearly 10 percent a lap. We cannot sustain this stint.",
+    "url": "/voice/clips/tyre_med_deg_10pct.mp3"
+  },
+  {
+    "id": "tyre_hard_deg_5pct",
+    "category": "tyre_deg",
+    "title": "Hard Deg > 5%",
+    "filename": "tyre_hard_deg_5pct.mp3",
+    "scenario": "Hard Tyre High Degradation (>5%/lap)",
+    "badge": "HARD DEG > 5%",
+    "compound": "Hard",
+    "wear_rate": 5,
+    "text": "Hard tyre wear is running at 5 percent per lap. We need to nurse them to hit our target lap.",
+    "url": "/voice/clips/tyre_hard_deg_5pct.mp3"
+  },
+  {
+    "id": "tyre_hard_deg_10pct",
+    "category": "tyre_deg",
+    "title": "Hard Deg > 10% (Critical)",
+    "filename": "tyre_hard_deg_10pct.mp3",
+    "scenario": "Hard Tyre Critical Degradation (>10%/lap)",
+    "badge": "HARD CRITICAL",
+    "compound": "Hard",
+    "wear_rate": 10,
+    "text": "Hard tyres are tearing up, 10 percent wear per lap. Prepare for an emergency stop.",
+    "url": "/voice/clips/tyre_hard_deg_10pct.mp3"
+  },
+  {
+    "id": "box_window_open",
+    "category": "tyre_deg",
+    "title": "Box Window Open",
+    "filename": "box_window_open.mp3",
+    "scenario": "Pit Stop Window Open",
+    "badge": "PIT WINDOW",
+    "text": "Box window is open, Max. Standby for the pit call.",
+    "url": "/voice/clips/box_window_open.mp3"
+  },
+  {
+    "id": "box_this_lap",
+    "category": "tyre_deg",
+    "title": "Box This Lap",
+    "filename": "box_this_lap.mp3",
+    "scenario": "Immediate Pit Call (Box, Box!)",
+    "badge": "BOX THIS LAP",
+    "text": "Box this lap, Max. Box this lap. Confirm we are boxing.",
+    "url": "/voice/clips/box_this_lap.mp3"
+  },
+  {
+    "id": "pace_green",
+    "category": "pace_delta",
+    "title": "Pace Strong (-0.2s)",
+    "filename": "pace_green.mp3",
+    "scenario": "Pace Improving (-0.2s faster)",
+    "badge": "DELTA -0.2S",
+    "delta_sec": -0.2,
+    "text": "Pace is very strong, delta is negative two tenths. Keep this rhythm.",
+    "url": "/voice/clips/pace_green.mp3"
+  },
+  {
+    "id": "pace_drop_half_sec",
+    "category": "pace_delta",
+    "title": "Pace Drop (+0.5s)",
+    "filename": "pace_drop_half_sec.mp3",
+    "scenario": "Pace Slower (+0.5s drop)",
+    "badge": "DELTA +0.5S",
+    "delta_sec": 0.5,
+    "text": "Pace dropped by roughly half a second compared to last lap. Watch the mid-corner rotation.",
+    "url": "/voice/clips/pace_drop_half_sec.mp3"
+  },
+  {
+    "id": "pace_drop_1sec_box",
+    "category": "pace_delta",
+    "title": "Pace Drop > 1.0s (Box Order)",
+    "filename": "pace_drop_1sec_box.mp3",
+    "scenario": "Severe Pace Loss (>1.0s) -> Urgent Box Call",
+    "badge": "DELTA +1.0S BOX",
+    "delta_sec": 1.0,
+    "text": "Pace has dropped over a full second compared to last lap. Tyres are finished, box this lap for fresh rubber.",
+    "url": "/voice/clips/pace_drop_1sec_box.mp3"
+  },
+  {
+    "id": "pace_drop_severe_box",
+    "category": "pace_delta",
+    "title": "Pace Drop > 1.2s (Bleeding Time)",
+    "filename": "pace_drop_severe_box.mp3",
+    "scenario": "Severe Degradation (>1.2s drop) -> Immediate Box",
+    "badge": "DELTA +1.2S BOX",
+    "delta_sec": 1.2,
+    "text": "Delta is plus 1.2 seconds, we are bleeding too much lap time. Box this lap, box this lap.",
+    "url": "/voice/clips/pace_drop_severe_box.mp3"
+  },
+  {
+    "id": "gap_ahead_drs",
+    "category": "rival_gap",
+    "title": "Car Ahead < 1.0s (DRS)",
+    "filename": "gap_ahead_drs.mp3",
+    "scenario": "Rival Ahead in DRS Range (<1.0s)",
+    "badge": "AHEAD < 1.0S",
+    "target": "ahead",
+    "gap_sec": 0.8,
+    "text": "Gap to car ahead is under a second. DRS is available, push now.",
+    "url": "/voice/clips/gap_ahead_drs.mp3"
+  },
+  {
+    "id": "gap_ahead_1_5s",
+    "category": "rival_gap",
+    "title": "Car Ahead 1.5s",
+    "filename": "gap_ahead_1_5s.mp3",
+    "scenario": "Rival Ahead 1.5s Interval",
+    "badge": "AHEAD 1.5S",
+    "target": "ahead",
+    "gap_sec": 1.5,
+    "text": "Gap to car ahead is roughly 1.5 seconds. You are closing by two tenths a lap.",
+    "url": "/voice/clips/gap_ahead_1_5s.mp3"
+  },
+  {
+    "id": "gap_ahead_2s",
+    "category": "rival_gap",
+    "title": "Car Ahead 2.0s",
+    "filename": "gap_ahead_2s.mp3",
+    "scenario": "Rival Ahead 2.0s Interval",
+    "badge": "AHEAD 2.0S",
+    "target": "ahead",
+    "gap_sec": 2.0,
+    "text": "Gap to car ahead is 2 seconds. Keep chipping away.",
+    "url": "/voice/clips/gap_ahead_2s.mp3"
+  },
+  {
+    "id": "gap_ahead_3s",
+    "category": "rival_gap",
+    "title": "Car Ahead 3.0s",
+    "filename": "gap_ahead_3s.mp3",
+    "scenario": "Rival Ahead 3.0s Interval",
+    "badge": "AHEAD 3.0S",
+    "target": "ahead",
+    "gap_sec": 3.0,
+    "text": "Gap to car ahead is 3 seconds. Clean air ahead, build the tyre delta.",
+    "url": "/voice/clips/gap_ahead_3s.mp3"
+  },
+  {
+    "id": "gap_ahead_5s",
+    "category": "rival_gap",
+    "title": "Car Ahead 5.0s",
+    "filename": "gap_ahead_5s.mp3",
+    "scenario": "Rival Ahead 5.0s Interval",
+    "badge": "AHEAD 5.0S",
+    "target": "ahead",
+    "gap_sec": 5.0,
+    "text": "Gap to car ahead is 5 seconds. Focus on your own delta.",
+    "url": "/voice/clips/gap_ahead_5s.mp3"
+  },
+  {
+    "id": "gap_leader_3s",
+    "category": "rival_gap",
+    "title": "Leader 3.0s",
+    "filename": "gap_leader_3s.mp3",
+    "scenario": "Gap to Race Leader 3.0s",
+    "badge": "LEADER 3.0S",
+    "target": "leader",
+    "gap_sec": 3.0,
+    "text": "Gap to the leader is roughly 3 seconds. Your pace is matching.",
+    "url": "/voice/clips/gap_leader_3s.mp3"
+  },
+  {
+    "id": "gap_leader_5s",
+    "category": "rival_gap",
+    "title": "Leader 5.0s",
+    "filename": "gap_leader_5s.mp3",
+    "scenario": "Gap to Race Leader 5.0s",
+    "badge": "LEADER 5.0S",
+    "target": "leader",
+    "gap_sec": 5.0,
+    "text": "Gap to the leader is 5 seconds. Managing the gap well.",
+    "url": "/voice/clips/gap_leader_5s.mp3"
+  },
+  {
+    "id": "gap_leader_10s",
+    "category": "rival_gap",
+    "title": "Leader 10.0s",
+    "filename": "gap_leader_10s.mp3",
+    "scenario": "Gap to Race Leader 10.0s",
+    "badge": "LEADER 10.0S",
+    "target": "leader",
+    "gap_sec": 10.0,
+    "text": "Gap to the leader is 10 seconds. We are running in clean air.",
+    "url": "/voice/clips/gap_leader_10s.mp3"
+  },
+  {
+    "id": "gap_teammate_2s",
+    "category": "rival_gap",
+    "title": "Teammate 2.0s",
+    "filename": "gap_teammate_2s.mp3",
+    "scenario": "Gap to Teammate 2.0s",
+    "badge": "TEAMMATE 2.0S",
+    "target": "teammate",
+    "gap_sec": 2.0,
+    "text": "Gap to your teammate is 2 seconds. Maintaining position.",
+    "url": "/voice/clips/gap_teammate_2s.mp3"
+  },
+  {
+    "id": "gap_teammate_5s",
+    "category": "rival_gap",
+    "title": "Teammate 5.0s Behind",
+    "filename": "gap_teammate_5s.mp3",
+    "scenario": "Teammate 5.0s Behind",
+    "badge": "TEAMMATE 5.0S",
+    "target": "teammate",
+    "gap_sec": 5.0,
+    "text": "Teammate is 5 seconds behind. No pressure from behind.",
+    "url": "/voice/clips/gap_teammate_5s.mp3"
+  }
+];
+
+
+function RadioTestConsole({
+  manifestClips,
+  isPlayingVoice,
+  currentVoiceClip,
+  onPlayClip,
+  onStopClip,
+  t = {},
+  isDarkMode = true,
+}) {
+  const [voiceCategory, setVoiceCategory] = useState("all");
+
+  const categories = [
+    { id: 'all', label: 'ALL', count: manifestClips.length, color: '#0052FF' },
+    { id: 'braking', label: 'BRAKING (5~30M)', count: manifestClips.filter(c => c.category === 'braking').length, color: '#FF3B30' },
+    { id: 'traction', label: 'TRACTION', count: manifestClips.filter(c => c.category === 'traction').length, color: '#FF9500' },
+    { id: 'tyre_deg', label: 'TYRE & BOX', count: manifestClips.filter(c => c.category === 'tyre_deg').length, color: '#AF52DE' },
+    { id: 'pace_delta', label: 'PACE DELTA', count: manifestClips.filter(c => c.category === 'pace_delta').length, color: '#34C759' },
+    { id: 'rival_gap', label: 'RIVAL GAP', count: manifestClips.filter(c => c.category === 'rival_gap').length, color: '#5856D6' },
+  ];
+
+  const filteredClips = manifestClips.filter(
+    (c) => voiceCategory === 'all' || c.category === voiceCategory
+  );
+
+  return (
+    <div style={{ marginTop: '10px' }}>
+      {/* Category Pills Bar (Multi-row Wrap with High-Contrast Accent Pills) */}
+      <div
+        style={{
+          display: 'flex',
+          gap: '6px',
+          flexWrap: 'wrap',
+          padding: '8px 10px',
+          borderRadius: 'var(--rounded-md)',
+          backgroundColor: isDarkMode ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.04)',
+          border: isDarkMode ? '1px solid rgba(255,255,255,0.14)' : '1px solid rgba(0,0,0,0.1)',
+          marginBottom: '12px',
+        }}
+      >
+        {categories.map((cat) => {
+          const isActive = voiceCategory === cat.id;
+          return (
+            <button
+              key={cat.id}
+              onClick={() => setVoiceCategory(cat.id)}
+              style={{
+                backgroundColor: isActive
+                  ? cat.color
+                  : isDarkMode
+                  ? 'rgba(255, 255, 255, 0.08)'
+                  : '#ffffff',
+                color: isActive ? '#ffffff' : isDarkMode ? '#cfd3dc' : '#374151',
+                border: isActive
+                  ? `1px solid ${cat.color}`
+                  : isDarkMode
+                  ? '1px solid rgba(255, 255, 255, 0.16)'
+                  : '1px solid #d1d5db',
+                fontSize: '11px',
+                fontWeight: 700,
+                padding: '6px 12px',
+                borderRadius: 'var(--rounded-pill)',
+                whiteSpace: 'nowrap',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'all 0.15s ease',
+                boxShadow: isActive ? `0 0 10px ${cat.color}66` : 'none',
+              }}
+            >
+              <span>{cat.label}</span>
+              <span
+                style={{
+                  backgroundColor: isActive
+                    ? 'rgba(255,255,255,0.28)'
+                    : isDarkMode
+                    ? 'rgba(255,255,255,0.12)'
+                    : 'rgba(0,0,0,0.08)',
+                  color: isActive ? '#ffffff' : isDarkMode ? '#ffffff' : '#1f2937',
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  padding: '1px 6px',
+                  borderRadius: '10px',
+                }}
+              >
+                {cat.count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Voice Clips Grid */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+          gap: '8px',
+          maxHeight: isDarkMode ? '240px' : '220px',
+          overflowY: 'auto',
+          paddingRight: '4px',
+        }}
+      >
+        {filteredClips.map((clip) => {
+          const isPlaying = isPlayingVoice && currentVoiceClip?.id === clip.id;
+          return (
+            <button
+              key={clip.id}
+              onClick={() => onPlayClip(clip)}
+              className={`voice-test-btn ${isPlaying ? 'active' : ''}`}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                padding: '8px 10px',
+                gap: '4px',
+                backgroundColor: isPlaying
+                  ? 'var(--color-primary)'
+                  : isDarkMode
+                  ? 'var(--color-surface-dark-elevated)'
+                  : '#ffffff',
+                border: isPlaying
+                  ? '1px solid var(--color-primary)'
+                  : isDarkMode
+                  ? '1px solid rgba(255,255,255,0.1)'
+                  : '1px solid var(--color-hairline)',
+                color: isPlaying ? '#ffffff' : isDarkMode ? '#ffffff' : 'var(--color-ink)',
+                borderRadius: 'var(--rounded-md)',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%', justifyContent: 'space-between' }}>
+                <span style={{ fontWeight: 600, fontSize: '11px' }}>{clip.title}</span>
+                {isPlaying && <span style={{ fontSize: '10px' }}>🔊</span>}
+              </div>
+              <span
+                style={{
+                  fontSize: '10px',
+                  color: isPlaying ? 'rgba(255,255,255,0.9)' : isDarkMode ? '#888ea0' : 'var(--color-muted)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  maxWidth: '100%',
+                }}
+              >
+                {clip.badge}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function useVoicePlayer() {
+  const [isPlayingVoice, setIsPlayingVoice] = useState(false);
+  const [currentVoiceClip, setCurrentVoiceClip] = useState(null);
+  const [activeVoiceTranscript, setActiveVoiceTranscript] = useState(null);
+  const audioRef = useRef(null);
+  const activeSourceNodeRef = useRef(null);
+
+  const playRadioBleep = () => {
+    try {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1750, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1350, ctx.currentTime + 0.07);
+      gain.gain.setValueAtTime(0.06, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.07);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.08);
+    } catch (e) {}
+  };
+
+  const stopVoiceClip = () => {
+    if (activeSourceNodeRef.current) {
+      try { activeSourceNodeRef.current.stop(); } catch (e) {}
+      activeSourceNodeRef.current = null;
+    }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    setIsPlayingVoice(false);
+  };
+
+  const playVoiceClip = async (clip) => {
+    if (!clip) return;
+    stopVoiceClip();
+    playRadioBleep();
+
+    setCurrentVoiceClip(clip);
+    setActiveVoiceTranscript({
+      text: clip.text,
+      scenario: clip.scenario,
+      title: clip.title,
+      badge: clip.badge || 'RADIO',
+    });
+    setIsPlayingVoice(true);
+
+    const ctx = getAudioContext();
+
+    // Modular stitched event with multiple segments
+    if (clip.segments && clip.segments.length > 0 && ctx) {
+      try {
+        const decodedBuffers = [];
+        for (const segUrl of clip.segments) {
+          const fullUrl = segUrl.startsWith('http') ? segUrl : `http://localhost:8080${segUrl}`;
+          try {
+            const res = await fetch(fullUrl);
+            if (res.ok) {
+              const arrayBuf = await res.arrayBuffer();
+              const decoded = await ctx.decodeAudioData(arrayBuf);
+              decodedBuffers.push(decoded);
+            } else {
+              console.warn(`Segment 404: ${fullUrl}, skipping segment`);
+            }
+          } catch (e) {
+            console.warn(`Segment decode error: ${fullUrl}`);
+          }
+        }
+
+        if (decodedBuffers.length > 0) {
+          const stitchedBuffer = stitchAudioBuffers(ctx, decodedBuffers, 35);
+          if (stitchedBuffer) {
+            const source = ctx.createBufferSource();
+            source.buffer = stitchedBuffer;
+            activeSourceNodeRef.current = source;
+
+            // Route through F1 Radio Bandpass & Saturation FX
+            const radioFX = createF1RadioFX(ctx, ctx.destination);
+            source.connect(radioFX);
+
+            source.onended = () => {
+              setIsPlayingVoice(false);
+              activeSourceNodeRef.current = null;
+              playRadioBleep();
+            };
+
+            source.start();
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn("Modular stitching error, falling back smoothly:", err);
+      }
+    }
+
+    // Standard audio clip playback (resolve url or filename)
+    const rawPath = clip.url || (clip.filename ? `/voice/clips/${clip.filename}` : null) || clip.fallback_url || '/voice/clips/radio_check.mp3';
+    const audioUrl = rawPath.startsWith('http') ? rawPath : `http://localhost:8080${rawPath}`;
+
+    // Prefer Web Audio API with realistic F1 team radio bandpass filter
+    if (ctx) {
+      try {
+        const res = await fetch(audioUrl);
+        if (res.ok) {
+          const arrayBuf = await res.arrayBuffer();
+          const decoded = await ctx.decodeAudioData(arrayBuf);
+          const source = ctx.createBufferSource();
+          source.buffer = decoded;
+          activeSourceNodeRef.current = source;
+          const radioFX = createF1RadioFX(ctx, ctx.destination);
+          source.connect(radioFX);
+          source.onended = () => {
+            setIsPlayingVoice(false);
+            activeSourceNodeRef.current = null;
+            playRadioBleep();
+          };
+          source.start();
+          return;
+        } else {
+          // File not yet present on disk: display transcript and reset after 3s
+          setTimeout(() => setIsPlayingVoice(false), 3000);
+          return;
+        }
+      } catch (e) {
+        setTimeout(() => setIsPlayingVoice(false), 3000);
+        return;
+      }
+    }
+
+    const audio = new Audio(audioUrl);
+    audioRef.current = audio;
+
+    audio.onended = () => {
+      setIsPlayingVoice(false);
+      playRadioBleep();
+    };
+
+    audio.onerror = () => {
+      setIsPlayingVoice(false);
+    };
+
+    audio.play().catch(() => {
+      setIsPlayingVoice(false);
+    });
+  };
+
+  return {
+    isPlayingVoice,
+    setIsPlayingVoice,
+    currentVoiceClip,
+    activeVoiceTranscript,
+    setActiveVoiceTranscript,
+    playVoiceClip,
+    stopVoiceClip,
+    playRadioBleep,
+  };
+}
 
 function Dashboard({ settings, setSettings, onExit }) {
   const t = i18n[settings.language || 'ko'];
   const [data, setData] = useState(null);
+    const [manifestClips, setManifestClips] = useState(DEFAULT_MANIFEST_CLIPS);
+  const [autoRadioEnabled, setAutoRadioEnabled] = useState(true);
+  const lastTriggeredVoiceIdRef = useRef(null);
+
+  // Load clips from manifest.json API on mount
+  useEffect(() => {
+    fetch('http://localhost:8080/api/voice/clips')
+      .then((res) => res.json())
+      .then((resData) => {
+        if (resData.clips && resData.clips.length > 0) {
+          setManifestClips(resData.clips);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const {
+    isPlayingVoice,
+    currentVoiceClip,
+    activeVoiceTranscript,
+    playVoiceClip,
+    stopVoiceClip,
+  } = useVoicePlayer();
+
+
+
+  // Initial Radio Check on session start if TTS enabled
+  useEffect(() => {
+    if (settings.tts && settings.voice === 'redbull') {
+      const timer = setTimeout(() => {
+        if (!lastTriggeredVoiceIdRef.current) {
+          lastTriggeredVoiceIdRef.current = 'initial_auto_check';
+          playVoiceClip(manifestClips[0]);
+        }
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, []);
   const [connected, setConnected] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState(null);
   const [selectedLapId, setSelectedLapId] = useState(null);
@@ -113,6 +1010,7 @@ function Dashboard({ settings, setSettings, onExit }) {
     let wsUrl = `ws://localhost:8080/ws?port=${settings.port}&rate=${settings.updateRate}&units=${settings.units}&replay=${settings.useRawReplay}`;
     if (settings.useRawReplay) {
       wsUrl += `&circuit=${encodeURIComponent(settings.replayCircuit || 'circuit_Catalunya')}&lap=${encodeURIComponent(settings.replayLap || 'all')}&speed=${settings.replaySpeed || 2.0}&loop=true`;
+      if (settings.replaySession) wsUrl += `&session=${encodeURIComponent(settings.replaySession)}`;
     }
     const ws = new WebSocket(wsUrl);
 
@@ -127,6 +1025,28 @@ function Dashboard({ settings, setSettings, onExit }) {
           return;
         }
         setData(parsedData);
+
+        if (parsedData.voice_clips && parsedData.voice_clips.length > 0) {
+          setManifestClips(parsedData.voice_clips);
+        }
+
+        // Auto Radio Briefing integration
+        if (parsedData.voice_event && settings.tts) {
+          const ev = parsedData.voice_event;
+          if (ev.event_id && ev.event_id !== lastTriggeredVoiceIdRef.current) {
+            lastTriggeredVoiceIdRef.current = ev.event_id;
+            if (autoRadioEnabled) {
+              playVoiceClip(ev);
+            } else {
+              setActiveVoiceTranscript({
+                text: ev.text,
+                scenario: ev.scenario,
+                title: ev.title,
+                badge: ev.badge || 'RADIO',
+              });
+            }
+          }
+        }
 
         if (!hasAutoSelectedLapRef.current && parsedData.players) {
           const you =
@@ -163,6 +1083,7 @@ function Dashboard({ settings, setSettings, onExit }) {
     settings.updateRate,
     settings.useRawReplay,
     settings.replayCircuit,
+    settings.replaySession,
     settings.replayLap,
     settings.replaySpeed,
   ]);
@@ -397,6 +1318,23 @@ function Dashboard({ settings, setSettings, onExit }) {
                 📍 {circuit_environment.track_name} ·{' '}
                 <span className="mono-num">{circuit_environment.track_length}m</span>
               </span>
+              {circuit_environment.session?.name && (
+                <span
+                  className="badge-pill"
+                  title={`Session UID ${circuit_environment.session.uid || '-'}`}
+                  style={{
+                    backgroundColor:
+                      circuit_environment.session.group === 'race'
+                        ? 'rgba(207, 32, 47, 0.12)'
+                        : circuit_environment.session.group === 'qualifying'
+                        ? 'rgba(245, 185, 66, 0.15)'
+                        : 'rgba(0, 82, 255, 0.1)',
+                    fontWeight: 600,
+                  }}
+                >
+                  🏁 {circuit_environment.session.name}
+                </span>
+              )}
               <span className="badge-pill">🌤️ {circuit_environment.weather}</span>
               <span className="badge-pill">
                 Track <span className="mono-num">{circuit_environment.track_temp}°</span>
@@ -454,6 +1392,26 @@ function Dashboard({ settings, setSettings, onExit }) {
             >
               ● {connected ? (settings.useRawReplay ? 'REPLAY STREAM' : `LIVE :${settings.port}`) : 'OFFLINE'}
             </div>
+            <button
+              onClick={() => {
+                const el = document.getElementById('gp-radio-console');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="btn-secondary-light"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                backgroundColor: isPlayingVoice ? 'rgba(0,82,255,0.2)' : undefined,
+                borderColor: isPlayingVoice ? 'var(--color-primary)' : undefined,
+                color: isPlayingVoice ? 'var(--color-primary)' : undefined,
+                cursor: 'pointer',
+              }}
+              title="Jump to Engineer Team Radio Console"
+            >
+              📻 <span>Team Radio</span>
+              {isPlayingVoice && <span style={{ fontSize: '10px', color: 'var(--color-semantic-up)' }}>● LIVE</span>}
+            </button>
             <button onClick={onExit} className="btn-secondary-light">
               EXIT
             </button>
@@ -1378,25 +2336,119 @@ function Dashboard({ settings, setSettings, onExit }) {
                 </div>
               </div>
 
-              {/* AI Race Engineer Strategy Card (pricing-tier-featured dark card style) */}
-              <div
+              {/* AI Race Engineer Strategy & Voice Test Console */}
+              <div id="gp-radio-console"
                 style={{
                   backgroundColor: 'var(--color-surface-dark)',
                   color: 'var(--color-on-dark)',
                   padding: '20px 24px',
                   borderRadius: 'var(--rounded-lg)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  boxShadow: isPlayingVoice ? '0 0 24px rgba(0, 82, 255, 0.25)' : 'none',
+                  transition: 'box-shadow 0.3s ease',
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-primary)', letterSpacing: '0.5px' }}>
-                    AI RACE ENGINEER BRIEFING
-                  </span>
-                  <span className="badge-pill" style={{ backgroundColor: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: '11px' }}>
-                    {settings.voice?.toUpperCase() || 'GP'}
-                  </span>
+                {/* Header with Radio Wave Animation & Auto Radio Switch */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-primary)', letterSpacing: '0.6px' }}>
+                      🎙️ {t.radioTitle || 'RED BULL ENGINEER TEAM RADIO'}
+                    </span>
+                    <span className="badge-pill" style={{ backgroundColor: 'rgba(255,255,255,0.12)', color: '#fff', fontSize: '11px', padding: '2px 8px' }}>
+                      {settings.voice === 'redbull' ? 'RED BULL ENGINEER' : (settings.voice?.toUpperCase() || 'ENGINEER')}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    {isPlayingVoice ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', height: '16px' }}>
+                          <span className="radio-wave-bar"></span>
+                          <span className="radio-wave-bar"></span>
+                          <span className="radio-wave-bar"></span>
+                          <span className="radio-wave-bar"></span>
+                        </div>
+                        <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-semantic-up)', letterSpacing: '0.5px' }}>
+                          {t.radioActive || 'RADIO ACTIVE'}
+                        </span>
+                        <button
+                          onClick={stopVoiceClip}
+                          className="voice-test-btn"
+                          style={{ padding: '3px 8px', fontSize: '11px', backgroundColor: 'var(--color-semantic-down)', borderColor: 'var(--color-semantic-down)' }}
+                        >
+                          ⏹ {t.stopRadio || 'STOP'}
+                        </button>
+                      </div>
+                    ) : (
+                      <span style={{ fontSize: '11px', color: 'var(--color-muted)' }}>
+                        STANDBY · 20777 UDP
+                      </span>
+                    )}
+
+                    {/* Auto Radio Briefing Toggle */}
+                    <button
+                      onClick={() => setAutoRadioEnabled(!autoRadioEnabled)}
+                      className={`btn-secondary-light ${autoRadioEnabled ? 'active' : ''}`}
+                      style={{ padding: '3px 10px', fontSize: '11px', borderRadius: 'var(--rounded-pill)' }}
+                      title="Automatically voice contextual radio updates during race"
+                    >
+                      {t.autoRadio || 'Auto Radio'}: {autoRadioEnabled ? 'ON' : 'OFF'}
+                    </button>
+                  </div>
                 </div>
-                <div style={{ fontSize: '14px', lineHeight: 1.55, color: 'var(--color-on-dark)' }}>
-                  {strategy}
+
+                {/* Radio Message Speech Box */}
+                <div
+                  style={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: 'var(--rounded-md)',
+                    padding: '14px 16px',
+                    marginBottom: '16px',
+                    minHeight: '68px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-primary)', letterSpacing: '0.4px' }}>
+                      {activeVoiceTranscript?.scenario || 'REAL-TIME TELEMETRY STRATEGY'}
+                    </span>
+                    {activeVoiceTranscript?.badge && (
+                      <span className="badge-pill" style={{ backgroundColor: 'rgba(0,82,255,0.2)', color: 'var(--color-primary)', fontSize: '10px', padding: '1px 6px' }}>
+                        {activeVoiceTranscript.badge}
+                      </span>
+                    )}
+                  </div>
+
+                  <div style={{ fontSize: '14px', lineHeight: 1.55, color: '#ffffff', fontWeight: 500 }}>
+                    "{activeVoiceTranscript ? activeVoiceTranscript.text : strategy}"
+                  </div>
+
+
+                </div>
+
+                {/* Engineer Radio Test Console (TTS / Voice Tester) */}
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '14px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#ffffff' }}>
+                      📻 {t.radioTestConsole || 'Engineer Radio Test Console (TTS/Voice Tester)'}
+                    </span>
+                    <span style={{ fontSize: '11px', color: 'var(--color-muted)' }}>
+                      {manifestClips.length} High-Res Voice Clips
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#888ea0', marginBottom: '10px' }}>
+                    {t.radioTestDesc || 'Click any button to test the engineer\'s pit-wall voice clips and verify telemetry sync:'}
+                  </div>
+
+                  <RadioTestConsole
+                    manifestClips={manifestClips}
+                    isPlayingVoice={isPlayingVoice}
+                    currentVoiceClip={currentVoiceClip}
+                    onPlayClip={playVoiceClip}
+                    onStopClip={stopVoiceClip}
+                    t={t}
+                    isDarkMode={true}
+                  />
                 </div>
               </div>
             </div>
@@ -2139,16 +3191,36 @@ function Dashboard({ settings, setSettings, onExit }) {
 
 function SetupPage({ onStart }) {
   const [port, setPort] = useState(20777);
+  const [manifestClips, setManifestClips] = useState(DEFAULT_MANIFEST_CLIPS);
+  useEffect(() => {
+    fetch('http://localhost:8080/api/voice/clips')
+      .then((res) => res.json())
+      .then((resData) => {
+        if (resData.clips && resData.clips.length > 0) {
+          setManifestClips(resData.clips);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const {
+    isPlayingVoice,
+    currentVoiceClip,
+    activeVoiceTranscript,
+    playVoiceClip,
+    stopVoiceClip,
+  } = useVoicePlayer();
   const [tts, setTts] = useState(true);
   const [overlay, setOverlay] = useState(false);
   const [units, setUnits] = useState('metric');
   const [updateRate, setUpdateRate] = useState(60);
-  const [voice, setVoice] = useState('gp');
+  const [voice, setVoice] = useState('redbull');
   const [language, setLanguage] = useState('ko');
   const [useRawReplay, setUseRawReplay] = useState(true);
   const [availableReplays, setAvailableReplays] = useState([]);
   const [replayCircuit, setReplayCircuit] = useState('circuit_Catalunya');
   const [replayLap, setReplayLap] = useState('all');
+  const [replaySession, setReplaySession] = useState('');
   const [replaySpeed, setReplaySpeed] = useState(2.0);
   const t = i18n[language];
 
@@ -2172,6 +3244,16 @@ function SetupPage({ onStart }) {
   const currentCircuitObj =
     availableReplays.find((c) => c.id === replayCircuit) ||
     (availableReplays.length > 0 ? availableReplays[0] : null);
+  const circuitSessions = (currentCircuitObj && currentCircuitObj.sessions) || [];
+  const currentSessionObj = circuitSessions.find((s) => s.uid === replaySession) || null;
+
+  useEffect(() => {
+    if (circuitSessions.length > 0 && !circuitSessions.some((s) => s.uid === replaySession)) {
+      const longest = circuitSessions.reduce((a, b) => (b.frames > a.frames ? b : a));
+      setReplaySession(longest.uid);
+      setReplayLap('all');
+    }
+  }, [replayCircuit, availableReplays]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--color-canvas)' }}>
@@ -2280,7 +3362,10 @@ function SetupPage({ onStart }) {
                     {availableReplays.length > 0 ? (
                       availableReplays.map((c) => (
                         <option key={c.id} value={c.id}>
-                          {c.name} ({c.files.length} Completed Laps)
+                          {c.name}
+                          {c.sessions && c.sessions.length > 0
+                            ? ` (${c.sessions.length} Sessions)`
+                            : ` (${c.files.length} Completed Laps)`}
                         </option>
                       ))
                     ) : (
@@ -2291,6 +3376,32 @@ function SetupPage({ onStart }) {
                     )}
                   </select>
                 </div>
+
+                {circuitSessions.length > 0 && (
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '12px', color: 'var(--color-body)', fontWeight: 600 }}>
+                      {t.replaySession}
+                    </label>
+                    <select
+                      value={replaySession}
+                      onChange={(e) => {
+                        setReplaySession(e.target.value);
+                        setReplayLap('all');
+                      }}
+                      className="cb-select"
+                      style={{ width: '100%' }}
+                    >
+                      {circuitSessions.map((s) => (
+                        <option key={s.uid} value={s.uid}>
+                          {s.label}
+                          {s.laps && s.laps.length > 0
+                            ? ` · Lap ${s.laps[0]}–${s.laps[s.laps.length - 1]}`
+                            : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
@@ -2304,7 +3415,13 @@ function SetupPage({ onStart }) {
                       style={{ width: '100%' }}
                     >
                       <option value="all">{t.replayAllLaps}</option>
-                      {currentCircuitObj && currentCircuitObj.files
+                      {currentSessionObj && currentSessionObj.laps && currentSessionObj.laps.length > 0
+                        ? currentSessionObj.laps.map((l) => (
+                            <option key={l} value={String(l)}>
+                              Lap {l}
+                            </option>
+                          ))
+                        : currentCircuitObj && currentCircuitObj.files
                         ? currentCircuitObj.files.map((f) => (
                             <option key={f.filename} value={String(f.lap)}>
                               Lap {f.lap} ({f.size_mb} MB)
@@ -2422,10 +3539,62 @@ function SetupPage({ onStart }) {
                   className="cb-select"
                   style={{ width: '100%' }}
                 >
-                  <option value="gp">GP (Gianpiero Lambiase) — Red Bull Racing</option>
+                  <option value="redbull">Red Bull Engineer — Red Bull Racing</option>
                   <option value="bono">Bono (Peter Bonnington) — Mercedes-AMG</option>
                   <option value="adami">Ricky (Riccardo Adami) — Scuderia Ferrari</option>
                 </select>
+
+                {/* Engineer Radio Voice Preview & Test Console */}
+                <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--color-hairline)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-ink)' }}>
+                      📻 {t.radioTestConsole || 'Engineer Radio Test Console (TTS/Voice Tester)'}
+                    </span>
+                    {isPlayingVoice ? (
+                      <button
+                        onClick={stopVoiceClip}
+                        className="voice-test-btn"
+                        style={{ padding: '3px 8px', fontSize: '11px', backgroundColor: 'var(--color-semantic-down)', borderColor: 'var(--color-semantic-down)' }}
+                      >
+                        ⏹ {t.stopRadio || 'STOP'}
+                      </button>
+                    ) : (
+                      <span style={{ fontSize: '11px', color: 'var(--color-muted)' }}>
+                        {manifestClips.length} High-Res Voice Clips
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--color-muted)', marginBottom: '8px' }}>
+                    {t.radioTestDesc || 'Click any button to test the engineer\'s pit-wall voice clips:'}
+                  </div>
+                  {activeVoiceTranscript && (
+                    <div
+                      style={{
+                        backgroundColor: 'rgba(0,82,255,0.06)',
+                        border: '1px solid rgba(0,82,255,0.2)',
+                        padding: '10px 14px',
+                        borderRadius: 'var(--rounded-md)',
+                        marginBottom: '10px',
+                      }}
+                    >
+                      <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-primary)', marginBottom: '3px' }}>
+                        {activeVoiceTranscript.badge} · {activeVoiceTranscript.scenario}
+                      </div>
+                      <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--color-ink)' }}>
+                        "{activeVoiceTranscript.text}"
+                      </div>
+                    </div>
+                  )}
+                  <RadioTestConsole
+                    manifestClips={manifestClips}
+                    isPlayingVoice={isPlayingVoice}
+                    currentVoiceClip={currentVoiceClip}
+                    onPlayClip={playVoiceClip}
+                    onStopClip={stopVoiceClip}
+                    t={t}
+                    isDarkMode={false}
+                  />
+                </div>
               </div>
             )}
           </div>
@@ -2443,6 +3612,7 @@ function SetupPage({ onStart }) {
               language,
               useRawReplay,
               replayCircuit,
+              replaySession,
               replayLap,
               replaySpeed,
             })
@@ -2490,32 +3660,31 @@ export default function App() {
     overlay: false,
     units: 'metric',
     updateRate: 60,
-    voice: 'gp',
+    voice: 'redbull',
     language: 'ko',
     useRawReplay: true,
     replayCircuit: 'circuit_Catalunya',
+    replaySession: '',
     replayLap: 'all',
     replaySpeed: 2.0,
   });
 
-  if (!sessionActive) {
-    return (
-      <SetupPage
-        onStart={(s) => {
-          setSettings(s);
-          setSessionActive(true);
-        }}
-      />
-    );
-  }
-
   return (
     <ErrorBoundary>
-      <Dashboard
-        settings={settings}
-        setSettings={setSettings}
-        onExit={() => setSessionActive(false)}
-      />
+      {!sessionActive ? (
+        <SetupPage
+          onStart={(s) => {
+            setSettings(s);
+            setSessionActive(true);
+          }}
+        />
+      ) : (
+        <Dashboard
+          settings={settings}
+          setSettings={setSettings}
+          onExit={() => setSessionActive(false)}
+        />
+      )}
     </ErrorBoundary>
   );
 }

@@ -6,10 +6,12 @@ import json
 import re
 import os
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from telemetry.listener import F1UDPListener
 from telemetry.f1_types.router import parse_packet
-from state_mgmt.manager import StateManager, TRACK_MAP
+from state_mgmt.manager import StateManager, TRACK_MAP, ENGINEER_VOICE_CLIPS
+from state_mgmt.sessions import list_sessions, session_frame_refs, frame_session_uid, packet_session_uid
 
 app = FastAPI()
 app.add_middleware(
@@ -25,6 +27,11 @@ logger = logging.getLogger(__name__)
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEBUG_FILE_PATH = os.path.join(BASE_DIR, "docs", "debug_payload.json")
+VOICE_DIR = os.path.join(BASE_DIR, "backend", "data", "voice")
+if os.path.exists(VOICE_DIR):
+    app.mount("/voice", StaticFiles(directory=VOICE_DIR), name="voice")
+    logger.info(f"Mounted static voice directory from {VOICE_DIR}")
+
 
 
 class Dict2Obj:
@@ -167,11 +174,18 @@ def get_available_replays():
             if files:
                 files.sort(key=lambda x: x["lap"])
                 laps.sort()
+                try:
+                    sessions = list_sessions(item_path)
+                except Exception as e:
+                    logger.warning(f"Session index failed for {item}: {e}")
+                    sessions = []
                 circuits.append({
                     "id": item,
                     "name": raw_circuit_name,
                     "laps": laps,
                     "files": files,
+                    # recorded files can mix sessions; replay one session at a time
+                    "sessions": sessions,
                 })
     return circuits
 
@@ -179,9 +193,24 @@ def get_available_replays():
 @app.get("/api/replays")
 def get_replays_endpoint():
     return {"circuits": get_available_replays()}
+@app.get("/api/voice/clips")
+def get_voice_clips_endpoint():
+    return {
+        "persona": "redbull",
+        "name": "Red Bull Engineer",
+        "team": "Red Bull Racing",
+        "clips": state_manager.load_voice_manifest()
+    }
 
 
-async def replay_telemetry_loop(websocket: WebSocket, update_rate: int, units: str, circuit: str = "circuit_Catalunya", lap: str = "all", speed: float = 1.0, loop: bool = True):
+@app.post("/api/voice/test_trigger/{clip_id}")
+def test_voice_trigger_endpoint(clip_id: str):
+    event = state_manager.trigger_voice_clip(clip_id)
+    return {"status": "triggered", "event": event}
+
+
+
+async def replay_telemetry_loop(websocket: WebSocket, update_rate: int, units: str, circuit: str = "circuit_Catalunya", lap: str = "all", speed: float = 1.0, loop: bool = True, session: str = None):
     data_dir = os.path.join(BASE_DIR, "backend", "data")
     target_dir = os.path.join(data_dir, circuit)
     if not os.path.exists(target_dir):
@@ -192,8 +221,14 @@ async def replay_telemetry_loop(websocket: WebSocket, update_rate: int, units: s
         target_dir = os.path.join(data_dir, avail[0])
         circuit = avail[0]
 
+    # One session at a time: default to the session with the most recorded frames
+    sessions = list_sessions(target_dir)
+    if sessions and not any(x["uid"] == str(session) for x in sessions):
+        session = max(sessions, key=lambda x: x["frames"])["uid"] if sessions else None
+    session_meta = next((x for x in sessions if x["uid"] == str(session)), None)
+
     replay_manager = StateManager(auto_preload=False)
-    replay_manager.preload_circuit_laps(circuit)
+    replay_manager.preload_circuit_laps(circuit, session_uid=session)
 
     valid_lap_nums = {l["lap"] for l in replay_manager.lap_history.get(replay_manager.player_car_index, [])}
 
@@ -216,6 +251,17 @@ async def replay_telemetry_loop(websocket: WebSocket, update_rate: int, units: s
         if os.path.exists(target_file):
             files_to_play = [target_file]
 
+    session_lines = None  # {fpath: set(line_idx)} when replaying one session
+    if session:
+        refs = session_frame_refs(target_dir, session)
+        session_lines = {}
+        for fp, li in refs:
+            session_lines.setdefault(fp, set()).add(li)
+        lap_num_of = lambda fp: int(re.search(r"lap(\d+)\.jsonl", fp).group(1)) if re.search(r"lap(\d+)\.jsonl", fp) else 0
+        files_to_play = sorted(session_lines, key=lap_num_of)
+        logger.info(f"Replay session {session_meta['label'] if session_meta else session}: "
+                    f"{len(refs)} frames in {len(files_to_play)} file(s)")
+
     if not files_to_play:
         logger.error(f"No valid replay files found in {target_dir} for lap={lap}")
         return
@@ -233,9 +279,19 @@ async def replay_telemetry_loop(websocket: WebSocket, update_rate: int, units: s
                     last_frames = {}
                     last_p_dist = -9999.0
 
+                    keep_lines = session_lines.get(fpath) if session_lines is not None else None
                     for line_idx, line in enumerate(all_lines):
+                        if keep_lines is not None and line_idx not in keep_lines:
+                            continue
                         entry = json.loads(line)
                         data = entry.get("data", {})
+                        if session and lap != "all":
+                            try:
+                                pi = int(data["packet_id_1"]["m_header"]["m_playerCarIndex"])
+                                if str(data["packet_id_2"]["m_lapData"][pi]["m_currentLapNum"]) != str(lap):
+                                    continue
+                            except Exception:
+                                continue
 
                         # Check if player car distance changed so we skip parked garage frames
                         p1 = data.get("packet_id_1", {})
@@ -252,6 +308,9 @@ async def replay_telemetry_loop(websocket: WebSocket, update_rate: int, units: s
                         for pid in (1, 4, 5, 7, 10, 11, 0, 6, 2):
                             key = f"packet_id_{pid}"
                             pkt_dict = data.get(key)
+                            # recorder snapshots can hold stale packets from a previous session
+                            if session and packet_session_uid(pkt_dict) not in (None, str(session)):
+                                continue
                             if pkt_dict and isinstance(pkt_dict, dict):
                                 f_id = pkt_dict.get("m_header", {}).get("m_frameIdentifier")
                                 if f_id is None or last_frames.get(pid) != f_id or line_idx == 0:
@@ -260,9 +319,15 @@ async def replay_telemetry_loop(websocket: WebSocket, update_rate: int, units: s
 
                         payload = replay_manager.get_frontend_payload(units=units)
                         if payload.get("status") == "live":
+                            # Contextual voice evaluation during recorded replay
+                            voice_ev = replay_manager.evaluate_voice_triggers(is_replay=True)
+                            if voice_ev:
+                                payload["voice_event"] = voice_ev
+                            payload["voice_clips"] = replay_manager.load_voice_manifest()
                             payload["replay_info"] = {
                                 "is_replay": True,
                                 "circuit": circuit,
+                                "session": session_meta,
                                 "file": os.path.basename(fpath),
                                 "frame": line_idx + 1,
                                 "total_frames": total_lines,
@@ -301,12 +366,13 @@ async def websocket_endpoint(websocket: WebSocket):
     except (ValueError, TypeError):
         speed = 1.0
     loop = query_params.get("loop", "true").lower() == "true"
+    session = query_params.get("session") or None
 
     logger.info(f"Client connected. Settings - Port: {port}, Rate: {update_rate}Hz, Units: {units}, Replay: {replay}")
 
     if replay:
         logger.info(f"Starting Replay Mode: circuit={circuit}, lap={lap}, speed={speed}x, loop={loop}")
-        await replay_telemetry_loop(websocket, update_rate, units, circuit=circuit, lap=lap, speed=speed, loop=loop)
+        await replay_telemetry_loop(websocket, update_rate, units, circuit=circuit, lap=lap, speed=speed, loop=loop, session=session)
         return
 
     if udp_listener is None or udp_listener.port != port:
@@ -330,6 +396,12 @@ async def websocket_endpoint(websocket: WebSocket):
             udp_listener.stop()
             udp_listener = None
 
+
+
+FRONTEND_DIST = os.path.join(BASE_DIR, "frontend", "dist")
+if os.path.exists(FRONTEND_DIST):
+    app.mount("/", StaticFiles(directory=FRONTEND_DIST, html=True), name="frontend")
+    logger.info(f"Mounted static frontend distribution from {FRONTEND_DIST}")
 
 if __name__ == "__main__":
     import uvicorn

@@ -130,7 +130,7 @@ F1 게임이 실시간 UDP(기본 포트 `20777`)로 송출하는 바이너리 �
 ### ① 초기 세션 환경 설정 (Session Configuration)
 ![Session Configuration](images/01_session_configuration.png)
 * **Recorded Telemetry Replay 토글**: 백엔드 `data/circuit_*/`에 저장된 녹화 데이터를 1x~4x 속도로 모의 스트리밍하거나 실시간 F1 게임 UDP(`20777`) 수신으로 전환합니다.
-* **AI Engineer Voice**: 레이스 도중 타이어/코너 상황을 음성으로 전달할 엔지니어 페르소나(`GP`, `Bono`, `Ricky`)를 지정합니다.
+* **AI Engineer Voice**: 레이스 도중 타이어/코너 상황을 음성으로 전달할 엔지니어 페르소나(`redbull`, `Bono`, `Ricky`)를 지정합니다.
 
 ---
 

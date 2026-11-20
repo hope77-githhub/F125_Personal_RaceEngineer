@@ -4,3 +4,6 @@ __pycache__/
 venv/
 .DS_Store
 *.jsonl
+
+# build output (cx_Freeze exe, ~1GB)
+project/build/

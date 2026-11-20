@@ -1,0 +1,117 @@
+{
+  "stitch_settings": {
+    "crossfade_duration_ms": 35,
+    "f1_radio_fx": {
+      "bandpass_low_hz": 350,
+      "bandpass_high_hz": 3400,
+      "distortion_gain": 1.15,
+      "noise_floor_level": 0.015,
+      "radio_bleep_fx": true
+    }
+  },
+  "templates": {
+    "braking_early": {
+      "prefix": {
+        "file": "prefixes/brake_early.mp3",
+        "text": "Braking was about "
+      },
+      "number_pattern": "{m}",
+      "suffix": {
+        "file": "suffixes/meters_early_entry.mp3",
+        "text": " meters early on entry."
+      }
+    },
+    "braking_late": {
+      "prefix": {
+        "file": "prefixes/brake_late.mp3",
+        "text": "Braking was roughly "
+      },
+      "number_pattern": "{m}",
+      "suffix": {
+        "file": "suffixes/meters_late_apex.mp3",
+        "text": " meters late into the apex."
+      }
+    },
+    "gap_ahead": {
+      "prefix": {
+        "file": "prefixes/gap_ahead.mp3",
+        "text": "Gap to car ahead is "
+      },
+      "number_pattern": "{s}",
+      "suffix": {
+        "file": "suffixes/seconds.mp3",
+        "text": " seconds."
+      },
+      "drs_suffix": {
+        "file": "suffixes/seconds_drs.mp3",
+        "text": " seconds, DRS available."
+      }
+    },
+    "gap_leader": {
+      "prefix": {
+        "file": "prefixes/gap_leader.mp3",
+        "text": "Gap to the leader is "
+      },
+      "number_pattern": "{s}",
+      "suffix": {
+        "file": "suffixes/seconds.mp3",
+        "text": " seconds."
+      }
+    },
+    "gap_teammate": {
+      "prefix": {
+        "file": "prefixes/gap_teammate.mp3",
+        "text": "Gap to your teammate is "
+      },
+      "number_pattern": "{s}",
+      "suffix": {
+        "file": "suffixes/seconds.mp3",
+        "text": " seconds."
+      }
+    },
+    "pace_drop_box": {
+      "prefix": {
+        "file": "prefixes/pace_drop.mp3",
+        "text": "Pace dropped by "
+      },
+      "number_pattern": "{s}",
+      "suffix": {
+        "file": "suffixes/drop_box_this_lap.mp3",
+        "text": " seconds. Tyres are finished, box this lap!"
+      }
+    },
+    "pace_drop_normal": {
+      "prefix": {
+        "file": "prefixes/pace_drop.mp3",
+        "text": "Pace dropped by "
+      },
+      "number_pattern": "{s}",
+      "suffix": {
+        "file": "suffixes/seconds.mp3",
+        "text": " seconds."
+      }
+    },
+    "pace_gain": {
+      "prefix": {
+        "file": "prefixes/pace_gain.mp3",
+        "text": "Pace improved by "
+      },
+      "number_pattern": "{s}",
+      "suffix": {
+        "file": "suffixes/seconds_rhythm.mp3",
+        "text": " seconds, strong rhythm."
+      }
+    },
+    "tyre_deg": {
+      "prefix": {
+        "file": "prefixes/tyre_deg_is.mp3",
+        "text": "Tyre degradation is running at "
+      },
+      "number_pattern": "{pct}",
+      "suffix": {
+        "file": "suffixes/percent_per_lap.mp3",
+        "text": " percent per lap."
+      }
+    }
+  }
+}
