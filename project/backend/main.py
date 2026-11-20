@@ -246,6 +246,7 @@ class AskBody(BaseModel):
 
 class OverlayStartBody(BaseModel):
     window: bool = True
+    halo: bool = True   # TV-pod halo HUD (off upstream by default; the game doesn't report the camera)
 
 
 @app.get("/api/overlay/status")
@@ -267,7 +268,7 @@ async def overlay_start_endpoint(body: OverlayStartBody = OverlayStartBody()):
             logger.warning(f"UDP 20777 not available for the overlay feed: {e}")
             udp_listener = None
     loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(None, overlay_manager.start, body.window)
+    return await loop.run_in_executor(None, overlay_manager.start, body.window, body.halo)
 
 
 @app.post("/api/overlay/stop")
@@ -355,8 +356,10 @@ async def replay_telemetry_loop(websocket: WebSocket, update_rate: int, units: s
 
     logger.info(f"Replaying {len(files_to_play)} file(s) for {circuit}: {[os.path.basename(f) for f in files_to_play]} at speed {speed}x")
     delay = max(0.015, 0.2 / max(0.1, speed))
+    overlay_sent_at = {}  # packet id -> last time it was forwarded to the TV overlay
 
     while True:
+        sent_this_pass = 0
         for fpath in files_to_play:
             logger.info(f"Streaming {os.path.basename(fpath)}...")
             try:
@@ -368,6 +371,8 @@ async def replay_telemetry_loop(websocket: WebSocket, update_rate: int, units: s
 
                     keep_lines = session_lines.get(fpath) if session_lines is not None else None
                     for line_idx, line in enumerate(all_lines):
+                        if line_idx % 500 == 0:
+                            await asyncio.sleep(0)  # filtered-out stretches must not starve the event loop
                         if keep_lines is not None and line_idx not in keep_lines:
                             continue
                         entry = json.loads(line)
@@ -392,7 +397,8 @@ async def replay_telemetry_loop(websocket: WebSocket, update_rate: int, units: s
                             last_p_dist = curr_d
 
                         # Update packets in deterministic order (session & participants before lap_data & telemetry)
-                        for pid in (1, 4, 5, 7, 10, 11, 0, 6, 2):
+                        # 16 (2026 car telemetry 2: active aero / overtake) only feeds the TV overlay
+                        for pid in (1, 4, 5, 7, 10, 11, 0, 6, 16, 2):
                             key = f"packet_id_{pid}"
                             pkt_dict = data.get(key)
                             # recorder snapshots can hold stale packets from a previous session
@@ -402,9 +408,18 @@ async def replay_telemetry_loop(websocket: WebSocket, update_rate: int, units: s
                                 f_id = pkt_dict.get("m_header", {}).get("m_frameIdentifier")
                                 if f_id is None or last_frames.get(pid) != f_id or line_idx == 0:
                                     last_frames[pid] = f_id
-                                    replay_manager.update(pid, Dict2Obj(pkt_dict))
+                                    if pid != 16:
+                                        replay_manager.update(pid, Dict2Obj(pkt_dict))
                                     if overlay_manager.forwarding:
                                         overlay_manager.forward(encode_packet(pid, pkt_dict))
+                                        overlay_sent_at[pid] = time.time()
+                                elif (pid in (1, 4) and overlay_manager.forwarding
+                                      and time.time() - overlay_sent_at.get(pid, 0) > 2.0):
+                                    # Session / participants rarely change in a recording, so they would
+                                    # be sent once; an overlay started a moment later would never get
+                                    # driver names. Re-send them every 2 s, like the game does live.
+                                    overlay_manager.forward(encode_packet(pid, pkt_dict))
+                                    overlay_sent_at[pid] = time.time()
 
                         payload = replay_manager.get_frontend_payload(units=units)
                         if payload.get("status") == "live":
@@ -424,6 +439,7 @@ async def replay_telemetry_loop(websocket: WebSocket, update_rate: int, units: s
                                 "speed": speed,
                             }
                         await websocket.send_json(payload)
+                        sent_this_pass += 1
                         await asyncio.sleep(delay)
             except WebSocketDisconnect:
                 logger.info("WebSocket disconnected during replay")
@@ -432,6 +448,14 @@ async def replay_telemetry_loop(websocket: WebSocket, update_rate: int, units: s
                 logger.error(f"Error during replay of {fpath}: {e}")
                 return
 
+        if not sent_this_pass:
+            # e.g. a lap number the chosen session doesn't have: looping would spin forever
+            logger.error(f"Replay: no frames match session={session} lap={lap} in {circuit}; stopping")
+            try:
+                await websocket.close()
+            except Exception:
+                pass
+            return
         if not loop:
             break
         logger.info("Replay sequence finished, looping from beginning...")

@@ -18,5 +18,5 @@ class PacketCarTelemetry2Data(ctypes.LittleEndianStructure):
     _pack_ = 1
     _fields_ = [
         ("m_header", PacketHeader),
-        ("m_carTelemetry2Data", CarTelemetry2Data * 22),
+        ("m_carTelemetry2Data", CarTelemetry2Data * 24),   # 24 slots like every other 2026 packet (269 bytes)
     ]

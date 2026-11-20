@@ -14,3 +14,7 @@
 *.log
 .DS_Store
 Thumbs.db
+
+# F1 AI Race Engineer: user-supplied artwork (official logos / fonts are not redistributed)
+/local-assets/*
+!/local-assets/README.md

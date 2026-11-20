@@ -198,6 +198,8 @@ class OverlayManager:
                 st["overlay_received"] = dbg.get("counts")      # packets per id the overlay got
                 st["overlay_parsed"] = dbg.get("parsed")        # id -> layout recognised
                 st["overlay_has_data"] = bool(s.get("lastPacketAt"))
+                st["halo_on"] = bool((s.get("ui") or {}).get("halo"))
+                st["turn_map"] = s.get("turn")                 # {n, total, status} for the current track
             except Exception:
                 st["overlay_has_data"] = None
         return st
@@ -241,14 +243,74 @@ class OverlayManager:
         threading.Thread(target=run, daemon=True).start()
         return True
 
+    # ------------------------------------------------------------------ telemetry links
+    def sync_turn_maps(self):
+        """Give the overlay's TURN counter our official turn numbers.
+
+        The game does not send the corner number. Upstream learns corners from steering on the first
+        clean lap (nothing is shown until then, and the count can differ from the official one).
+        circuit_data/*_corners.json has every official turn of 24 tracks as lap distances, so we
+        write them as overlay/curvas/<trackId>.json. Files the user edited by hand are left alone.
+        """
+        src_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "circuit_data")
+        dst_dir = os.path.join(self.dir, "curvas")
+        written = 0
+        try:
+            os.makedirs(dst_dir, exist_ok=True)
+            for name in sorted(os.listdir(src_dir)):
+                if not name.endswith("_corners.json"):
+                    continue
+                with open(os.path.join(src_dir, name), encoding="utf-8") as f:
+                    data = json.load(f)
+                tid, corners = data.get("track_id"), data.get("corners") or []
+                if tid is None or not corners:
+                    continue
+                dst = os.path.join(dst_dir, f"{tid}.json")
+                if os.path.exists(dst):
+                    try:
+                        with open(dst, encoding="utf-8") as f:
+                            old = json.load(f)
+                    except Exception:
+                        old = {}
+                    if not (old.get("learned") or str(old.get("source", "")).startswith("f125-engineer")):
+                        continue  # hand-edited map: keep
+                out = {
+                    "trackId": tid,
+                    "trackLength": data.get("lap_length_m"),
+                    "source": "f125-engineer circuit_data (official turn numbers)",
+                    "corners": [{"n": int(c["turn"]), "start": int(c["entry_dist"]), "end": int(c["exit_dist"])}
+                                for c in corners if c.get("turn") is not None],
+                }
+                with open(dst, "w", encoding="utf-8") as f:
+                    json.dump(out, f, indent=1)
+                written += 1
+        except Exception as e:
+            logger.warning(f"Overlay turn maps not written: {e}")
+        return written
+
+    def set_ui(self, key, value):
+        """Switch one overlay HUD on/off (server.js /api/ui {set, value})."""
+        body = json.dumps({"set": key, "value": bool(value)}).encode("utf-8")
+        req = urllib.request.Request(f"http://127.0.0.1:{self.http_port}/api/ui", data=body, method="POST",
+                                     headers={"Content-Type": "application/json"})
+        try:
+            with urllib.request.urlopen(req, timeout=1.0) as r:
+                return r.status == 200
+        except Exception as e:
+            logger.warning(f"Overlay UI '{key}' not set: {e}")
+            return False
+
     # ------------------------------------------------------------------ start / stop
-    def start(self, window=True):
+    def start(self, window=True, halo=True):
         with self._lock:
             self.last_error = None
             if not self.node:
                 self.last_error = "Node.js not found - install Node.js 18+ (https://nodejs.org)"
                 return self.status()
             if not self.server_running:
+                n = self.sync_turn_maps()
+                if n:
+                    logger.info(f"TV overlay: official turn maps for {n} tracks")
                 if _port_busy_tcp(self.http_port):
                     self.last_error = f"HTTP port {self.http_port} is already in use (another overlay running?)"
                     return self.status()
@@ -266,6 +328,10 @@ class OverlayManager:
                     self.last_error = "Overlay server exited at start - see overlay/overlay-run.log"
                     return self.status()
                 logger.info(f"TV overlay server on UDP {self.udp_port} / http://127.0.0.1:{self.http_port}/")
+                # The halo HUD starts off upstream (the game doesn't say which camera is used). This app
+                # targets the centred TV-pod camera, so switch it on; Ctrl+Alt+G still hides it.
+                if halo:
+                    self.set_ui("halo", True)
             if window and not self.window_running:
                 if not self.electron_installed:
                     self.install_window(wait=False)

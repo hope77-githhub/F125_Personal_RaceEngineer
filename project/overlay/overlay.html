@@ -242,6 +242,10 @@
   #haloGauge .pill[data-state="soon"] text { fill: #ffdc8a; }
   @keyframes pillPulse { 50% { stroke-opacity: .35; } }
 </style>
+<!-- F1 AI Race Engineer: broadcast-style theme (theme-broadcast.css); ?theme=original turns it off -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira:ital,wdth,wght@0,50..125,100..900;1,50..125,100..900&display=swap">
+<link id="broadcastTheme" rel="stylesheet" href="/theme-broadcast.css">
+<script>if (new URLSearchParams(location.search).get('theme') === 'original') document.getElementById('broadcastTheme').disabled = true;</script>
 </head>
 <body>
 <div id="status">aguardando…</div>
@@ -927,5 +931,6 @@
   connect();
 })();
 </script>
+<script src="/theme-broadcast.js"></script>
 </body>
 </html>

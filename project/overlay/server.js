@@ -172,6 +172,9 @@ function parseLapData(buf) { // id 2
       state.car.lapDistance = buf.readFloatLE(o + 20);
       state.car.lapNum = c.lap;
       state.car.inPit = c.pit;
+      // F1 AI Race Engineer: with a known turn map, follow the lap distance on every lap-data packet
+      // (telemetry packets alone can be sparse, e.g. in recordings)
+      if (turns.state.status === 'ready') turns.sample(c.lap, state.car.lapDistance, state.car.steer || 0, c.pit || 0);
       // O jogo fornece segundos de delta, mas nao um bit de "delta ativo".
       // Zero durante SC pode significar que o delta deixou de ser exigido.
       const delta = buf.readFloatLE(o + 28);
@@ -549,6 +552,9 @@ function updateUi(action) {
   if (UI_KEYS.includes(action.toggle)) {
     ui[action.toggle] = !ui[action.toggle];
     label = `${action.toggle.toUpperCase()}: ${ui[action.toggle] ? 'LIGADO' : 'DESLIGADO'}`;
+  } else if (UI_KEYS.includes(action.set) && typeof action.value === 'boolean') {   // F1 AI Race Engineer: set, not toggle
+    ui[action.set] = action.value;
+    label = `${action.set.toUpperCase()}: ${action.value ? 'LIGADO' : 'DESLIGADO'}`;
   } else if (typeof action.toast === 'string') {
     label = action.toast.slice(0, 90);
   } else if (action.cycleMode === true) {
@@ -645,6 +651,41 @@ const server = http.createServer((req, res) => {
       res.end(JSON.stringify(ok ? (url === '/api/ui' ? state.ui
         : url === '/api/halo-layout' ? state.haloLayouts
         : url === '/api/offset' ? state.hudOffsets : state.hudScales) : { error: 'acao invalida' }));
+    });
+  } else if (req.method === 'GET' && (url === '/theme-broadcast.css' || url === '/theme-broadcast.js')) {
+    // F1 AI Race Engineer: broadcast theme (stylesheet + helper script)
+    fs.readFile(path.join(__dirname, url.slice(1)), (err, data) => {
+      if (err) { res.writeHead(404); res.end(''); return; }
+      res.writeHead(200, { 'Content-Type': url.endsWith('.css') ? 'text/css; charset=utf-8' : 'text/javascript; charset=utf-8', 'Cache-Control': 'no-store' });
+      res.end(data);
+    });
+  } else if (req.method === 'GET' && url.startsWith('/local-assets/')) {
+    // F1 AI Race Engineer: user-supplied artwork (logo, fonts, team logos), git-ignored
+    const base = path.join(__dirname, 'local-assets');
+    if (url === '/local-assets/index.json') {
+      const files = [];
+      const walk = (dir, rel) => {
+        let entries = [];
+        try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch (_) { return; }
+        for (const e of entries) {
+          const r = rel ? rel + '/' + e.name : e.name;
+          if (e.isDirectory()) walk(path.join(dir, e.name), r); else files.push(r);
+        }
+      };
+      walk(base, '');
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+      res.end(JSON.stringify({ files }));
+      return;
+    }
+    const file = path.normalize(path.join(base, decodeURIComponent(url.slice('/local-assets/'.length))));
+    const types = { '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.jpg': 'image/jpeg',
+      '.woff2': 'font/woff2', '.woff': 'font/woff', '.ttf': 'font/ttf', '.otf': 'font/otf' };
+    const type = types[path.extname(file).toLowerCase()];
+    if (!file.startsWith(base + path.sep) || !type) { res.writeHead(404); res.end(''); return; }
+    fs.readFile(file, (err, data) => {
+      if (err) { res.writeHead(404); res.end(''); return; }
+      res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-store' });
+      res.end(data);
     });
   } else if (req.method === 'GET' && (url === '/' || url === '/overlay.html' || url === '/control')) {
     fs.readFile(path.join(__dirname, url === '/control' ? 'control.html' : 'overlay.html'), (err, data) => {
