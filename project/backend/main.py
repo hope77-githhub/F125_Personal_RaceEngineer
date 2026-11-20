@@ -29,6 +29,16 @@ app.add_middleware(
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
+@app.middleware("http")
+async def _always_revalidate_html(request, call_next):
+    """The web UI's index.html names the current build's hashed JS bundle. Without this header a browser may
+    reuse a cached index.html after a rebuild and keep running the old app (old sounds, old UI)."""
+    response = await call_next(request)
+    if response.headers.get("content-type", "").startswith("text/html"):
+        response.headers["Cache-Control"] = "no-cache"
+    return response
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEBUG_FILE_PATH = os.path.join(BASE_DIR, "docs", "debug_payload.json")
 VOICE_DIR = os.path.join(BASE_DIR, "backend", "data", "voice")
@@ -337,6 +347,35 @@ async def ask_engineer_endpoint(body: AskBody):
 
 
 
+def _overlay_car_telemetry(template, car_idx, kin, frame_id):
+    """A car-telemetry packet (id 6) for the TV overlay: the recorded packet with the viewed car's speed, gear,
+    RPM, pedals and steering replaced by the replay manager's kinematics for this frame (the same numbers the
+    dashboard shows). Only the one car is copied; the template is not modified."""
+    try:
+        cars = template["m_carTelemetryData"]
+        if not kin or car_idx is None or not (0 <= int(car_idx) < len(cars)):
+            return None
+        car_idx = int(car_idx)
+        car = dict(cars[car_idx])
+        car.update({
+            "m_speed": int(max(0, min(400, kin.get("speed", 0)))),
+            "m_gear": int(max(-1, min(8, kin.get("gear", 0)))),
+            "m_engineRPM": int(max(0, min(20000, kin.get("rpm", 0)))),
+            "m_throttle": max(0.0, min(1.0, kin.get("throttle", 0) / 100.0)),
+            "m_brake": max(0.0, min(1.0, kin.get("brake", 0) / 100.0)),
+            "m_steer": max(-1.0, min(1.0, float(kin.get("steer", 0.0)))),
+        })
+        cars = list(cars)
+        cars[car_idx] = car
+        header = dict(template["m_header"])
+        if frame_id is not None:
+            header["m_frameIdentifier"] = frame_id
+            header["m_overallFrameIdentifier"] = frame_id
+        return {**template, "m_header": header, "m_carTelemetryData": cars}
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
 async def replay_telemetry_loop(websocket: WebSocket, update_rate: int, units: str, circuit: str = "circuit_Catalunya", lap: str = "all", speed: float = 1.0, loop: bool = True, session: str = None):
     data_dir = os.path.join(BASE_DIR, "backend", "data")
     target_dir = os.path.join(data_dir, circuit)
@@ -398,6 +437,7 @@ async def replay_telemetry_loop(websocket: WebSocket, update_rate: int, units: s
     logger.info(f"Replaying {len(files_to_play)} file(s) for {circuit}: {[os.path.basename(f) for f in files_to_play]} at speed {speed}x")
     delay = max(0.015, 0.2 / max(0.1, speed))
     overlay_sent_at = {}  # packet id -> last time it was forwarded to the TV overlay
+    car_tele_template = None  # last recorded car-telemetry packet (id 6) of this session, see _overlay_car_telemetry
 
     while True:
         sent_this_pass = 0
@@ -439,16 +479,20 @@ async def replay_telemetry_loop(websocket: WebSocket, update_rate: int, units: s
 
                         # Update packets in deterministic order (session & participants before lap_data & telemetry)
                         # 16 (2026 car telemetry 2: active aero / overtake) only feeds the TV overlay
+                        fresh_this_frame = set()
                         for pid in (1, 4, 5, 7, 10, 11, 0, 6, 16, 2):
                             key = f"packet_id_{pid}"
                             pkt_dict = data.get(key)
                             # recorder snapshots can hold stale packets from a previous session
                             if session and packet_session_uid(pkt_dict) not in (None, str(session)):
                                 continue
+                            if pid == 6 and isinstance(pkt_dict, dict):
+                                car_tele_template = pkt_dict
                             if pkt_dict and isinstance(pkt_dict, dict):
                                 f_id = pkt_dict.get("m_header", {}).get("m_frameIdentifier")
                                 if f_id is None or last_frames.get(pid) != f_id or line_idx == 0:
                                     last_frames[pid] = f_id
+                                    fresh_this_frame.add(pid)
                                     if pid != 16:
                                         replay_manager.update(pid, Dict2Obj(pkt_dict))
                                     if overlay_manager.forwarding:
@@ -462,6 +506,17 @@ async def replay_telemetry_loop(websocket: WebSocket, update_rate: int, units: s
                                     overlay_manager.forward(encode_packet(pid, pkt_dict))
                                     overlay_sent_at[pid] = time.time()
 
+                        # Recordings often hold the same (stale) car-telemetry packet for many frames, so the overlay's
+                        # halo (speed, gear, RPM, pedals) froze while the tower and lap cards moved on. When this
+                        # frame's lap data is new but its car telemetry is not, send the overlay the values the
+                        # dashboard shows: the replay manager's kinematics derived from lap distance.
+                        if (overlay_manager.forwarding and 2 in fresh_this_frame and 6 not in fresh_this_frame
+                                and car_tele_template):
+                            synth = _overlay_car_telemetry(car_tele_template, p_idx,
+                                                           replay_manager._car_kinematics.get(p_idx),
+                                                           last_frames.get(2))
+                            if synth:
+                                overlay_manager.forward(encode_packet(6, synth))
                         overlay_manager.on_game_packet()   # a replay counts as game data for the TV overlay
                         payload = replay_manager.get_frontend_payload(units=units)
                         if payload.get("status") == "live":
