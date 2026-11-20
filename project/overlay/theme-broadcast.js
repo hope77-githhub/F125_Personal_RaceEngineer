@@ -84,7 +84,8 @@
     };
     const layer = mk('g', { id: 'rfHalo' });
     const rot = (a, x, y) => 'rotate(' + a + ' ' + x + ' ' + y + ')';
-    const add = (tag, attrs, text) => { const n = mk(tag, attrs, text); layer.appendChild(n); return n; };
+    let into = layer;                     // where add()/put()/... append: the layer, or the dial cluster below
+    const add = (tag, attrs, text) => { const n = mk(tag, attrs, text); into.appendChild(n); return n; };
     const label = (cls, x, y, a, txt) => add('text', { class: cls, x, y, 'text-anchor': 'middle', transform: rot(a, x, y) }, txt);
     const put = (n, x, y, a, cls, anchor) => {
       if (!n) return;
@@ -92,7 +93,7 @@
       n.setAttribute('transform', a ? rot(a, x, y) : '');
       if (cls) n.setAttribute('class', cls);
       if (anchor) n.setAttribute('text-anchor', anchor);
-      layer.appendChild(n);
+      into.appendChild(n);
     };
     const watch = (n, fn, attrs) => {     // re-run fn whenever the overlay updates that node
       if (!n) return;
@@ -112,6 +113,12 @@
     // of the screen: with the game's centred TV-pod camera the halo is centred on screen.
     const CX = 704, CY = 371;
     layer.setAttribute('transform', 'translate(' + (1247 / 2 - CX) + ' 0)');
+    // F1 25's own TV Pod camera shows the car's halo much lower than the broadcast frame the dial was measured on:
+    // its top edge peaks at y = 443 here, about 9.5 right of the screen centre (measured on an in-game TV Pod
+    // screenshot, 1911x1069). The dial cluster keeps its measured shape and moves as one group (HX, DROP) so its
+    // top sits under the halo's top bar; the arc, gears and RPM bar are traced on the game's halo itself.
+    const HX = 9.5, DROP = 166;
+    const cluster = mk('g', { transform: 'translate(' + HX + ' ' + DROP + ')' });
     // point on an ellipse around C (angles in degrees, SVG orientation: 0 = right, 90 = down)
     const P = (a, b, deg) => [CX + a * Math.cos(deg * Math.PI / 180), CY + b * Math.sin(deg * Math.PI / 180)];
     const f1 = (v) => v.toFixed(1);
@@ -122,9 +129,12 @@
       return 'M' + f1(p1[0]) + ' ' + f1(p1[1]) + ' A' + ao + ' ' + bo + ' 0 ' + big + ' 1 ' + f1(p2[0]) + ' ' + f1(p2[1]) +
         ' L' + f1(p3[0]) + ' ' + f1(p3[1]) + ' A' + ai + ' ' + bi + ' 0 ' + big + ' 0 ' + f1(p4[0]) + ' ' + f1(p4[1]) + ' Z';
     };
-    // halo arc, symmetric over the dial
-    const ARC = [[464, 357], [520, 326], [574, 302], [630, 284], [704, 274], [778, 284], [834, 302], [888, 326], [944, 357]];
+    // halo arc: the game halo's top edge (lifted 3 above it), symmetric over the halo centre 713.5
+    const ARC = [[523.5, 459.3], [563.5, 451.4], [613.5, 444.8], [663.5, 441.1], [713.5, 439.9],
+      [763.5, 441.1], [813.5, 444.8], [863.5, 451.4], [903.5, 459.3]];
     add('path', { class: 'rf-arc', d: smooth(ARC) });
+    layer.appendChild(cluster);
+    into = cluster;      // dial cluster: everything up to the battery is drawn in the cluster's own frame
     // slope of that arc (degrees) at a given x: same Catmull-Rom -> Bezier segments as smooth()
     const arcAngleAt = (x) => {
       const i = Math.max(1, Math.min(ARC.length - 1, ARC.findIndex((p) => p[0] >= x)));
@@ -142,7 +152,7 @@
     const sideBox = (cx, tilt) => {
       const g = mk('g', { transform: 'translate(' + cx + ' ' + BOX_Y + ') rotate(' + tilt + ')' });
       g.appendChild(mk('rect', { class: 'plate rf-box', x: -27, y: -31, width: 54, height: 62, rx: 6 }));
-      layer.appendChild(g);
+      into.appendChild(g);
       return g;
     };
     const inBox = (g, n, x, y, cls) => {
@@ -151,12 +161,12 @@
       n.setAttribute('class', cls); n.setAttribute('text-anchor', 'middle'); n.setAttribute('dominant-baseline', 'central');
       g.appendChild(n);
     };
-    const turnBox = sideBox(CX - BOX_D, arcAngleAt(CX - BOX_D).toFixed(1));
+    const turnBox = sideBox(CX - BOX_D, arcAngleAt(CX + HX - BOX_D).toFixed(1));
     inBox(turnBox, keep.turn, 0, -9, 'rf-turn');
     turnBox.appendChild(mk('text', { class: 'rf-lbl', x: 0, y: 14, 'text-anchor': 'middle', 'dominant-baseline': 'central' }, 'TURN'));
     if (keep.turn) keep.turn.style.removeProperty('font-size');      // upstream inline 22px would overflow the box
     watch(keep.turn, () => { keep.turn.style.visibility = /\d/.test(keep.turn.textContent) ? '' : 'hidden'; });
-    const aeroBox = sideBox(CX + BOX_D, arcAngleAt(CX + BOX_D).toFixed(1));
+    const aeroBox = sideBox(CX + BOX_D, arcAngleAt(CX + HX + BOX_D).toFixed(1));
     inBox(aeroBox, keep.aero1, 0, -15, 'rf-lbl');
     inBox(aeroBox, keep.aero2, 0, -3, 'rf-lbl');
     const aeroLines = [[13, 11], [10, 18]].map(([w, y]) => {
@@ -195,7 +205,7 @@
         seg.dataset.activeColor = color;
         group.appendChild(seg);
       }
-      layer.appendChild(group);
+      into.appendChild(group);
     };
     if (keep.brakeBars) placeBars(keep.brakeBars, -1);
     if (keep.thrBars) placeBars(keep.thrBars, 1);
@@ -214,7 +224,7 @@
       Object.entries({ x, y, width: w, height: h, rx: 1.5 }).forEach(([k, v]) => r.setAttribute(k, v));
       t.setAttribute('x', x + w / 2); t.setAttribute('y', y + h / 2); t.setAttribute('dominant-baseline', 'central');
       t.style.fontSize = fs + 'px';
-      layer.appendChild(g);
+      into.appendChild(g);
       // the broadcast prints just the name; the state is the pill's colour (keep distances such as "18 M")
       watch(t, () => { const s = t.textContent.replace(/\s+(READY|ON|OFF|EMPTY)$/, ''); if (s !== t.textContent) t.textContent = s; });
     };
@@ -224,16 +234,19 @@
     label('rf-lbl sm', 702, 408, 0, 'MPH');
     const ers = mk('g', { transform: 'translate(676 416) scale(1.18 1.08) translate(-358 -146)' });
     for (const n of [keep.ersBg, keep.ersFill, keep.bolt]) if (n) ers.appendChild(n);
-    layer.appendChild(ers);
-    // gears on the curve of the halo, RPM bar under them
-    const GEAR = [[916, 410], [935, 418], [956, 428], [975, 437], [995, 448], [1015, 460], [1034, 473], [1052, 485], [1070, 502]];
-    const RPM = [[904, 420], [936, 432], [980, 454], [1020, 476], [1050, 497], [1076, 520]];
+    into.appendChild(ers);
+    into = layer;
+    // gears just outside the right leg of the game's halo, RPM bar on the halo under them (mirrors the names on
+    // the left leg); positions follow the halo's top edge, evenly spaced along it
+    const GEAR = [[923.3, 457.9], [940.1, 462], [956.8, 466.8], [973.3, 472.3], [989.6, 478.5], [1005.5, 485.5],
+      [1021.2, 493.3], [1036.4, 501.9], [1051.1, 511.2]];
+    const RPM = [[911.2, 470.5], [943.9, 478.7], [978.5, 490.3], [1010.2, 504.5], [1035.9, 519.2], [1053.7, 531.3]];
     const GEAR_LIFT = 3;
     const rpmPath = smooth(RPM);
     add('path', { class: 'rf-rpmbg', d: rpmPath, pathLength: 100 });
     const rpmFill = add('path', { class: 'rf-rpmfill', d: rpmPath, pathLength: 100, 'stroke-dasharray': '0 100' });
     // bar end = the car's max RPM from telemetry (car status packet, upstream default 13000 until it arrives)
-    const rpmEnd = label('rf-tick', 1073, 532, 20, '13');
+    const rpmEnd = label('rf-tick', 1049.7, 540.8, 36, '13');
     let rpmMax = 13;
     const drawRpm = () => {
       const v = parseFloat(keep.rpm && keep.rpm.textContent), pct = Number.isFinite(v) ? Math.max(0, Math.min(100, (v / rpmMax) * 100)) : 0;
@@ -260,9 +273,9 @@
       });
       layer.appendChild(keep.gears);
     }
-    label('rf-lbl', 1006, 435.5, 29, 'GEARS');
-    label('rf-lbl', 985, 474, 29, 'RPM x1000');
-    // car ahead + viewed car written along the left of the halo ("14  SAINZ" / "15  HADJAR")
+    label('rf-lbl', 1024.3, 476.9, 27, 'GEARS');
+    label('rf-lbl', 952.8, 494.9, 18, 'RPM x1000');
+    // car ahead + viewed car written along the left leg of the halo ("14  SAINZ" / "15  HADJAR")
     const nameLine = (x, y, a, cls) => {
       const t = add('text', { class: cls, x, y, transform: rot(a, x, y) });
       const pos = mk('tspan', {}), name = mk('tspan', { dx: 8 });
