@@ -54,6 +54,7 @@ The session type is detected from the game data (`m_sessionType`) and shown as a
 * Lap 1 has no reference lap yet, so there are no braking calls.
 * **Laps with a safety car / VSC or a pit stop** are left out of pace comparisons and setup analysis (no false "box this lap").
 * Setup advice shows **current → suggested values** (e.g. `Front wing 36 → 38`) and the data behind it (average tyre temperatures, wear per lap) in the radio panel.
+* Every line the engineer can say (radio calls, setup advice, Q&A answers) is listed in the [engineer voice lines](project/docs/ENGINEER_VOICE_LINES.md) (Korean).
 
 ### 4-1. Ask the engineer
 In the radio panel's **"🎧 Ask the engineer"** box, tap a preset or type a question. The engineer answers from the live data with **voice + text (English / Korean) + the numbers behind it**.

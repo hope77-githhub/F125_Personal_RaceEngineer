@@ -14,7 +14,15 @@ const i18n = {
     units: "Measurement Units",
     unitsDesc: "Select display units for speed and temperature.",
     tts: "AI Engineer Voice (TTS)",
-    ttsDesc: "Enable real-time voice briefings from your race engineer.",
+    ttsDesc: "Your race engineer radios braking, pace, tyre and gap calls, answers your questions and gives setup advice in practice.",
+    comingSoon: "coming soon",
+    radioPlanTitle: "What the engineer calls, by session",
+    radioPlan: [
+      "Practice: braking per corner, lap pace, exit traction, tyre wear, setup advice",
+      "Qualifying: braking per corner, lap pace",
+      "Race: all of the above plus pit calls and the gap to the car ahead",
+      "Any session: ask questions from \"Ask the engineer\" on the dashboard",
+    ],
     persona: "Engineer Persona",
     overlay: "TV Overlay (broadcast graphics over the game)",
     overlayDesc: "Timing tower, lap cards and the TV-pod halo on top of the game. When ON it appears by itself as soon as the game sends telemetry (nothing shows before that). Game must be in borderless / windowed-fullscreen. Needs Node.js; the overlay window is a one-time download (Electron, ~370 MB).",
@@ -60,7 +68,15 @@ const i18n = {
     units: "측정 단위",
     unitsDesc: "표시할 속도 및 온도 단위를 선택합니다. (Metric / Imperial)",
     tts: "AI 엔지니어 음성 브리핑 (TTS)",
-    ttsDesc: "레이스 엔지니어의 실시간 음성 브리핑을 활성화합니다.",
+    ttsDesc: "레이스 엔지니어가 코너 브레이킹·페이스·타이어·앞차 갭을 무전하고, 질문에 답하며, 프랙티스에서는 셋업을 조언합니다.",
+    comingSoon: "준비 중",
+    radioPlanTitle: "세션별 엔지니어 무전",
+    radioPlan: [
+      "프랙티스: 코너별 브레이킹, 랩 페이스, 탈출 트랙션, 타이어 마모, 셋업 조언",
+      "퀄리파잉: 코너별 브레이킹, 랩 페이스",
+      "레이스: 위 항목 전부 + 피트인 콜, 앞차와의 갭",
+      "모든 세션: 대시보드의 '엔지니어에게 질문'에서 질문 가능",
+    ],
     persona: "엔지니어 페르소나 선택",
     overlay: "TV 오버레이 (게임 위 중계 그래픽)",
     overlayDesc: "타이밍 타워, 랩 카드, TV-pod 할로 계기판을 게임 화면 위에 띄워요. ON이면 게임이 텔레메트리를 보내는 순간 자동으로 나타나요(그 전에는 아무것도 표시되지 않아요). 게임은 '창 모드(전체 화면)'여야 하고 Node.js가 필요해요. 오버레이 창은 처음 한 번만 내려받아요(Electron, 약 370MB).",
@@ -3386,26 +3402,6 @@ function Dashboard({ settings, setSettings, onExit }) {
 function SetupPage({ onStart }) {
   const [port, setPort] = useState(20777);
   const [cornerMapOpen, setCornerMapOpen] = useState(false);
-  const [manifestClips, setManifestClips] = useState(DEFAULT_MANIFEST_CLIPS);
-  useEffect(() => {
-    fetch('http://localhost:8080/api/voice/clips')
-      .then((res) => res.json())
-      .then((resData) => {
-        if (resData.clips && resData.clips.length > 0) {
-          setManifestClips(resData.clips);
-        }
-      })
-      .catch(() => {});
-  }, []);
-
-  const {
-    isPlayingVoice,
-    currentVoiceClip,
-    activeVoiceTranscript,
-    setActiveVoiceTranscript,
-    playVoiceClip,
-    stopVoiceClip,
-  } = useVoicePlayer();
   const [tts, setTts] = useState(true);
   const tv = useTvOverlay();
   const [units, setUnits] = useState('metric');
@@ -3785,61 +3781,18 @@ function SetupPage({ onStart }) {
                   style={{ width: '100%' }}
                 >
                   <option value="redbull">Red Bull Engineer — Red Bull Racing</option>
-                  <option value="bono">Bono (Peter Bonnington) — Mercedes-AMG</option>
-                  <option value="adami">Ricky (Riccardo Adami) — Scuderia Ferrari</option>
+                  <option value="bono" disabled>Bono (Peter Bonnington) — Mercedes-AMG ({t.comingSoon})</option>
+                  <option value="adami" disabled>Ricky (Riccardo Adami) — Scuderia Ferrari ({t.comingSoon})</option>
                 </select>
 
-                {/* Engineer Radio Voice Preview & Test Console */}
-                <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--color-hairline)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                    <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-ink)' }}>
-                      📻 {t.radioTestConsole || 'Engineer Radio Test Console (TTS/Voice Tester)'}
-                    </span>
-                    {isPlayingVoice ? (
-                      <button
-                        onClick={stopVoiceClip}
-                        className="voice-test-btn"
-                        style={{ padding: '3px 8px', fontSize: '11px', backgroundColor: 'var(--color-semantic-down)', borderColor: 'var(--color-semantic-down)' }}
-                      >
-                        ⏹ {t.stopRadio || 'STOP'}
-                      </button>
-                    ) : (
-                      <span style={{ fontSize: '11px', color: 'var(--color-muted)' }}>
-                        {manifestClips.length} High-Res Voice Clips
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ fontSize: '12px', color: 'var(--color-muted)', marginBottom: '8px' }}>
-                    {t.radioTestDesc || 'Click any button to test the engineer\'s pit-wall voice clips:'}
-                  </div>
-                  {activeVoiceTranscript && (
-                    <div
-                      style={{
-                        backgroundColor: 'rgba(0,82,255,0.06)',
-                        border: '1px solid rgba(0,82,255,0.2)',
-                        padding: '10px 14px',
-                        borderRadius: 'var(--rounded-md)',
-                        marginBottom: '10px',
-                      }}
-                    >
-                      <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-primary)', marginBottom: '3px' }}>
-                        {activeVoiceTranscript.badge} · {activeVoiceTranscript.scenario}
-                      </div>
-                      <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--color-ink)' }}>
-                        "{activeVoiceTranscript.text}"
-                      </div>
-                    </div>
-                  )}
-                  <RadioTestConsole
-                    manifestClips={manifestClips}
-                    isPlayingVoice={isPlayingVoice}
-                    currentVoiceClip={currentVoiceClip}
-                    onPlayClip={playVoiceClip}
-                    onStopClip={stopVoiceClip}
-                    t={t}
-                    isDarkMode={false}
-                  />
+                <div style={{ marginTop: '14px', fontSize: '12px', fontWeight: 600, color: 'var(--color-body)' }}>
+                  {t.radioPlanTitle}
                 </div>
+                <ul style={{ margin: '6px 0 0', paddingLeft: '18px', fontSize: '12px', color: 'var(--color-body)', lineHeight: 1.6 }}>
+                  {t.radioPlan.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
               </div>
             )}
           </div>
