@@ -24,7 +24,7 @@ body { font-family: var(--font); font-stretch: var(--font-stretch); }
 body.has-font { --font-stretch: normal; }   /* user font: use as designed */
 
 /* ---------------------------------------------------------------- tower */
-#left { left: 4.2vw; top: 3.4vh; width: 12.1rem; filter: drop-shadow(0 .15rem .35rem #0008); }
+#left { left: 1.5vw; top: 3.4vh; width: 12.1rem; filter: drop-shadow(0 .15rem .35rem #0008); }
 
 #brand {
   height: 4.3rem;
@@ -119,11 +119,7 @@ body.has-logo #brand::before {
   transform: translate(var(--rf-hdx, 0px), var(--rf-hdy, 0px)) scale(var(--halo-scale, 1)) !important;
   transform-origin: 50% 52.9% !important;   /* dial centre: screen centre, 371/702 */
 }
-/* upstream "JOGO EM PAUSA · DADOS CONGELADOS" banner (game paused / no new packets): not wanted on screen */
-#pauseBadge { display: none !important; }
-/* upstream never styled these two, so they printed as loose text over the tower / top cards:
-   the connection debug line stays off screen (it is on /control), the hotkey toast is a small pill at the bottom */
-#status { display: none !important; }
+/* hotkey toast (e.g. "HALO: ON"): a small pill at the bottom, only while it is showing */
 #toast { display: none; position: fixed; left: 50%; bottom: 1.2vh; transform: translateX(-50%); z-index: 6;
   padding: .2rem .7rem; background: #0b0c0fe6; border: 1px solid #ffffff2a; border-radius: .2rem; color: #e8ebef;
   font: 600 .62rem/1.2 var(--font); font-stretch: var(--font-stretch); letter-spacing: .05em; white-space: nowrap; pointer-events: none; }

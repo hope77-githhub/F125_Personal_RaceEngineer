@@ -1,15 +1,16 @@
-// Numero da curva (TURN): o jogo nao envia isso na telemetria UDP, entao o overlay APRENDE a pista.
-// Na primeira volta completa e sem pit em uma pista, detecta onde o volante esta esterçado (steer x
-// distancia da volta) e numera as curvas em ordem. Salva em curvas/<trackId>.json (pode ser editado:
-// ajuste start/end/n, ou apague o arquivo para reaprender). A numeracao aprendida pode divergir da
-// oficial (curvas em reta muito rapidas nao sao detectadas; chicanes contam como duas).
+// Turn number (TURN): the game does not send it in the UDP telemetry, so the overlay LEARNS the track.
+// On the first complete lap without a pit stop it finds where the wheel is turned (steer x lap
+// distance) and numbers the corners in order. Saved to curvas/<trackId>.json (editable: adjust
+// start/end/n, or delete the file to relearn). Learned numbers can differ from the official ones
+// (very fast kinks are not detected; chicanes count as two). F1 AI Race Engineer writes the official
+// turn maps for 24 tracks into curvas/ at start, so learning is only a fallback.
 'use strict';
 const fs = require('fs');
 const path = require('path');
 
 const ENTER = 0.10, EXIT = 0.05, MIN_PEAK = 0.15, MIN_LEN = 20, MERGE_GAP = 40, LEAD = 20;
 
-function detectCorners(samples) { // samples: [[dist, steer]] ordenado por dist
+function detectCorners(samples) { // samples: [[dist, steer]] sorted by dist
   const segs = [];
   let cur = null;
   for (const [d, s] of samples) {

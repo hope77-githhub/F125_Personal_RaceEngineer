@@ -1,6 +1,7 @@
-// Janela transparente, sem borda, sempre no topo e "click-through" (nao rouba mouse/teclado).
-// Mostra http://127.0.0.1:8080/ (o servidor precisa estar rodando).
-// O jogo precisa estar em "Janela (Tela Cheia)" para o overlay aparecer por cima.
+// Transparent, frameless, always-on-top, click-through window (never takes the mouse or keyboard).
+// Shows OVERLAY_URL (default http://127.0.0.1:8080/; F1 AI Race Engineer uses :8090). The server must be running.
+// The game must run in "Windowed (Fullscreen)" / borderless mode for the overlay to appear on top
+// (an exclusive-fullscreen game cannot be drawn over by any window).
 const { app, BrowserWindow, screen, globalShortcut } = require('electron');
 const http = require('http');
 
@@ -13,12 +14,12 @@ function send(action) {
   const req = http.request(apiUrl, { method: 'POST', headers: {
     'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body)
   } }, res => res.resume());
-  req.on('error', err => console.error('Atalho sem servidor:', err.message));
+  req.on('error', err => console.error('Hotkey: server not reachable:', err.message));
   req.end(body);
 }
 
-// Modo de edicao: a janela deixa de ser click-through (mouse e foco) enquanto ui.edit estiver ligado.
-// Consulta o servidor, assim o botao da pagina /control tambem liga o modo.
+// Edit mode: the window stops being click-through (mouse and focus) while ui.edit is on.
+// It polls the server, so the /control page button turns the mode on too.
 function pollUi() {
   http.get(apiUrl, res => {
     let body = '';
@@ -45,12 +46,26 @@ app.whenReady().then(() => {
     win.setFocusable(on);
     win.setAlwaysOnTop(true, 'screen-saver');
     if (on) win.focus(); else win.blur();
-    console.log('Modo de edicao:', on ? 'LIGADO (mouse ativo)' : 'desligado (click-through)');
+    console.log('Edit mode:', on ? 'ON (mouse active)' : 'off (click-through)');
   };
   setInterval(pollUi, 400);
   win.loadURL(overlayUrl);
-  win.once('ready-to-show', () => win.showInactive());
-  // Cada acao tem mais de um atalho: se um estiver ocupado por outro programa, o outro funciona.
+  // Stay above the game. A borderless-fullscreen game puts its own window back on top whenever it is activated
+  // (Alt+Tab back into it), which pushed this window behind it when it was raised only once at start. While the
+  // overlay runs it takes the top of the always-on-top band again every half second, after a minimise
+  // (Win+D / show desktop) and on blur — never taking focus, so the game keeps the keyboard and mouse.
+  let shown = false;
+  const keepOnTop = () => {
+    if (!shown || win.isDestroyed()) return;
+    if (win.isMinimized() || !win.isVisible()) win.showInactive();
+    win.setAlwaysOnTop(true, 'screen-saver', 1);
+    win.moveTop();
+  };
+  win.once('ready-to-show', () => { win.showInactive(); shown = true; keepOnTop(); });
+  win.on('minimize', keepOnTop);
+  win.on('blur', keepOnTop);
+  setInterval(keepOnTop, 500);
+  // Each action has more than one hotkey: if one is taken by another program, the other still works.
   const registered = [], failed = [];
   for (const [shortcuts, action] of [
     [['Control+Alt+H', 'Control+Shift+H', 'Control+Alt+F10'], { toggle: 'all' }],
@@ -66,16 +81,16 @@ app.whenReady().then(() => {
   ]) {
     for (const shortcut of shortcuts) {
       let ok = false;
-      try { ok = globalShortcut.register(shortcut, () => { console.log('Atalho', shortcut); send(action); }); } catch (_) {}
+      try { ok = globalShortcut.register(shortcut, () => { console.log('Hotkey', shortcut); send(action); }); } catch (_) {}
       (ok ? registered : failed).push(shortcut);
     }
   }
-  console.log('Atalhos registrados:', registered.join(', '));
-  if (failed.length) console.warn('Atalhos indisponiveis (usados por outro programa):', failed.join(', '));
-  // Aviso na tela por alguns segundos, para saber se os atalhos pegaram.
+  console.log('Hotkeys registered:', registered.join(', '));
+  if (failed.length) console.warn('Hotkeys unavailable (used by another program):', failed.join(', '));
+  // Short on-screen notice so you know whether the hotkeys were registered.
   setTimeout(() => send({ toast: failed.length
-    ? 'ATALHO OCUPADO: ' + failed.join(' ') + ' | HUD: Ctrl+Shift+H'
-    : 'ATALHOS OK | HUD: Ctrl+Alt+H ou Ctrl+Shift+H' }), 2500);
+    ? 'HOTKEY TAKEN: ' + failed.join(' ') + ' | HUD: Ctrl+Shift+H'
+    : 'HOTKEYS OK | HUD: Ctrl+Alt+H or Ctrl+Shift+H' }), 2500);
 });
 
 app.on('will-quit', () => globalShortcut.unregisterAll());

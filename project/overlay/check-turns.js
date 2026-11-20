@@ -1,4 +1,4 @@
-// Testa o aprendizado de curvas com uma pista sintetica (4000 m, 5 curvas).
+// Tests turn learning on a synthetic track (4000 m, 5 corners).
 'use strict';
 const assert = require('assert');
 const fs = require('fs');
@@ -21,12 +21,12 @@ assert.strictEqual(t.state.status, 'ready');
 assert.strictEqual(t.state.total, 5);
 const saved = JSON.parse(fs.readFileSync(path.join(dir, '7.json'), 'utf8'));
 assert.strictEqual(saved.corners.length, 5);
-// volta com pit nao ensina
+// a lap with a pit stop does not teach
 const t2 = createTurnTracker(fs.mkdtempSync(path.join(os.tmpdir(), 'curvas-')));
 t2.setTrack(9, 4000);
 for (let lap = 1; lap <= 2; lap++) for (let d = 0; d < 4000; d += 5) t2.sample(lap, d, steer(d), d < 100 ? 1 : 0);
 assert.strictEqual(t2.state.status, 'learning');
-// novo tracker le o arquivo salvo
+// a new tracker reads the saved file
 const t3 = createTurnTracker(dir); t3.setTrack(7, 4000);
 assert.strictEqual(t3.state.status, 'ready');
-console.log('Curvas: aprende 5 curvas na 1a volta limpa, ignora volta com pit, recarrega do arquivo.');
+console.log('Turns: learns 5 corners on the 1st clean lap, ignores a lap with a pit stop, reloads from the file.');
