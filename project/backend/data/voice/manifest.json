@@ -4,7 +4,6 @@
   "team": "Red Bull Racing",
   "base_url": "/voice/clips",
   "categories": {
-    "braking": "Braking Kinematics (Early & Late 5m~30m)",
     "traction": "Exit Traction & Throttle Modulation",
     "tyre_deg": "Tyre Degradation by Compound & Box Window",
     "pace_delta": "Lap Pace Delta Tracking & 1s Drop Box Order",
@@ -21,138 +20,6 @@
       "text": "Radio check, Max. Telemetry stream is active, tyres looking good.",
       "trigger": "session_start",
       "url": "/voice/clips/radio_check.mp3"
-    },
-    {
-      "id": "brake_early_5m",
-      "category": "braking",
-      "title": "Brake 5m Early",
-      "filename": "brake_early_5m.mp3",
-      "scenario": "Early Braking by 5m",
-      "badge": "BRAKE -5M",
-      "delta_m": -5,
-      "text": "Braking was about 5 meters early. You can carry slightly more speed on entry.",
-      "url": "/voice/clips/brake_early_5m.mp3"
-    },
-    {
-      "id": "brake_early_10m",
-      "category": "braking",
-      "title": "Brake 10m Early",
-      "filename": "brake_early_10m.mp3",
-      "scenario": "Early Braking by 10m",
-      "badge": "BRAKE -10M",
-      "delta_m": -10,
-      "text": "Braked roughly 10 meters early. Entry speed was compromised.",
-      "url": "/voice/clips/brake_early_10m.mp3"
-    },
-    {
-      "id": "brake_early_15m",
-      "category": "braking",
-      "title": "Brake 15m Early",
-      "filename": "brake_early_15m.mp3",
-      "scenario": "Early Braking by 15m",
-      "badge": "BRAKE -15M",
-      "delta_m": -15,
-      "text": "That was about 15 meters early on the brakes. We are giving away too much speed on entry.",
-      "url": "/voice/clips/brake_early_15m.mp3"
-    },
-    {
-      "id": "brake_early_20m",
-      "category": "braking",
-      "title": "Brake 20m Early",
-      "filename": "brake_early_20m.mp3",
-      "scenario": "Early Braking by 20m",
-      "badge": "BRAKE -20M",
-      "delta_m": -20,
-      "text": "Braking point was 20 meters early. You have plenty of margin to brake later.",
-      "url": "/voice/clips/brake_early_20m.mp3"
-    },
-    {
-      "id": "brake_early_25m",
-      "category": "braking",
-      "title": "Brake 25m Early",
-      "filename": "brake_early_25m.mp3",
-      "scenario": "Early Braking by 25m",
-      "badge": "BRAKE -25M",
-      "delta_m": -25,
-      "text": "Braked 25 meters early into the corner. Push that braking marker further.",
-      "url": "/voice/clips/brake_early_25m.mp3"
-    },
-    {
-      "id": "brake_early_30m",
-      "category": "braking",
-      "title": "Brake 30m Early",
-      "filename": "brake_early_30m.mp3",
-      "scenario": "Early Braking by 30m",
-      "badge": "BRAKE -30M",
-      "delta_m": -30,
-      "text": "Way too conservative on the brakes, 30 meters early. Commit more on entry.",
-      "url": "/voice/clips/brake_early_30m.mp3"
-    },
-    {
-      "id": "brake_late_5m",
-      "category": "braking",
-      "title": "Brake 5m Late",
-      "filename": "brake_late_5m.mp3",
-      "scenario": "Late Braking by 5m",
-      "badge": "BRAKE +5M",
-      "delta_m": 5,
-      "text": "Slightly deep on the brakes, roughly 5 meters late. Apex missed slightly.",
-      "url": "/voice/clips/brake_late_5m.mp3"
-    },
-    {
-      "id": "brake_late_10m",
-      "category": "braking",
-      "title": "Brake 10m Late",
-      "filename": "brake_late_10m.mp3",
-      "scenario": "Late Braking by 10m",
-      "badge": "BRAKE +10M",
-      "delta_m": 10,
-      "text": "Braking was 10 meters late. We missed the optimal apex.",
-      "url": "/voice/clips/brake_late_10m.mp3"
-    },
-    {
-      "id": "brake_late_15m",
-      "category": "braking",
-      "title": "Brake 15m Late",
-      "filename": "brake_late_15m.mp3",
-      "scenario": "Late Braking by 15m",
-      "badge": "BRAKE +15M",
-      "delta_m": 15,
-      "text": "Braked roughly 15 meters late into the turn. Struggling to rotate the car.",
-      "url": "/voice/clips/brake_late_15m.mp3"
-    },
-    {
-      "id": "brake_late_20m",
-      "category": "braking",
-      "title": "Brake 20m Late",
-      "filename": "brake_late_20m.mp3",
-      "scenario": "Late Braking by 20m",
-      "badge": "BRAKE +20M",
-      "delta_m": 20,
-      "text": "That was 20 meters too deep on the brakes. Front tyres scrubbed wide.",
-      "url": "/voice/clips/brake_late_20m.mp3"
-    },
-    {
-      "id": "brake_late_25m",
-      "category": "braking",
-      "title": "Brake 25m Late",
-      "filename": "brake_late_25m.mp3",
-      "scenario": "Late Braking by 25m",
-      "badge": "BRAKE +25M",
-      "delta_m": 25,
-      "text": "25 meters late on the brakes. Serious lockup risk, reset your reference marker.",
-      "url": "/voice/clips/brake_late_25m.mp3"
-    },
-    {
-      "id": "brake_late_30m",
-      "category": "braking",
-      "title": "Brake 30m Late",
-      "filename": "brake_late_30m.mp3",
-      "scenario": "Late Braking by 30m",
-      "badge": "BRAKE +30M",
-      "delta_m": 30,
-      "text": "Massive overshoot, 30 meters late on the brakes. Bring the braking point back.",
-      "url": "/voice/clips/brake_late_30m.mp3"
     },
     {
       "id": "traction_prev_lap",
@@ -267,6 +134,54 @@
       "url": "/voice/clips/tyre_hard_deg_10pct.mp3"
     },
     {
+      "id": "tyre_inter_deg_5pct",
+      "category": "tyre_deg",
+      "title": "Inter Deg > 5%",
+      "filename": "tyre_inter_deg_5pct.mp3",
+      "scenario": "Intermediate High Degradation (>5%/lap)",
+      "badge": "INTER DEG 5%",
+      "compound": "Inter",
+      "wear_rate": 5,
+      "text": "The intermediates are wearing over five percent a lap. Use the wet parts of the track to cool them.",
+      "url": "/voice/clips/tyre_inter_deg_5pct.mp3"
+    },
+    {
+      "id": "tyre_inter_deg_10pct",
+      "category": "tyre_deg",
+      "title": "Inter Deg > 10% (Critical)",
+      "filename": "tyre_inter_deg_10pct.mp3",
+      "scenario": "Intermediate Critical Degradation (>10%/lap)",
+      "badge": "INTER CRITICAL",
+      "compound": "Inter",
+      "wear_rate": 10,
+      "text": "The intermediates are wearing ten percent a lap. They will not last long like this.",
+      "url": "/voice/clips/tyre_inter_deg_10pct.mp3"
+    },
+    {
+      "id": "tyre_wet_deg_5pct",
+      "category": "tyre_deg",
+      "title": "Wet Deg > 5%",
+      "filename": "tyre_wet_deg_5pct.mp3",
+      "scenario": "Full Wet High Degradation (>5%/lap)",
+      "badge": "WET DEG 5%",
+      "compound": "Wet",
+      "wear_rate": 5,
+      "text": "The full wets are wearing over five percent a lap. Keep them in the standing water where you can.",
+      "url": "/voice/clips/tyre_wet_deg_5pct.mp3"
+    },
+    {
+      "id": "tyre_wet_deg_10pct",
+      "category": "tyre_deg",
+      "title": "Wet Deg > 10% (Critical)",
+      "filename": "tyre_wet_deg_10pct.mp3",
+      "scenario": "Full Wet Critical Degradation (>10%/lap)",
+      "badge": "WET CRITICAL",
+      "compound": "Wet",
+      "wear_rate": 10,
+      "text": "The full wets are wearing ten percent a lap. The track may be ready for inters.",
+      "url": "/voice/clips/tyre_wet_deg_10pct.mp3"
+    },
+    {
       "id": "box_window_open",
       "category": "tyre_deg",
       "title": "Box Window Open",
@@ -331,16 +246,16 @@
       "url": "/voice/clips/pace_drop_severe_box.mp3"
     },
     {
-      "id": "gap_ahead_drs",
+      "id": "gap_ahead_overtake",
       "category": "rival_gap",
-      "title": "Car Ahead < 1.0s (DRS)",
-      "filename": "gap_ahead_drs.mp3",
-      "scenario": "Rival Ahead in DRS Range (<1.0s)",
+      "title": "Car Ahead < 1.0s (Overtake)",
+      "filename": "gap_ahead_overtake.mp3",
+      "scenario": "Rival Ahead in Overtake Mode Range (<1.0s)",
       "badge": "AHEAD < 1.0S",
       "target": "ahead",
       "gap_sec": 0.8,
-      "text": "Gap to car ahead is under a second. DRS is available, push now.",
-      "url": "/voice/clips/gap_ahead_drs.mp3"
+      "text": "Gap to car ahead is under a second. Overtake mode is available, push now.",
+      "url": "/voice/clips/gap_ahead_overtake.mp3"
     },
     {
       "id": "gap_ahead_1_5s",

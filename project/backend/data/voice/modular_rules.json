@@ -10,28 +10,6 @@
     }
   },
   "templates": {
-    "braking_early": {
-      "prefix": {
-        "file": "prefixes/brake_early.mp3",
-        "text": "Braking was about "
-      },
-      "number_pattern": "{m}",
-      "suffix": {
-        "file": "suffixes/meters_early_entry.mp3",
-        "text": " meters early on entry."
-      }
-    },
-    "braking_late": {
-      "prefix": {
-        "file": "prefixes/brake_late.mp3",
-        "text": "Braking was roughly "
-      },
-      "number_pattern": "{m}",
-      "suffix": {
-        "file": "suffixes/meters_late_apex.mp3",
-        "text": " meters late into the apex."
-      }
-    },
     "gap_ahead": {
       "prefix": {
         "file": "prefixes/gap_ahead.mp3",
@@ -42,9 +20,9 @@
         "file": "suffixes/seconds.mp3",
         "text": " seconds."
       },
-      "drs_suffix": {
-        "file": "suffixes/seconds_drs.mp3",
-        "text": " seconds, DRS available."
+      "overtake_suffix": {
+        "file": "suffixes/seconds_overtake.mp3",
+        "text": " seconds, overtake mode available."
       }
     },
     "gap_leader": {

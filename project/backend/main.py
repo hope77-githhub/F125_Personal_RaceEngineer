@@ -124,13 +124,41 @@ def ctypes_to_dict(obj):
         return obj
 
 
+_no_dashboard_since = None   # game data has been flowing since then with no LIVE dashboard connected
+_radio_hint_at = 0.0         # when the "engineer radio off" notice was last shown on the TV overlay
+_last_game_packet_at = 0.0
+RADIO_HINT_AFTER_S, RADIO_HINT_EVERY_S = 15.0, 600.0
+
+
+def radio_off_hint(now=None):
+    """The engineer radio is worked out and played by a LIVE dashboard (get_frontend_payload ->
+    evaluate_voice_triggers -> the browser). Driving with only the TV overlay keeps the radio silent, so
+    after 15 s of game data without a LIVE dashboard the overlay says so (again at most every 10 min)."""
+    global _no_dashboard_since, _radio_hint_at, _last_game_packet_at
+    now = time.time() if now is None else now
+    gap = now - _last_game_packet_at
+    _last_game_packet_at = now
+    if _live_clients > 0:
+        _no_dashboard_since = None
+        return False
+    if _no_dashboard_since is None or gap > 30.0:   # first packet, or the game came back after a break
+        _no_dashboard_since = now
+        return False
+    if now - _no_dashboard_since >= RADIO_HINT_AFTER_S and now - _radio_hint_at >= RADIO_HINT_EVERY_S:
+        if overlay_manager.toast("ENGINEER RADIO OFF - open localhost:8080 and start in LIVE mode"):
+            _radio_hint_at = now
+            return True
+    return False
+
+
 def on_udp_packet_received(data: bytes):
     """Callback function when UDP listener receives a packet."""
     global _last_raw_dump_time
     overlay_manager.forward(data)
     packet_id, parsed_packet = parse_packet(data)
     if parsed_packet:
-        overlay_manager.on_game_packet()   # TV overlay switch ON: starts the overlay on the first game packet
+        overlay_manager.on_game_packet(live=True)   # TV overlay switch ON: starts the overlay on the first game packet
+        radio_off_hint()
         state_manager.update(packet_id, parsed_packet)
         latest_raw_packet_objs[f"packet_id_{packet_id}"] = parsed_packet
 
@@ -283,6 +311,47 @@ class AskBody(BaseModel):
     text: str
 
 
+
+class QaDemoBody(BaseModel):
+    mode: str = "off"        # race / quali / off
+
+
+class QaUiBody(BaseModel):
+    source: str = "demo"     # demo / live
+    key: str = ""            # all, tower, lap, onboard, halo, cards, flags, fastest
+    value: bool = True
+    mode: str = ""           # auto / quali / race
+    toast: str = ""
+
+
+@app.get("/api/qa/overlay")
+def qa_overlay_endpoint(source: str = "live"):
+    """QA tab: what the TV overlay has received from the game and what it shows ('live'), or the demo."""
+    return overlay_manager.qa_snapshot("demo" if source == "demo" else "live")
+
+
+@app.post("/api/qa/overlay/demo")
+def qa_overlay_demo_endpoint(body: QaDemoBody):
+    """QA tab: start a simulated race / qualifying overlay (own ports) or stop it."""
+    return overlay_manager.start_demo(body.mode) if body.mode in ("race", "quali") else overlay_manager.stop_demo()
+
+
+@app.post("/api/qa/overlay/ui")
+def qa_overlay_ui_endpoint(body: QaUiBody):
+    """QA tab: switch one HUD on/off, the layout mode, or show a test toast on the chosen overlay."""
+    source = "demo" if body.source == "demo" else "live"
+    if body.key in ("all", "tower", "lap", "onboard", "halo", "cards", "flags", "fastest"):
+        action = {"set": body.key, "value": body.value}
+    elif body.mode in ("auto", "quali", "race"):
+        action = {"mode": body.mode}
+    elif body.toast:
+        action = {"toast": body.toast[:90]}
+    else:
+        return {"ok": False}
+    ui = overlay_manager.post_ui(action, source=source)
+    return {"ok": ui is not None, "ui": ui}
+
+
 class OverlayStartBody(BaseModel):
     window: bool = True
     halo: bool = True   # TV-pod halo HUD (off upstream by default; the game doesn't report the camera)
@@ -355,6 +424,7 @@ async def _listen_for_game_on_launch():
 @app.on_event("shutdown")
 def _stop_overlay_on_shutdown():
     overlay_manager.stop()
+    overlay_manager.stop_demo()
     try:
         recordings.purge()             # the session just played is not needed once the app closes
     except Exception as e:

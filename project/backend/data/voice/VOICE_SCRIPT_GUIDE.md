@@ -82,7 +82,7 @@
 
 | 파일명 | 상황 / 뱃지 | 영문 음성 대본 (Text) |
 |---|---|---|
-| `gap_ahead_drs.mp3` | AHEAD < 1.0S | "Gap to car ahead is under a second. DRS is available, push now." |
+| `gap_ahead_overtake.mp3` | AHEAD < 1.0S | "Gap to car ahead is under a second. Overtake mode is available, push now." |
 | `gap_ahead_1_5s.mp3` | AHEAD 1.5S | "Gap to car ahead is roughly 1.5 seconds. You are closing by two tenths a lap." |
 | `gap_ahead_2s.mp3` | AHEAD 2.0S | "Gap to car ahead is 2 seconds. Keep chipping away." |
 | `gap_ahead_3s.mp3` | AHEAD 3.0S | "Gap to car ahead is 3 seconds. Clean air ahead, build the tyre delta." |
@@ -115,7 +115,7 @@
 - **접미사**: `backend/data/voice/segments/suffixes/`
   - `meters_early_entry.mp3`: "meters early on entry."
   - `meters_late_apex.mp3`: "meters late into the apex."
-  - `seconds_drs.mp3`: "seconds, DRS available."
+  - `seconds_overtake.mp3`: "seconds, overtake mode available."
   - `seconds.mp3`: "seconds."
   - `drop_box_this_lap.mp3`: "seconds. Tyres are finished, box this lap!"
 - **숫자**: `backend/data/voice/segments/numbers/`

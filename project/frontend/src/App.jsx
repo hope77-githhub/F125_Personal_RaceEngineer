@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './styles/design-system.css';
 import CornerMapModal from './CornerMapModal';
+import SetupAnalysisCard from './SetupAnalysisCard';
+import QaPage from './QaPage';
 
 const i18n = {
   en: {
@@ -14,13 +16,13 @@ const i18n = {
     units: "Measurement Units",
     unitsDesc: "Select display units for speed and temperature.",
     tts: "AI Engineer Voice (TTS)",
-    ttsDesc: "Your race engineer radios braking, pace, tyre and gap calls, answers your questions and gives setup advice in practice.",
+    ttsDesc: "Your race engineer debriefs your laps (which turn cost the time and why), calls tyres, pit stops and gaps, gives setup advice in practice and answers your questions.",
     comingSoon: "coming soon",
     radioPlanTitle: "What the engineer calls, by session",
     radioPlan: [
-      "Practice: braking per corner, lap pace, exit traction, tyre wear, setup advice",
-      "Qualifying: braking per corner, lap pace",
-      "Race: all of the above plus pit calls and the gap to the car ahead",
+      "Practice: car and pace - a lap debrief when a lap loses a lot (which turn and why), your timesheet position on a new best, setup advice, long-run tyre life",
+      "Qualifying: after every push lap - how far off your best, which sector and turn cost the time and why, and which turn to focus on",
+      "Race: setup brief before the start, gap to the car ahead, tyre wear and strategy, pit calls, the turn behind a big lap loss",
       "Any session: ask questions from \"Ask the engineer\" on the dashboard",
     ],
     persona: "Engineer Persona",
@@ -29,6 +31,12 @@ const i18n = {
     language: "Display Language",
     languageDesc: "Choose the interface language for the telemetry dashboard.",
     connect: "Connect & Start Session",
+    modeTitle: "Connection mode",
+    liveDesc: "Live telemetry from F1 25 (UDP): dashboard, lap analysis and the engineer radio.",
+    tabSetup: "Session setup",
+    tabQa: "QA test",
+    startLive: "🔴 Start LIVE (connect to the game)",
+    startReplay: "▶ Start replay",
     vsAhead: "vs Ahead",
     vsLeader: "vs Leader",
     whiteLine: "*Vertical marker indicates {compLabelEng}'s input",
@@ -50,11 +58,17 @@ const i18n = {
     keepRecDisk: "On disk now",
     replayCircuit: "Circuit Dataset",
     replayNone: "No recorded sessions",
+    replayNoneHint: "Nothing to replay yet: recordings are deleted when a session ends. Turn \"Keep recordings\" ON below and drive in LIVE; that session can then be replayed.",
     replayLap: "Target Lap",
     replaySession: "Session",
     replaySpeed: "Playback Speed",
     replayAllLaps: "All Completed Laps (Sequential)",
     replayModeBadge: "REPLAY",
+    switchLive: "Game detected · switch to LIVE for the engineer radio",
+    toLive: "Switch to LIVE",
+    backToSetup: "Back to setup",
+    waitLiveHint: "Start a session in F1 25 with UDP telemetry on (port {port}); the dashboard connects by itself. The engineer radio runs in LIVE mode.",
+    waitReplayHint: "Nothing to replay: recordings are deleted when a session ends unless \"Keep recordings\" is ON. The engineer radio for your own driving runs in LIVE mode.",
     radioTitle: "Red Bull Engineer Team Radio",
     radioActive: "RADIO ACTIVE",
     radioTestConsole: "Engineer Radio Test Console (TTS/Voice Tester)",
@@ -73,13 +87,13 @@ const i18n = {
     units: "측정 단위",
     unitsDesc: "표시할 속도 및 온도 단위를 선택합니다. (Metric / Imperial)",
     tts: "AI 엔지니어 음성 브리핑 (TTS)",
-    ttsDesc: "레이스 엔지니어가 코너 브레이킹·페이스·타이어·앞차 갭을 무전하고, 질문에 답하며, 프랙티스에서는 셋업을 조언합니다.",
+    ttsDesc: "레이스 엔지니어가 랩을 디브리프하고(어느 코너에서 왜 시간을 잃었는지), 타이어·피트·앞차 갭을 무전하며, 프랙티스에서는 셋업을 조언하고 질문에 답합니다.",
     comingSoon: "준비 중",
     radioPlanTitle: "세션별 엔지니어 무전",
     radioPlan: [
-      "프랙티스: 코너별 브레이킹, 랩 페이스, 탈출 트랙션, 타이어 마모, 셋업 조언",
-      "퀄리파잉: 코너별 브레이킹, 랩 페이스",
-      "레이스: 위 항목 전부 + 피트인 콜, 앞차와의 갭",
+      "프랙티스: 차량·페이스 중심 - 랩에서 시간을 많이 잃으면 어느 코너에서 왜 잃었는지, 베스트 랩이면 타임시트 순위, 셋업 조언, 롱런 타이어 수명",
+      "퀄리파잉: 푸시 랩마다 - 베스트보다 몇 초 느렸는지, 어느 섹터·코너에서 왜 잃었는지, 어느 코너에 집중할지",
+      "레이스: 출발 전 셋업 브리핑, 앞차 갭, 타이어 마모·전략, 피트인 콜, 랩 타임이 크게 떨어지면 원인 코너",
       "모든 세션: 대시보드의 '엔지니어에게 질문'에서 질문 가능",
     ],
     persona: "엔지니어 페르소나 선택",
@@ -88,6 +102,12 @@ const i18n = {
     language: "언어 (Language)",
     languageDesc: "대시보드 표시 언어를 선택합니다.",
     connect: "세션 연결 및 시작",
+    modeTitle: "연결 모드",
+    liveDesc: "F1 25가 보내는 실시간 텔레메트리(UDP)로 대시보드·랩 분석·엔지니어 무전을 써요.",
+    tabSetup: "세션 설정",
+    tabQa: "QA 테스트",
+    startLive: "🔴 LIVE 시작 (게임 연결)",
+    startReplay: "▶ 리플레이 시작",
     vsAhead: "vs 앞차 (Ahead)",
     vsLeader: "vs 선두 (Leader)",
     whiteLine: "*수직 마커: {compLabelEng} 조작량 기준선",
@@ -109,11 +129,17 @@ const i18n = {
     keepRecDisk: "현재 녹화 용량",
     replayCircuit: "리플레이 서킷 선택",
     replayNone: "녹화된 세션 없음",
+    replayNoneHint: "리플레이할 녹화가 없어요. 세션이 끝나면 녹화가 지워지기 때문이에요. 아래 '녹화 보관'을 ON으로 하고 LIVE로 주행하면 그 세션을 리플레이할 수 있어요.",
     replayLap: "재생할 랩",
     replaySession: "리플레이 세션",
     replaySpeed: "재생 배속",
     replayAllLaps: "전체 완주 랩 순차 재생 (권장)",
     replayModeBadge: "리플레이",
+    switchLive: "게임 감지됨 · 엔지니어 무전은 LIVE로 전환",
+    toLive: "LIVE로 전환",
+    backToSetup: "설정으로",
+    waitLiveHint: "F1 25에서 UDP 텔레메트리(포트 {port})를 켜고 세션을 시작하면 자동으로 연결돼요. 엔지니어 무전은 LIVE 모드에서 나와요.",
+    waitReplayHint: "리플레이할 녹화가 없어요. '녹화 보관'이 OFF면 세션이 끝날 때 녹화가 지워져요. 직접 주행할 때의 엔지니어 무전은 LIVE 모드에서 나와요.",
     radioTitle: "레드불 엔지니어 팀 라디오",
     radioActive: "무전 송출 중 (RADIO ACTIVE)",
     radioTestConsole: "엔지니어 보이스 테스트 콘솔 (Voice/TTS Tester)",
@@ -217,138 +243,6 @@ const DEFAULT_MANIFEST_CLIPS = [
     "text": "Radio check, Max. Telemetry stream is active, tyres looking good.",
     "trigger": "session_start",
     "url": "/voice/clips/radio_check.mp3"
-  },
-  {
-    "id": "brake_early_5m",
-    "category": "braking",
-    "title": "Brake 5m Early",
-    "filename": "brake_early_5m.mp3",
-    "scenario": "Early Braking by 5m",
-    "badge": "BRAKE -5M",
-    "delta_m": -5,
-    "text": "Braking was about 5 meters early. You can carry slightly more speed on entry.",
-    "url": "/voice/clips/brake_early_5m.mp3"
-  },
-  {
-    "id": "brake_early_10m",
-    "category": "braking",
-    "title": "Brake 10m Early",
-    "filename": "brake_early_10m.mp3",
-    "scenario": "Early Braking by 10m",
-    "badge": "BRAKE -10M",
-    "delta_m": -10,
-    "text": "Braked roughly 10 meters early. Entry speed was compromised.",
-    "url": "/voice/clips/brake_early_10m.mp3"
-  },
-  {
-    "id": "brake_early_15m",
-    "category": "braking",
-    "title": "Brake 15m Early",
-    "filename": "brake_early_15m.mp3",
-    "scenario": "Early Braking by 15m",
-    "badge": "BRAKE -15M",
-    "delta_m": -15,
-    "text": "That was about 15 meters early on the brakes. We are giving away too much speed on entry.",
-    "url": "/voice/clips/brake_early_15m.mp3"
-  },
-  {
-    "id": "brake_early_20m",
-    "category": "braking",
-    "title": "Brake 20m Early",
-    "filename": "brake_early_20m.mp3",
-    "scenario": "Early Braking by 20m",
-    "badge": "BRAKE -20M",
-    "delta_m": -20,
-    "text": "Braking point was 20 meters early. You have plenty of margin to brake later.",
-    "url": "/voice/clips/brake_early_20m.mp3"
-  },
-  {
-    "id": "brake_early_25m",
-    "category": "braking",
-    "title": "Brake 25m Early",
-    "filename": "brake_early_25m.mp3",
-    "scenario": "Early Braking by 25m",
-    "badge": "BRAKE -25M",
-    "delta_m": -25,
-    "text": "Braked 25 meters early into the corner. Push that braking marker further.",
-    "url": "/voice/clips/brake_early_25m.mp3"
-  },
-  {
-    "id": "brake_early_30m",
-    "category": "braking",
-    "title": "Brake 30m Early",
-    "filename": "brake_early_30m.mp3",
-    "scenario": "Early Braking by 30m",
-    "badge": "BRAKE -30M",
-    "delta_m": -30,
-    "text": "Way too conservative on the brakes, 30 meters early. Commit more on entry.",
-    "url": "/voice/clips/brake_early_30m.mp3"
-  },
-  {
-    "id": "brake_late_5m",
-    "category": "braking",
-    "title": "Brake 5m Late",
-    "filename": "brake_late_5m.mp3",
-    "scenario": "Late Braking by 5m",
-    "badge": "BRAKE +5M",
-    "delta_m": 5,
-    "text": "Slightly deep on the brakes, roughly 5 meters late. Apex missed slightly.",
-    "url": "/voice/clips/brake_late_5m.mp3"
-  },
-  {
-    "id": "brake_late_10m",
-    "category": "braking",
-    "title": "Brake 10m Late",
-    "filename": "brake_late_10m.mp3",
-    "scenario": "Late Braking by 10m",
-    "badge": "BRAKE +10M",
-    "delta_m": 10,
-    "text": "Braking was 10 meters late. We missed the optimal apex.",
-    "url": "/voice/clips/brake_late_10m.mp3"
-  },
-  {
-    "id": "brake_late_15m",
-    "category": "braking",
-    "title": "Brake 15m Late",
-    "filename": "brake_late_15m.mp3",
-    "scenario": "Late Braking by 15m",
-    "badge": "BRAKE +15M",
-    "delta_m": 15,
-    "text": "Braked roughly 15 meters late into the turn. Struggling to rotate the car.",
-    "url": "/voice/clips/brake_late_15m.mp3"
-  },
-  {
-    "id": "brake_late_20m",
-    "category": "braking",
-    "title": "Brake 20m Late",
-    "filename": "brake_late_20m.mp3",
-    "scenario": "Late Braking by 20m",
-    "badge": "BRAKE +20M",
-    "delta_m": 20,
-    "text": "That was 20 meters too deep on the brakes. Front tyres scrubbed wide.",
-    "url": "/voice/clips/brake_late_20m.mp3"
-  },
-  {
-    "id": "brake_late_25m",
-    "category": "braking",
-    "title": "Brake 25m Late",
-    "filename": "brake_late_25m.mp3",
-    "scenario": "Late Braking by 25m",
-    "badge": "BRAKE +25M",
-    "delta_m": 25,
-    "text": "25 meters late on the brakes. Serious lockup risk, reset your reference marker.",
-    "url": "/voice/clips/brake_late_25m.mp3"
-  },
-  {
-    "id": "brake_late_30m",
-    "category": "braking",
-    "title": "Brake 30m Late",
-    "filename": "brake_late_30m.mp3",
-    "scenario": "Late Braking by 30m",
-    "badge": "BRAKE +30M",
-    "delta_m": 30,
-    "text": "Massive overshoot, 30 meters late on the brakes. Bring the braking point back.",
-    "url": "/voice/clips/brake_late_30m.mp3"
   },
   {
     "id": "traction_prev_lap",
@@ -527,16 +421,16 @@ const DEFAULT_MANIFEST_CLIPS = [
     "url": "/voice/clips/pace_drop_severe_box.mp3"
   },
   {
-    "id": "gap_ahead_drs",
+    "id": "gap_ahead_overtake",
     "category": "rival_gap",
-    "title": "Car Ahead < 1.0s (DRS)",
-    "filename": "gap_ahead_drs.mp3",
-    "scenario": "Rival Ahead in DRS Range (<1.0s)",
+    "title": "Car Ahead < 1.0s (Overtake)",
+    "filename": "gap_ahead_overtake.mp3",
+    "scenario": "Rival Ahead in Overtake Mode Range (<1.0s)",
     "badge": "AHEAD < 1.0S",
     "target": "ahead",
     "gap_sec": 0.8,
-    "text": "Gap to car ahead is under a second. DRS is available, push now.",
-    "url": "/voice/clips/gap_ahead_drs.mp3"
+    "text": "Gap to car ahead is under a second. Overtake mode is available, push now.",
+    "url": "/voice/clips/gap_ahead_overtake.mp3"
   },
   {
     "id": "gap_ahead_1_5s",
@@ -739,7 +633,6 @@ function RadioTestConsole({
 
   const categories = [
     { id: 'all', label: 'ALL', count: manifestClips.length, color: '#0052FF' },
-    { id: 'braking', label: 'BRAKING (5~30M)', count: manifestClips.filter(c => c.category === 'braking').length, color: '#FF3B30' },
     { id: 'traction', label: 'TRACTION', count: manifestClips.filter(c => c.category === 'traction').length, color: '#FF9500' },
     { id: 'tyre_deg', label: 'TYRE & BOX', count: manifestClips.filter(c => c.category === 'tyre_deg').length, color: '#AF52DE' },
     { id: 'pace_delta', label: 'PACE DELTA', count: manifestClips.filter(c => c.category === 'pace_delta').length, color: '#34C759' },
@@ -1032,7 +925,8 @@ function useVoicePlayer() {
 
     // Engineer answers / setup advice are built from pre-baked lines; if none of the files exist
     // yet, show the text instead of falling back to an unrelated clip.
-    if ((clip.type === 'qa_answer' || clip.type === 'setup_advice') && !(clip.segments && clip.segments.length)) {
+    // (every engineer_brain event carries `keys`: Q&A, setup advice, race brief, tyre report)
+    if ((clip.keys || clip.type === 'qa_answer' || clip.type === 'setup_advice') && !(clip.segments && clip.segments.length)) {
       setTimeout(() => setIsPlayingVoice(false), 2500);
       return;
     }
@@ -1273,7 +1167,13 @@ function Dashboard({ settings, setSettings, onExit }) {
       wsUrl += `&circuit=${encodeURIComponent(settings.replayCircuit || '')}&lap=${encodeURIComponent(settings.replayLap || 'all')}&speed=${settings.replaySpeed || 2.0}&loop=true`;
       if (settings.replaySession) wsUrl += `&session=${encodeURIComponent(settings.replaySession)}`;
     }
-    const ws = new WebSocket(wsUrl);
+    // LIVE mode reconnects by itself (e.g. after the backend restarts), so the engineer radio never stays
+    // silent behind a dead socket; a replay ends when its data does and is not retried.
+    let ws = null;
+    let disposed = false;
+    let retryTimer = null;
+    const connect = () => {
+    ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
       setConnected(true);
@@ -1333,10 +1233,15 @@ function Dashboard({ settings, setSettings, onExit }) {
 
     ws.onclose = () => {
       setConnected(false);
+      if (!disposed && !settings.useRawReplay) retryTimer = setTimeout(connect, 2000);
     };
+    };
+    connect();
 
     return () => {
-      ws.close();
+      disposed = true;
+      clearTimeout(retryTimer);
+      if (ws) ws.close();
     };
   }, [
     settings.port,
@@ -1386,6 +1291,19 @@ function Dashboard({ settings, setSettings, onExit }) {
         <p style={{ color: 'var(--color-body)', fontSize: '14px', margin: 0 }}>
           ws://localhost:8080/ws · Port {settings.port}
         </p>
+        <p style={{ color: 'var(--color-body)', fontSize: '14px', margin: 0, maxWidth: '560px', textAlign: 'center' }}>
+          {settings.useRawReplay ? t.waitReplayHint : t.waitLiveHint.replace('{port}', settings.port)}
+        </p>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {settings.useRawReplay && (
+            <button className="btn-primary" onClick={() => setSettings({ ...settings, useRawReplay: false })}>
+              {t.toLive}
+            </button>
+          )}
+          <button className="btn-secondary-light" onClick={onExit}>
+            {t.backToSetup}
+          </button>
+        </div>
       </div>
     );
   }
@@ -1396,6 +1314,7 @@ function Dashboard({ settings, setSettings, onExit }) {
     sector_comparisons,
     circuit_corners = [],
     reference_track = [],
+    setup_analysis = null,
   } = data;
   const selectedPlayer =
     players.find((p) => p.id === activePlayerId) || players[0];
@@ -1631,6 +1550,15 @@ function Dashboard({ settings, setSettings, onExit }) {
                 )}
                 <span className="mono-num">[{settings.replaySpeed || 2}x]</span>
               </div>
+            )}
+            {settings.useRawReplay && tv.st && tv.st.live_game_age_s != null && tv.st.live_game_age_s < 5 && (
+              <button
+                onClick={() => setSettings({ ...settings, useRawReplay: false })}
+                className="btn-primary"
+                title={t.switchLive}
+              >
+                🎮 {t.switchLive}
+              </button>
             )}
             <button
               onClick={() => setSettings({ ...settings, tts: !settings.tts })}
@@ -2746,6 +2674,12 @@ function Dashboard({ settings, setSettings, onExit }) {
               </div>
             </div>
           </div>
+          {/* Practice only: setup analysis vs the fastest car of the session */}
+          {setup_analysis && (
+            <div style={{ marginTop: '24px' }}>
+              <SetupAnalysisCard data={setup_analysis} language={settings.language || 'ko'} />
+            </div>
+          )}
         </div>
       </section>
 
@@ -3483,6 +3417,7 @@ function Dashboard({ settings, setSettings, onExit }) {
 }
 
 function SetupPage({ onStart }) {
+  const [page, setPage] = useState('setup');   // 'setup' | 'qa' (QA tab: TV overlay check)
   const [port, setPort] = useState(20777);
   const [cornerMapOpen, setCornerMapOpen] = useState(false);
   const [tts, setTts] = useState(true);
@@ -3491,7 +3426,8 @@ function SetupPage({ onStart }) {
   const [updateRate, setUpdateRate] = useState(60);
   const [voice, setVoice] = useState('redbull');
   const [language, setLanguage] = useState('ko');
-  const [useRawReplay, setUseRawReplay] = useState(true);
+  // LIVE by default (the engineer radio needs it); replay is opt-in and only possible with recordings on disk
+  const [useRawReplay, setUseRawReplay] = useState(false);
   const [availableReplays, setAvailableReplays] = useState([]);
   const [replayCircuit, setReplayCircuit] = useState('');
   const [replayLap, setReplayLap] = useState('all');
@@ -3523,6 +3459,7 @@ function SetupPage({ onStart }) {
     fetch('http://localhost:8080/api/replays')
       .then((res) => res.json())
       .then((data) => {
+        if (!data.circuits || data.circuits.length === 0) setUseRawReplay(false);
         if (data.circuits && data.circuits.length > 0) {
           setAvailableReplays(data.circuits);
           // the backend lists the most recently recorded circuit first
@@ -3557,6 +3494,22 @@ function SetupPage({ onStart }) {
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button
+              type="button"
+              onClick={() => setPage('setup')}
+              className={`btn-secondary-light ${page === 'setup' ? 'active' : ''}`}
+            >
+              {t.tabSetup}
+            </button>
+            <button
+              type="button"
+              onClick={() => setPage('qa')}
+              className={`btn-secondary-light ${page === 'qa' ? 'active' : ''}`}
+            >
+              {t.tabQa}
+            </button>
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
               onClick={() => setLanguage('ko')}
               className={`btn-secondary-light ${language === 'ko' ? 'active' : ''}`}
             >
@@ -3572,6 +3525,9 @@ function SetupPage({ onStart }) {
         </div>
       </header>
 
+      {page === 'qa' ? (
+        <QaPage language={language} />
+      ) : (
       <div
         style={{
           display: 'flex',
@@ -3610,27 +3566,41 @@ function SetupPage({ onStart }) {
               padding: '20px',
               backgroundColor: 'var(--color-surface-soft)',
               borderRadius: 'var(--rounded-lg)',
-              border: useRawReplay
-                ? '1.5px solid var(--color-primary)'
-                : '1px solid var(--color-hairline)',
+              border: '1.5px solid var(--color-primary)',
               marginBottom: '20px',
             }}
           >
+            {/* Connection mode: LIVE (the game, default; the engineer radio needs it) or REPLAY (recordings) */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
               <div>
                 <div style={{ fontWeight: 600, fontSize: '16px', color: 'var(--color-ink)' }}>
-                  {t.useRawReplay}
+                  {t.modeTitle}
                 </div>
                 <div style={{ fontSize: '13px', color: 'var(--color-body)', marginTop: '4px' }}>
-                  {t.useRawReplayDesc}
+                  {useRawReplay ? t.useRawReplayDesc : t.liveDesc}
                 </div>
+                {availableReplays.length === 0 && (
+                  <div style={{ fontSize: '12px', color: 'var(--color-ink)', marginTop: '6px' }}>
+                    {t.replayNoneHint}
+                  </div>
+                )}
               </div>
-              <button
-                onClick={() => setUseRawReplay(!useRawReplay)}
-                className={`btn-secondary-light ${useRawReplay ? 'active' : ''}`}
-              >
-                {useRawReplay ? 'ENABLED' : 'OFF'}
-              </button>
+              <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+                <button
+                  onClick={() => setUseRawReplay(false)}
+                  className={`btn-secondary-light ${!useRawReplay ? 'active' : ''}`}
+                >
+                  🔴 LIVE
+                </button>
+                <button
+                  onClick={() => setUseRawReplay(true)}
+                  disabled={availableReplays.length === 0}
+                  title={availableReplays.length === 0 ? t.replayNone : undefined}
+                  className={`btn-secondary-light ${useRawReplay ? 'active' : ''}`}
+                >
+                  {t.replayModeBadge}
+                </button>
+              </div>
             </div>
 
             {useRawReplay && (
@@ -3944,9 +3914,10 @@ function SetupPage({ onStart }) {
           className="btn-pill-cta"
           style={{ width: '100%', maxWidth: '600px' }}
         >
-          {t.connect}
+          {useRawReplay ? t.startReplay : t.startLive}
         </button>
       </div>
+      )}
       <CornerMapModal open={cornerMapOpen} onClose={() => setCornerMapOpen(false)} language={language} />
     </div>
   );
