@@ -14,7 +14,7 @@
 :root {
   --font: "F1Local", "Saira", "Bahnschrift", "Segoe UI", "Arial Narrow", Arial, sans-serif;
   --font-stretch: 118%;
-  --rf-row: rgba(6, 7, 10, 0.84);
+  --rf-row: rgba(30, 32, 38, 0.72);   /* a softer, see-through black, so the team marks stand out */
   --rf-p1: #e9545c;
   --rf-text: #ffffff;
   --rf-dim: #c8cbd2;
@@ -81,6 +81,11 @@ body.has-logo #brand::before {
 }
 
 .row .team { font-size: .78rem; overflow: hidden; }
+/* team logos from local-assets/teams (see theme-broadcast.js): fitted inside the padded team cell */
+body.has-team-logos #left { width: 12.25rem; }   /* the wider team column must not squeeze "+1:02.345" gaps */
+body.has-team-logos .row { grid-template-columns: 1.62rem 1.8rem 2.6rem minmax(0, 1fr) 1rem; }
+body.has-team-logos #root.red-flag .row { grid-template-columns: 1.4rem 1.8rem minmax(0, 1fr); }
+body.has-team-logos .row .team { padding: .4rem .1rem; }
 .row .code { font: 700 .92rem/1 var(--font); font-stretch: var(--font-stretch); letter-spacing: .01em; padding: .14rem .14rem .12rem; }
 .row.me .code { color: #111216; background: #f6f6f6; }
 
@@ -117,40 +122,92 @@ body.has-logo #brand::before {
 #haloGauge {
   left: 0 !important; top: 0 !important; width: 100vw !important; height: 100vh !important;
   transform: translate(var(--rf-hdx, 0px), var(--rf-hdy, 0px)) scale(var(--halo-scale, 1)) !important;
-  transform-origin: 50.8% 76.5% !important;   /* dial centre on the game's halo: (623.5 + 9.5)/1247, (371 + 166)/702 */
+  transform-origin: 50.8% 76.5% !important;   /* scaling pivot under the halo centre (halo-fit.js uses the same) */
 }
 /* hotkey toast (e.g. "HALO: ON"): a small pill at the bottom, only while it is showing */
 #toast { display: none; position: fixed; left: 50%; bottom: 1.2vh; transform: translateX(-50%); z-index: 6;
   padding: .2rem .7rem; background: #0b0c0fe6; border: 1px solid #ffffff2a; border-radius: .2rem; color: #e8ebef;
   font: 600 .62rem/1.2 var(--font); font-stretch: var(--font-stretch); letter-spacing: .05em; white-space: nowrap; pointer-events: none; }
 #toast.show { display: block; }
-/* fastest-lap banner: near the top (under the quali cards), so it never covers the halo dial at the bottom */
+/* fastest-lap banner: near the top, so it never covers the halo dial at the bottom */
 #fastestLap { top: 14vh; bottom: auto; transform-origin: center top; }
-/* practice / qualifying lap cards: never more than 3, at the top centre of the screen */
-#qCards { top: 3vh; bottom: auto; transform-origin: center top; }
+/* practice / qualifying lap cards: never more than 3, at the bottom centre of the screen like the TV feed */
+#qCards { top: auto; bottom: 1.5vh; transform-origin: center bottom; }
 #qCards .qc:nth-child(n+4) { display: none !important; }
 #haloGauge .rf-arc { fill: none; stroke: #fff; stroke-width: 1.3; opacity: .85; }
-#haloGauge .rf-box { fill: #07152c; fill-opacity: .55; stroke-opacity: .55; }
+/* TURN / ACTIVE AERO panels: a faint glass panel with a thin steel-blue edge */
+#haloGauge .rf-panel { fill: #0a1830; fill-opacity: .28; stroke: #9ab8de; stroke-width: .8; stroke-opacity: .5; }
+#haloGauge .rf-paneltxt { fill: #cfe6ff; }
+/* RECHARGE / DEPLOY frames: dark blue with a bright blue edge, letters light blue */
+#haloGauge .rf-frame { fill: #0a2d55; fill-opacity: .72; stroke: #2f9cf0; stroke-width: 1.3; }
+/* brake / throttle columns: dark plate, unlit bars slate grey */
+#haloGauge .rf-barplate { fill: #08121f; fill-opacity: .55; stroke: #6f8aa8; stroke-width: .6; stroke-opacity: .35; }
+#haloGauge #rfHalo .seg-off { fill: #3a4656; fill-opacity: .8; stroke: none; }
+/* guide curves the names run along (never drawn), dividers between the cells of a section */
+#haloGauge .rf-guide { fill: none; stroke: none; }
+#haloGauge .rf-divider { fill: none; stroke: #9ab8de; stroke-width: .8; stroke-opacity: .35; }
+/* ACTIVE AERO cell: invisible until active aero / DRS is available or open (state rules below) */
+#haloGauge .rf-aerocell { fill: none; stroke: none; }
+/* viewed car's name band in its team colour */
+#haloGauge .rf-band { fill: var(--rf-team, #3671c6); fill-opacity: .14; stroke: var(--rf-team, #3671c6); stroke-width: 1.3; }
 #haloGauge .rf-lbl { font-size: 9px; font-weight: 700; letter-spacing: .6px; fill: #e3f3ff; }
-#haloGauge .rf-vlbl { font-size: 7px; font-weight: 700; fill: #d8efff; }
-#haloGauge .rf-tag { font-size: 9px; font-weight: 700; letter-spacing: .6px; fill: #eef6ff; }
+#haloGauge .rf-vlbl { font-size: 7px; font-weight: 700; fill: #6cc4ff; }
+#haloGauge .rf-tag { font-size: 8px; font-weight: 700; letter-spacing: .7px; fill: #eef6ff; }
 #haloGauge .rf-tag.g { fill: #eefff6; }
 #haloGauge .rf-lbl.sm { font-size: 8px; }
 #haloGauge .rf-big { font-size: 23px; font-weight: 800; fill: #fff; }
 #haloGauge .rf-mid { font-size: 19px; font-weight: 800; fill: #fff; }
 #haloGauge #rfHalo .pill text { font-weight: 700; letter-spacing: .5px; }
-#haloGauge .rf-tickmark { fill: none; stroke: #93a9bb; stroke-width: .9; opacity: .6; }
+#haloGauge .rf-tickmark { fill: none; stroke: #93a9bb; stroke-width: 1.1; opacity: .55; }
 #haloGauge .rf-turn { font-size: 18px; font-weight: 800; fill: #fff; }
+/* corner direction arrow above the turn number (theme-broadcast.js) */
+#haloGauge .rf-turnarrow .stem { fill: none; stroke: #fff; stroke-width: 3.2; stroke-linejoin: round; }
+#haloGauge .rf-turnarrow .head { fill: #fff; }
 #haloGauge .rf-tick { font-size: 7px; font-weight: 600; fill: #c8d2dc; }
-#haloGauge .rf-name { font-size: 13px; font-weight: 800; letter-spacing: .5px; fill: #f2f6ff; }
-#haloGauge .rf-name.dim { fill: #b9bec8; }
+#haloGauge .rf-name { font-size: 13px; font-weight: 700; letter-spacing: .8px; fill: #f2f6ff; }
+#haloGauge .rf-name .rf-pos { font-weight: 500; }
+#haloGauge .rf-name.dim { fill: #b9bec8; opacity: .85; }
 #haloGauge .rf-name.me { font-size: 15px; }
 #haloGauge .rf-rpmbg, #haloGauge .rf-rpmfill { fill: none; stroke-width: 3; stroke-linecap: round; }
 #haloGauge .rf-rpmbg { stroke: #8d97a6; opacity: .45; }
-#haloGauge .rf-rpmfill { stroke: #6cc4ff; filter: drop-shadow(0 0 2px #2f9be0); }
+#haloGauge .rf-rpmfill { stroke: var(--rf-team, #6cc4ff); filter: drop-shadow(0 0 2px var(--rf-team, #2f9be0)); }
+#haloGauge .rf-ers { font-size: 8px; font-weight: 800; letter-spacing: .2px; fill: #fff;
+  paint-order: stroke; stroke: #062a47; stroke-width: 1.6px; stroke-linejoin: round; }
 #haloGauge .rf-aero { fill: none; stroke: #e8eef5; stroke-width: 1.6; stroke-linecap: round; opacity: .8; }
 #haloGauge .rf-aero[data-state="soon"] { stroke: #f0b43a; opacity: 1; }
 #haloGauge .rf-aero[data-state="ready"] { stroke: #4be59a; opacity: 1; }
 #haloGauge .rf-aero[data-state="on"] { stroke: #22d97a; opacity: 1; filter: drop-shadow(0 0 2px #2dff94); }
-#haloGauge #rfHalo .gear { font-size: 15px; font-weight: 700; fill: #d6e2ec; filter: none; }
-#haloGauge #rfHalo .gear.active { font-size: 18px; font-weight: 900; fill: #fff; filter: drop-shadow(0 0 2px #8fe0ff); }
+
+/* ---- modes in use: theme-broadcast.js copies the pills' states to #rfHalo as data-aero / data-ot / data-boost.
+   Each mode has its own colour so the driver sees at a glance which one is running:
+   active aero / DRS green, overtake mode magenta, boost cyan. */
+@keyframes rfGlow { from { filter: drop-shadow(0 0 1px var(--glow)); } to { filter: drop-shadow(0 0 7px var(--glow)); } }
+@keyframes rfFlow { to { stroke-dashoffset: -15; } }
+@keyframes rfRipple { 0%, 100% { opacity: .2; } 35% { opacity: 1; } }
+/* active aero (2026) / DRS: the box lights up and its lines stream like air over an open flap */
+#haloGauge #rfHalo[data-aero="soon"] .rf-aeropanel { stroke: #f0b43a; stroke-opacity: 1; }
+#haloGauge #rfHalo[data-aero="ready"] .rf-aeropanel { stroke: #4be59a; stroke-opacity: 1; }
+#haloGauge #rfHalo[data-aero="on"] .rf-aeropanel { --glow: #2dff94; fill: #0b4a2c; fill-opacity: .9; stroke: #2dff94;
+  stroke-opacity: 1; stroke-width: 1.6; animation: rfGlow .55s ease-in-out infinite alternate; }
+#haloGauge #rfHalo[data-aero="on"] .rf-aerobox text { fill: #c8ffe2; }
+#haloGauge #rfHalo[data-aero="on"] .rf-aero { stroke: #5dffad; stroke-width: 2; stroke-dasharray: 6 3; animation: rfFlow .4s linear infinite; }
+/* overtake mode: magenta pill, and the dial ring and the halo arc pulse */
+#haloGauge #rfHalo #haloOvertakePill[data-state="on"] rect { --glow: #d65bff; fill: #b52cf0; stroke: #f3c6ff;
+  animation: rfGlow .5s ease-in-out infinite alternate; }
+#haloGauge #rfHalo #haloOvertakePill[data-state="on"] text { fill: #fff; font-weight: 900; }
+#haloGauge #rfHalo[data-ot="on"] .ring { --glow: #d65bff; stroke: #d65bff; stroke-width: 2.4; stroke-opacity: 1;
+  animation: rfGlow .5s ease-in-out infinite alternate; }
+#haloGauge #rfHalo[data-ot="on"] .rf-arc { --glow: #d65bff; stroke: #e597ff; stroke-width: 2.2; opacity: 1;
+  animation: rfGlow .5s ease-in-out infinite alternate; }
+/* boost: cyan pill, the ((( BOOST ))) marks ripple outwards and the battery glows; the ring glows cyan
+   unless overtake mode (magenta) is on at the same time */
+#haloGauge #rfHalo #haloBoostPill[data-state="on"] rect { --glow: #3ec5ff; fill: #1fb6ff; stroke: #d4f3ff;
+  animation: rfGlow .55s ease-in-out infinite alternate; }
+#haloGauge #rfHalo #haloBoostPill[data-state="on"] text { fill: #02233a; font-weight: 900; }
+#haloGauge #rfHalo[data-boost="on"] .rf-tickmark { stroke: #5fd3ff; stroke-width: 1.3; animation: rfRipple .7s ease-in-out infinite;
+  animation-delay: calc(var(--i) * .08s); }
+#haloGauge #rfHalo[data-boost="on"] #haloErsFill { --glow: #3ec5ff; animation: rfGlow .55s ease-in-out infinite alternate; }
+#haloGauge #rfHalo[data-boost="on"]:not([data-ot="on"]) .ring { --glow: #3ec5ff; stroke: #3ec5ff; stroke-width: 2.2; stroke-opacity: 1;
+  animation: rfGlow .55s ease-in-out infinite alternate; }
+#haloGauge #rfHalo .gear { font-size: 13px; font-weight: 700; fill: #d6e2ec; filter: none; }
+#haloGauge #rfHalo .gear.active { font-size: 16px; font-weight: 900; fill: #fff; filter: drop-shadow(0 0 2px #8fe0ff); }

@@ -21,7 +21,7 @@ and remembered between runs.
 | Switch OFF / app closed | The overlay window and server close. |
 
 The overlay window (Electron, about 370 MB) is downloaded **once**, only when you press **Install** on the TV card.
-At start the app writes the official turn maps of 24 tracks into `curvas/`, so the TURN number is right from the first lap.
+At start the app writes the official turn maps of 24 tracks into `curvas/`, so the TURN number is right from the first lap. Each turn also carries its direction, drawn as a left or right arrow above the number.
 
 Run the game in **Windowed (Fullscreen)** / borderless mode so the window can sit on top of it (no window can draw
 over exclusive fullscreen). While the switch is ON the window keeps itself above the game — after Alt+Tab, a minimise
@@ -36,7 +36,7 @@ or show-desktop it takes the top again within half a second, without ever taking
   - *Practice / qualifying:* up to 3 cards at the **top centre** — your car first, then cars on a flying lap. Each
     shows the live lap time, the reference time and driver, a 5-second delta when a sector closes, and S1/S2/S3 bars
     (green = personal best, purple = session best, yellow = slower).
-  - *Race:* one card at the bottom right with **only your own times** — live lap time, sector delta against your own
+  - *Race:* one card at the top right with **only your own times** — live lap time, sector delta against your own
     best lap, `BEST LAP`, and sector colours. S3 is worked out when you cross the line (last lap − S1 − S2) and the
     closed lap stays on screen for 5 s.
 - **Halo HUD** (fitted to F1 25's TV Pod camera: the arc traces the car's halo, the dial hangs under its top bar,

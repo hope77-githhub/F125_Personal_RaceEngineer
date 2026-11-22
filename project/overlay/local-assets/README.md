@@ -8,7 +8,7 @@ in the public repository. The overlay picks the files up automatically (reload t
 |---|---|
 | `logo.svg` / `logo.png` / `logo.webp` | tower header logo (replaces the built-in mark) |
 | `fonts/*.woff2` / `*.woff` / `*.ttf` / `*.otf` | overlay font. Weight is read from the file name: `…Regular…` 400, `…Bold…` 700, `…Wide…` 800, `…Black…` 900; `…Italic…` = italic |
-| `teams/<team>.svg` / `.png` / `.webp` | team mark in the tower. `<team>` = `mercedes`, `ferrari`, `redbull`, `williams`, `astonmartin`, `alpine`, `racingbulls`, `haas`, `mclaren`, `sauber`, `audi`, `cadillac` |
+| `teams/<team>.svg` / `.png` / `.webp` | team mark in the tower. `<team>` = `mercedes`, `ferrari`, `redbull`, `williams`, `astonmartin`, `alpine`, `racingbulls`, `haas`, `mclaren`, `sauber`, `audi`, `cadillac`. The image is fitted inside the team column; a mark on a transparent background looks best |
 
 Use only files you are allowed to use (personal use). Without them the overlay falls back to the
 built-in marks and the open **Saira** font (Google Fonts, SIL OFL) at 118 % width — the closest free match to the broadcast type.

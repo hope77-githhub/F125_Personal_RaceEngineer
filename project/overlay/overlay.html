@@ -136,7 +136,7 @@
   .qs { display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; font-size: .58rem; font-weight: 800;
     color: #c9ccd2; letter-spacing: .03em; }
   .qs span.sel { color: #fff; }
-  .qbars { display: grid; grid-template-columns: repeat(3, 1fr); gap: .1rem; height: .17rem; background: #000; }
+  .qbars { display: grid; grid-template-columns: repeat(3, 1fr); gap: .15rem; height: .3rem; background: #000; }
   .qbars i { background: #4b4e57; }
   .qbars i.green { background: var(--good); }
   .qbars i.yellow { background: #ffd23f; }
@@ -161,8 +161,8 @@
     background: #ffd23f; border: .1rem solid #111; cursor: nwse-resize; border-radius: .15rem; }
   body.edit .hudtag, body.edit .rz { display: block; }
 
-  #lapCard { position: absolute; right: 1.6rem; bottom: 3vh; display: none;
-    transform: scale(var(--lap-scale, 1)); transform-origin: bottom right;
+  #lapCard { position: absolute; right: 1.6rem; top: 3.4vh; display: none;   /* race only: top right */
+    transform: scale(var(--lap-scale, 1)); transform-origin: top right;
     filter: drop-shadow(.1rem .15rem .3rem #000a); }
   /* VSC/SC delta: shown only when the lap-data packet carries a valid delta. */
   #flags { position: absolute; left: 50%; top: 7vh; display: none; flex-direction: column; align-items: center; gap: .3rem;
@@ -176,22 +176,22 @@
   #deltaPanel .dm { padding: 0 .4rem .35rem; font-size: .65rem; font-weight: 800; letter-spacing: .08em; }
   #deltaPanel.safe .dv { color: #45df88; }
   #deltaPanel.fast .dv { color: #f0404b; }
-  #fastestLap { position: absolute; left: 50%; bottom: 12vh; width: 51rem; height: 5rem; display: none;
+  #fastestLap { position: absolute; left: 50%; bottom: 12vh; width: 32rem; height: 2.4rem; display: none;
     align-items: stretch; transform: translateX(-50%) scale(var(--fastest-scale, 1)); transform-origin: center bottom;
     background: #0e1015f2; color: white; box-shadow: .14rem .22rem .45rem #0009; overflow: hidden; }
   #fastestLap.on, body.edit #fastestLap { display: flex; }
-  #fastestLap .fastTitle { width: 31%; flex: none; display: flex; align-items: center; padding-left: 1.3rem;
+  #fastestLap .fastTitle { width: 31%; flex: none; display: flex; align-items: center; padding-left: .8rem;
     background: #b81bc8; clip-path: polygon(0 0, 87% 0, 100% 50%, 87% 100%, 0 100%);
-    font-size: 1.28rem; font-weight: 900; letter-spacing: .08em; white-space: nowrap; }
-  #fastestLap .fastChevrons { width: 5rem; flex: none; opacity: .7;
-    background: repeating-linear-gradient(50deg, transparent 0 1.1rem, #a522b1 1.1rem 2.25rem, transparent 2.25rem 3.25rem); }
-  #fastestLap .fastName { flex: 1; min-width: 0; display: flex; align-items: center; padding: 0 .6rem;
-    color: var(--fast-color, #f7f7f7); font-size: 1.3rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  #fastestLap .fastLogo { display: flex; align-items: center; justify-content: center; width: 2.5rem;
-    color: var(--fast-color, #f7f7f7); font-size: 1.3rem; font-weight: 900; }
-  #fastestLap .fastLogo svg { width: 2.2rem; }
-  #fastestLap .fastTime { display: flex; align-items: center; padding: 0 1rem 0 .2rem; color: #bd2acb;
-    font-size: 2.05rem; font-weight: 900; white-space: nowrap; }
+    font-size: .8rem; font-weight: 900; letter-spacing: .08em; white-space: nowrap; }
+  #fastestLap .fastChevrons { width: 3.1rem; flex: none; opacity: .7;
+    background: repeating-linear-gradient(50deg, transparent 0 .68rem, #a522b1 .68rem 1.4rem, transparent 1.4rem 2rem); }
+  #fastestLap .fastName { flex: 1; min-width: 0; display: flex; align-items: center; padding: 0 .4rem;
+    color: var(--fast-color, #f7f7f7); font-size: .82rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #fastestLap .fastLogo { display: flex; align-items: center; justify-content: center; width: 1.6rem;
+    color: var(--fast-color, #f7f7f7); font-size: .82rem; font-weight: 900; }
+  #fastestLap .fastLogo svg { width: 1.2rem; }
+  #fastestLap .fastTime { display: flex; align-items: center; padding: 0 .62rem 0 .12rem; color: #bd2acb;
+    font-size: 1.12rem; font-weight: 900; white-space: nowrap; }
   #onboardCard { position: absolute; left: 50%; bottom: 3.5vh;
     transform: translateX(-50%) scale(var(--onboard-scale, 1)); transform-origin: center bottom;
     width: 20rem; height: 4.45rem; display: none; align-items: stretch;
@@ -630,6 +630,22 @@
     $('deltaMessage').textContent = delta.seconds >= 0 ? 'DELTA POSITIVE' : 'SLOW DOWN';
   }
 
+  // The fastest-lap banner and the SC / VSC delta panel both sit at the top centre. While both are on screen
+  // and would touch, the banner moves down to just under the panel (also after either was moved or resized
+  // in edit mode); it goes back once the panel is gone. Not in edit mode, where HUDs are placed by hand.
+  function keepFastestClear(edit) {
+    const banner = el.fastestLap;
+    let push = 0;
+    if (!edit && banner.classList.contains('on') && el.flags.style.display !== 'none') {
+      const f = el.flags.getBoundingClientRect(), b = banner.getBoundingClientRect();
+      const current = parseFloat(banner.style.marginTop) || 0;
+      const top = b.top - current, gap = innerHeight * 0.012;
+      if (f.height && b.height && b.left < f.right && b.right > f.left && top < f.bottom + gap) push = Math.ceil(f.bottom + gap - top);
+    }
+    const value = push ? push + 'px' : '';
+    if (banner.style.marginTop !== value) banner.style.marginTop = value;
+  }
+
   function renderFastest(s, show, edit) {
     const event = s.fastestLap;
     const active = !!event && Date.now() < event.expiresAt;
@@ -736,6 +752,7 @@
     renderLapCard(s, list, cut, timed);
     renderFlags(s, ui.flags, edit);
     renderFastest(s, ui.fastest, edit);
+    keepFastestClear(edit);
 
     const me = s.cars[s.viewCar ?? s.player];
     if (me) {
@@ -800,6 +817,8 @@
     const steer = Number.isFinite(car.steer) ? car.steer : 0;
     const turn = s.turn || {};
     $('haloTurn').textContent = turn.n ? 'T' + turn.n : turn.status === 'learning' ? '…' : '—';
+    const turnDir = turn.n && (turn.dir === 'L' || turn.dir === 'R') ? turn.dir : '';   // corner direction (arrow)
+    if ($('haloTurn').dataset.dir !== turnDir) $('haloTurn').dataset.dir = turnDir;
     $('haloTurnTotal').textContent = turn.n && turn.total ? '/' + turn.total : turn.status === 'learning' ? 'LEARNING' : '';
     el.haloThrottleText.textContent = Math.round(throttle * 100) + '%';
     el.haloBrakeText.textContent = Math.round(brake * 100) + '%';

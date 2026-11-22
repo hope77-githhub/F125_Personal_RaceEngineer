@@ -534,6 +534,7 @@ function startDemo() {
     }
     car.steer = Math.sin(t / 1.3) * 0.5;
     state.turn.status = 'ready'; state.turn.total = 19; state.turn.n = 1 + Math.floor(((t / 6) % 1) * 19);
+    state.turn.dir = [1, 2, 5, 8, 11, 14, 17].includes(state.turn.n) ? 'L' : 'R';   // demo: a mix of left and right
     const demoLaps = state.cars.slice(0, names.length).map(c => c.bestLap).filter(Boolean);
     state.best = { lap: demoLaps.length ? Math.min(...demoLaps) : 0,
       s1: 27500, s2: 29500, s3: 31000 };
@@ -653,7 +654,7 @@ const server = http.createServer((req, res) => {
       res.writeHead(ok ? 200 : 400, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
       res.end(JSON.stringify(ok ? (url === '/api/ui' ? state.ui
         : url === '/api/halo-layout' ? state.haloLayouts
-        : url === '/api/offset' ? state.hudOffsets : state.hudScales) : { error: 'acao invalida' }));
+        : url === '/api/offset' ? state.hudOffsets : state.hudScales) : { error: 'invalid action' }));
     });
   } else if (req.method === 'GET' && (url === '/theme-broadcast.css' || url === '/theme-broadcast.js')) {
     // F1 AI Race Engineer: broadcast theme (stylesheet + helper script)
