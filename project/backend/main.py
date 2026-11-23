@@ -11,8 +11,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from telemetry.listener import F1UDPListener
 from telemetry.f1_types.router import parse_packet
 from state_mgmt.manager import StateManager, TRACK_MAP, ENGINEER_VOICE_CLIPS
-from state_mgmt.sessions import list_sessions, session_frame_refs, frame_session_uid, packet_session_uid
+from state_mgmt.sessions import (list_sessions, session_frame_refs, frame_session_uid, packet_session_uid,
+                                 recorded_circuits, latest_recorded_circuit)
 from state_mgmt import engineer_brain
+from state_mgmt.recordings import Recordings
 from pydantic import BaseModel
 from overlay_manager import OverlayManager
 from telemetry.encoder import encode_packet
@@ -28,6 +30,16 @@ app.add_middleware(
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+@app.middleware("http")
+async def _always_revalidate_html(request, call_next):
+    """The web UI's index.html names the current build's hashed JS bundle. Without this header a browser may
+    reuse a cached index.html after a rebuild and keep running the old app (old sounds, old UI)."""
+    response = await call_next(request)
+    if response.headers.get("content-type", "").startswith("text/html"):
+        response.headers["Cache-Control"] = "no-cache"
+    return response
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEBUG_FILE_PATH = os.path.join(BASE_DIR, "docs", "debug_payload.json")
@@ -63,14 +75,18 @@ if os.path.exists(DEBUG_FILE_PATH):
             if key.startswith("packet_id_") and isinstance(pkt_dict, dict):
                 pid = int(key.replace("packet_id_", ""))
                 state_manager.update(pid, Dict2Obj(pkt_dict))
-        state_manager.preload_circuit_laps("circuit_Catalunya")
-        logger.info("Seeded state_manager from debug_payload.json and preloaded Catalunya laps.")
+        _seed_circuit = latest_recorded_circuit(os.path.join(BASE_DIR, "backend", "data"))
+        state_manager.preload_circuit_laps(_seed_circuit)
+        logger.info(f"Seeded state_manager from debug_payload.json and preloaded {_seed_circuit or 'no'} laps.")
     except Exception as e:
         logger.warning(f"Failed to seed state_manager from debug_payload.json: {e}")
 
 latest_raw_packet_objs = {}
 _last_raw_dump_time = 0.0
 _live_clients = 0   # open live dashboards; raw packets are recorded to lapN.jsonl only while one is open
+# Recording retention: a session's recording is kept only while it is the one being recorded (unless the
+# "keep recordings" setting is on); see state_mgmt/recordings.py
+recordings = Recordings(os.path.join(BASE_DIR, "backend", "data"))
 
 
 def ensure_udp_listener(port=20777, update_rate=60):
@@ -108,13 +124,41 @@ def ctypes_to_dict(obj):
         return obj
 
 
+_no_dashboard_since = None   # game data has been flowing since then with no LIVE dashboard connected
+_radio_hint_at = 0.0         # when the "engineer radio off" notice was last shown on the TV overlay
+_last_game_packet_at = 0.0
+RADIO_HINT_AFTER_S, RADIO_HINT_EVERY_S = 15.0, 600.0
+
+
+def radio_off_hint(now=None):
+    """The engineer radio is worked out and played by a LIVE dashboard (get_frontend_payload ->
+    evaluate_voice_triggers -> the browser). Driving with only the TV overlay keeps the radio silent, so
+    after 15 s of game data without a LIVE dashboard the overlay says so (again at most every 10 min)."""
+    global _no_dashboard_since, _radio_hint_at, _last_game_packet_at
+    now = time.time() if now is None else now
+    gap = now - _last_game_packet_at
+    _last_game_packet_at = now
+    if _live_clients > 0:
+        _no_dashboard_since = None
+        return False
+    if _no_dashboard_since is None or gap > 30.0:   # first packet, or the game came back after a break
+        _no_dashboard_since = now
+        return False
+    if now - _no_dashboard_since >= RADIO_HINT_AFTER_S and now - _radio_hint_at >= RADIO_HINT_EVERY_S:
+        if overlay_manager.toast("ENGINEER RADIO OFF - open localhost:8080 and start in LIVE mode"):
+            _radio_hint_at = now
+            return True
+    return False
+
+
 def on_udp_packet_received(data: bytes):
     """Callback function when UDP listener receives a packet."""
     global _last_raw_dump_time
     overlay_manager.forward(data)
     packet_id, parsed_packet = parse_packet(data)
     if parsed_packet:
-        overlay_manager.on_game_packet()   # TV overlay switch ON: starts the overlay on the first game packet
+        overlay_manager.on_game_packet(live=True)   # TV overlay switch ON: starts the overlay on the first game packet
+        radio_off_hint()
         state_manager.update(packet_id, parsed_packet)
         latest_raw_packet_objs[f"packet_id_{packet_id}"] = parsed_packet
 
@@ -154,8 +198,8 @@ def on_udp_packet_received(data: bytes):
                     "timestamp": current_time,
                     "data": snapshot_dict,
                 }
-                with open(log_path, "a", encoding="utf-8") as f:
-                    f.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
+                recordings.note_frame(circuit_folder, snapshot_dict)   # a new session clears the earlier ones
+                recordings.append(log_path, json.dumps(log_entry, ensure_ascii=False) + "\n")
             except Exception as e:
                 logger.error(f"Failed to dump raw payload: {e}")
 
@@ -167,9 +211,10 @@ def get_available_replays():
         return []
 
     circuits = []
-    for item in sorted(os.listdir(data_dir)):
+    # most recently recorded circuit first, so the setup page defaults to the latest data on disk
+    for item in recorded_circuits(data_dir):
         item_path = os.path.join(data_dir, item)
-        if os.path.isdir(item_path) and item.startswith("circuit_") and item != "circuit_unknown":
+        if os.path.isdir(item_path):
             raw_circuit_name = item.replace("circuit_", "")
             # Check if pre-parsed cache exists to know which laps are complete
             valid_lap_nums = None
@@ -266,6 +311,47 @@ class AskBody(BaseModel):
     text: str
 
 
+
+class QaDemoBody(BaseModel):
+    mode: str = "off"        # race / quali / off
+
+
+class QaUiBody(BaseModel):
+    source: str = "demo"     # demo / live
+    key: str = ""            # all, tower, lap, onboard, halo, cards, flags, fastest
+    value: bool = True
+    mode: str = ""           # auto / quali / race
+    toast: str = ""
+
+
+@app.get("/api/qa/overlay")
+def qa_overlay_endpoint(source: str = "live"):
+    """QA tab: what the TV overlay has received from the game and what it shows ('live'), or the demo."""
+    return overlay_manager.qa_snapshot("demo" if source == "demo" else "live")
+
+
+@app.post("/api/qa/overlay/demo")
+def qa_overlay_demo_endpoint(body: QaDemoBody):
+    """QA tab: start a simulated race / qualifying overlay (own ports) or stop it."""
+    return overlay_manager.start_demo(body.mode) if body.mode in ("race", "quali") else overlay_manager.stop_demo()
+
+
+@app.post("/api/qa/overlay/ui")
+def qa_overlay_ui_endpoint(body: QaUiBody):
+    """QA tab: switch one HUD on/off, the layout mode, or show a test toast on the chosen overlay."""
+    source = "demo" if body.source == "demo" else "live"
+    if body.key in ("all", "tower", "lap", "onboard", "halo", "cards", "flags", "fastest"):
+        action = {"set": body.key, "value": body.value}
+    elif body.mode in ("auto", "quali", "race"):
+        action = {"mode": body.mode}
+    elif body.toast:
+        action = {"toast": body.toast[:90]}
+    else:
+        return {"ok": False}
+    ui = overlay_manager.post_ui(action, source=source)
+    return {"ok": ui is not None, "ui": ui}
+
+
 class OverlayStartBody(BaseModel):
     window: bool = True
     halo: bool = True   # TV-pod halo HUD (off upstream by default; the game doesn't report the camera)
@@ -312,14 +398,37 @@ def overlay_stop_endpoint():
     return overlay_manager.set_enabled(False)
 
 
+class RecordingsBody(BaseModel):
+    keep: bool
+
+
+@app.get("/api/recordings")
+def recordings_status_endpoint():
+    """Recorded telemetry on disk and the "keep recordings" setting."""
+    return recordings.status()
+
+
+@app.post("/api/recordings")
+def recordings_keep_endpoint(body: RecordingsBody):
+    """keep = false (default): a session's recording is deleted when the next session starts recording and
+    when the app closes. keep = true: recordings stay, for replays."""
+    return recordings.set_keep(body.keep)
+
+
 @app.on_event("startup")
 async def _listen_for_game_on_launch():
     ensure_udp_listener()
+    recordings.purge_in_background()   # recordings left by a run that did not close normally
 
 
 @app.on_event("shutdown")
 def _stop_overlay_on_shutdown():
     overlay_manager.stop()
+    overlay_manager.stop_demo()
+    try:
+        recordings.purge()             # the session just played is not needed once the app closes
+    except Exception as e:
+        logger.warning(f"Could not remove recordings on exit: {e}")
 
 
 @app.get("/api/qa/presets")
@@ -337,16 +446,47 @@ async def ask_engineer_endpoint(body: AskBody):
 
 
 
-async def replay_telemetry_loop(websocket: WebSocket, update_rate: int, units: str, circuit: str = "circuit_Catalunya", lap: str = "all", speed: float = 1.0, loop: bool = True, session: str = None):
+def _overlay_car_telemetry(template, car_idx, kin, frame_id):
+    """A car-telemetry packet (id 6) for the TV overlay: the recorded packet with the viewed car's speed, gear,
+    RPM, pedals and steering replaced by the replay manager's kinematics for this frame (the same numbers the
+    dashboard shows). Only the one car is copied; the template is not modified."""
+    try:
+        cars = template["m_carTelemetryData"]
+        if not kin or car_idx is None or not (0 <= int(car_idx) < len(cars)):
+            return None
+        car_idx = int(car_idx)
+        car = dict(cars[car_idx])
+        car.update({
+            "m_speed": int(max(0, min(400, kin.get("speed", 0)))),
+            "m_gear": int(max(-1, min(8, kin.get("gear", 0)))),
+            "m_engineRPM": int(max(0, min(20000, kin.get("rpm", 0)))),
+            "m_throttle": max(0.0, min(1.0, kin.get("throttle", 0) / 100.0)),
+            "m_brake": max(0.0, min(1.0, kin.get("brake", 0) / 100.0)),
+            "m_steer": max(-1.0, min(1.0, float(kin.get("steer", 0.0)))),
+        })
+        cars = list(cars)
+        cars[car_idx] = car
+        header = dict(template["m_header"])
+        if frame_id is not None:
+            header["m_frameIdentifier"] = frame_id
+            header["m_overallFrameIdentifier"] = frame_id
+        return {**template, "m_header": header, "m_carTelemetryData": cars}
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+async def replay_telemetry_loop(websocket: WebSocket, update_rate: int, units: str, circuit: str = None, lap: str = "all", speed: float = 1.0, loop: bool = True, session: str = None):
     data_dir = os.path.join(BASE_DIR, "backend", "data")
-    target_dir = os.path.join(data_dir, circuit)
-    if not os.path.exists(target_dir):
-        avail = [d for d in os.listdir(data_dir) if os.path.isdir(os.path.join(data_dir, d)) and d.startswith("circuit_")]
+    avail = recorded_circuits(data_dir)
+    if not circuit or circuit not in avail:
+        # asked-for circuit was deleted (or none given): play the most recently recorded one left
         if not avail:
             logger.error("No replay data directories found.")
             return
-        target_dir = os.path.join(data_dir, avail[0])
-        circuit = avail[0]
+        if circuit:
+            logger.warning(f"Replay: {circuit} has no recorded laps any more, using {avail[0]}")
+        circuit, session, lap = avail[0], (None if circuit else session), ("all" if circuit else lap)
+    target_dir = os.path.join(data_dir, circuit)
 
     # One session at a time: default to the session with the most recorded frames
     sessions = list_sessions(target_dir)
@@ -398,6 +538,7 @@ async def replay_telemetry_loop(websocket: WebSocket, update_rate: int, units: s
     logger.info(f"Replaying {len(files_to_play)} file(s) for {circuit}: {[os.path.basename(f) for f in files_to_play]} at speed {speed}x")
     delay = max(0.015, 0.2 / max(0.1, speed))
     overlay_sent_at = {}  # packet id -> last time it was forwarded to the TV overlay
+    car_tele_template = None  # last recorded car-telemetry packet (id 6) of this session, see _overlay_car_telemetry
 
     while True:
         sent_this_pass = 0
@@ -439,16 +580,20 @@ async def replay_telemetry_loop(websocket: WebSocket, update_rate: int, units: s
 
                         # Update packets in deterministic order (session & participants before lap_data & telemetry)
                         # 16 (2026 car telemetry 2: active aero / overtake) only feeds the TV overlay
+                        fresh_this_frame = set()
                         for pid in (1, 4, 5, 7, 10, 11, 0, 6, 16, 2):
                             key = f"packet_id_{pid}"
                             pkt_dict = data.get(key)
                             # recorder snapshots can hold stale packets from a previous session
                             if session and packet_session_uid(pkt_dict) not in (None, str(session)):
                                 continue
+                            if pid == 6 and isinstance(pkt_dict, dict):
+                                car_tele_template = pkt_dict
                             if pkt_dict and isinstance(pkt_dict, dict):
                                 f_id = pkt_dict.get("m_header", {}).get("m_frameIdentifier")
                                 if f_id is None or last_frames.get(pid) != f_id or line_idx == 0:
                                     last_frames[pid] = f_id
+                                    fresh_this_frame.add(pid)
                                     if pid != 16:
                                         replay_manager.update(pid, Dict2Obj(pkt_dict))
                                     if overlay_manager.forwarding:
@@ -462,6 +607,17 @@ async def replay_telemetry_loop(websocket: WebSocket, update_rate: int, units: s
                                     overlay_manager.forward(encode_packet(pid, pkt_dict))
                                     overlay_sent_at[pid] = time.time()
 
+                        # Recordings often hold the same (stale) car-telemetry packet for many frames, so the overlay's
+                        # halo (speed, gear, RPM, pedals) froze while the tower and lap cards moved on. When this
+                        # frame's lap data is new but its car telemetry is not, send the overlay the values the
+                        # dashboard shows: the replay manager's kinematics derived from lap distance.
+                        if (overlay_manager.forwarding and 2 in fresh_this_frame and 6 not in fresh_this_frame
+                                and car_tele_template):
+                            synth = _overlay_car_telemetry(car_tele_template, p_idx,
+                                                           replay_manager._car_kinematics.get(p_idx),
+                                                           last_frames.get(2))
+                            if synth:
+                                overlay_manager.forward(encode_packet(6, synth))
                         overlay_manager.on_game_packet()   # a replay counts as game data for the TV overlay
                         payload = replay_manager.get_frontend_payload(units=units)
                         if payload.get("status") == "live":
@@ -514,7 +670,7 @@ async def websocket_endpoint(websocket: WebSocket):
     update_rate = int(query_params.get("rate", 60))
     units = query_params.get("units", "metric")
     replay = query_params.get("replay", "false").lower() == "true"
-    circuit = query_params.get("circuit", "circuit_Catalunya")
+    circuit = query_params.get("circuit") or None
     lap = query_params.get("lap", "all")
     try:
         speed = float(query_params.get("speed", 1.0))

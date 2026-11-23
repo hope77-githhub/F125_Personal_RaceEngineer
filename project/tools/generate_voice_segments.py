@@ -34,8 +34,6 @@ NUMBER_WORDS = {
 # Master list of modular segments to bake
 SEGMENTS_TO_GENERATE = {
     "prefixes": [
-        ("brake_early.mp3", "Braking was about"),
-        ("brake_late.mp3", "Braking was roughly"),
         ("gap_ahead.mp3", "Gap to car ahead is"),
         ("gap_leader.mp3", "Gap to the leader is"),
         ("gap_teammate.mp3", "Gap to your teammate is"),
@@ -67,10 +65,8 @@ SEGMENTS_TO_GENERATE = {
         ("10_percent.mp3", "ten percent"),
     ],
     "suffixes": [
-        ("meters_early_entry.mp3", "meters early on entry."),
-        ("meters_late_apex.mp3", "meters late into the apex."),
         ("seconds.mp3", "seconds."),
-        ("seconds_drs.mp3", "seconds, DRS available."),
+        ("seconds_overtake.mp3", "seconds, overtake mode available."),
         ("seconds_rhythm.mp3", "seconds, strong rhythm."),
         ("percent_per_lap.mp3", "percent per lap."),
         ("drop_box_this_lap.mp3", "seconds. Tyres are finished, box this lap!"),

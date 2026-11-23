@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './styles/design-system.css';
 import CornerMapModal from './CornerMapModal';
+import SetupAnalysisCard from './SetupAnalysisCard';
+import QaPage from './QaPage';
 
 const i18n = {
   en: {
@@ -14,13 +16,27 @@ const i18n = {
     units: "Measurement Units",
     unitsDesc: "Select display units for speed and temperature.",
     tts: "AI Engineer Voice (TTS)",
-    ttsDesc: "Enable real-time voice briefings from your race engineer.",
+    ttsDesc: "Your race engineer debriefs your laps (which turn cost the time and why), calls tyres, pit stops and gaps, gives setup advice in practice and answers your questions.",
+    comingSoon: "coming soon",
+    radioPlanTitle: "What the engineer calls, by session",
+    radioPlan: [
+      "Practice: car and pace - a lap debrief when a lap loses a lot (which turn and why), your timesheet position on a new best, setup advice, long-run tyre life",
+      "Qualifying: after every push lap - how far off your best, which sector and turn cost the time and why, and which turn to focus on",
+      "Race: setup brief before the start, gap to the car ahead, tyre wear and strategy, pit calls, the turn behind a big lap loss",
+      "Any session: ask questions from \"Ask the engineer\" on the dashboard",
+    ],
     persona: "Engineer Persona",
     overlay: "TV Overlay (broadcast graphics over the game)",
     overlayDesc: "Timing tower, lap cards and the TV-pod halo on top of the game. When ON it appears by itself as soon as the game sends telemetry (nothing shows before that). Game must be in borderless / windowed-fullscreen. Needs Node.js; the overlay window is a one-time download (Electron, ~370 MB).",
     language: "Display Language",
     languageDesc: "Choose the interface language for the telemetry dashboard.",
     connect: "Connect & Start Session",
+    modeTitle: "Connection mode",
+    liveDesc: "Live telemetry from F1 25 (UDP): dashboard, lap analysis and the engineer radio.",
+    tabSetup: "Session setup",
+    tabQa: "QA test",
+    startLive: "🔴 Start LIVE (connect to the game)",
+    startReplay: "▶ Start replay",
     vsAhead: "vs Ahead",
     vsLeader: "vs Leader",
     whiteLine: "*Vertical marker indicates {compLabelEng}'s input",
@@ -36,12 +52,23 @@ const i18n = {
     selectLapPrompt: "Click any lap to inspect corner-by-corner telemetry",
     useRawReplay: "Recorded Telemetry Replay",
     useRawReplayDesc: "Simulate and analyze accumulated circuit lap telemetry from backend /data.",
+    keepRec: "Keep recordings",
+    keepRecOff: "OFF: a session's recording (about 200 MB) is deleted when the next session starts and when the app closes.",
+    keepRecOn: "ON: recordings stay on disk so you can replay them.",
+    keepRecDisk: "On disk now",
     replayCircuit: "Circuit Dataset",
+    replayNone: "No recorded sessions",
+    replayNoneHint: "Nothing to replay yet: recordings are deleted when a session ends. Turn \"Keep recordings\" ON below and drive in LIVE; that session can then be replayed.",
     replayLap: "Target Lap",
     replaySession: "Session",
     replaySpeed: "Playback Speed",
     replayAllLaps: "All Completed Laps (Sequential)",
     replayModeBadge: "REPLAY",
+    switchLive: "Game detected · switch to LIVE for the engineer radio",
+    toLive: "Switch to LIVE",
+    backToSetup: "Back to setup",
+    waitLiveHint: "Start a session in F1 25 with UDP telemetry on (port {port}); the dashboard connects by itself. The engineer radio runs in LIVE mode.",
+    waitReplayHint: "Nothing to replay: recordings are deleted when a session ends unless \"Keep recordings\" is ON. The engineer radio for your own driving runs in LIVE mode.",
     radioTitle: "Red Bull Engineer Team Radio",
     radioActive: "RADIO ACTIVE",
     radioTestConsole: "Engineer Radio Test Console (TTS/Voice Tester)",
@@ -60,13 +87,27 @@ const i18n = {
     units: "측정 단위",
     unitsDesc: "표시할 속도 및 온도 단위를 선택합니다. (Metric / Imperial)",
     tts: "AI 엔지니어 음성 브리핑 (TTS)",
-    ttsDesc: "레이스 엔지니어의 실시간 음성 브리핑을 활성화합니다.",
+    ttsDesc: "레이스 엔지니어가 랩을 디브리프하고(어느 코너에서 왜 시간을 잃었는지), 타이어·피트·앞차 갭을 무전하며, 프랙티스에서는 셋업을 조언하고 질문에 답합니다.",
+    comingSoon: "준비 중",
+    radioPlanTitle: "세션별 엔지니어 무전",
+    radioPlan: [
+      "프랙티스: 차량·페이스 중심 - 랩에서 시간을 많이 잃으면 어느 코너에서 왜 잃었는지, 베스트 랩이면 타임시트 순위, 셋업 조언, 롱런 타이어 수명",
+      "퀄리파잉: 푸시 랩마다 - 베스트보다 몇 초 느렸는지, 어느 섹터·코너에서 왜 잃었는지, 어느 코너에 집중할지",
+      "레이스: 출발 전 셋업 브리핑, 앞차 갭, 타이어 마모·전략, 피트인 콜, 랩 타임이 크게 떨어지면 원인 코너",
+      "모든 세션: 대시보드의 '엔지니어에게 질문'에서 질문 가능",
+    ],
     persona: "엔지니어 페르소나 선택",
     overlay: "TV 오버레이 (게임 위 중계 그래픽)",
     overlayDesc: "타이밍 타워, 랩 카드, TV-pod 할로 계기판을 게임 화면 위에 띄워요. ON이면 게임이 텔레메트리를 보내는 순간 자동으로 나타나요(그 전에는 아무것도 표시되지 않아요). 게임은 '창 모드(전체 화면)'여야 하고 Node.js가 필요해요. 오버레이 창은 처음 한 번만 내려받아요(Electron, 약 370MB).",
     language: "언어 (Language)",
     languageDesc: "대시보드 표시 언어를 선택합니다.",
     connect: "세션 연결 및 시작",
+    modeTitle: "연결 모드",
+    liveDesc: "F1 25가 보내는 실시간 텔레메트리(UDP)로 대시보드·랩 분석·엔지니어 무전을 써요.",
+    tabSetup: "세션 설정",
+    tabQa: "QA 테스트",
+    startLive: "🔴 LIVE 시작 (게임 연결)",
+    startReplay: "▶ 리플레이 시작",
     vsAhead: "vs 앞차 (Ahead)",
     vsLeader: "vs 선두 (Leader)",
     whiteLine: "*수직 마커: {compLabelEng} 조작량 기준선",
@@ -82,12 +123,23 @@ const i18n = {
     selectLapPrompt: "랩을 클릭하면 해당 랩의 코너별 상세 텔레메트리를 확인할 수 있습니다",
     useRawReplay: "Raw Data 리플레이 모드",
     useRawReplayDesc: "백엔드 /data에 기록된 서킷별 랩 주행 데이터를 불러와 시뮬레이션 및 코너 분석을 수행합니다.",
+    keepRec: "녹화 보관",
+    keepRecOff: "OFF: 다음 세션이 시작되거나 앱을 끄면 그 세션 녹화(약 200MB)를 자동으로 지워요.",
+    keepRecOn: "ON: 리플레이로 다시 볼 수 있게 녹화를 남겨 둬요.",
+    keepRecDisk: "현재 녹화 용량",
     replayCircuit: "리플레이 서킷 선택",
+    replayNone: "녹화된 세션 없음",
+    replayNoneHint: "리플레이할 녹화가 없어요. 세션이 끝나면 녹화가 지워지기 때문이에요. 아래 '녹화 보관'을 ON으로 하고 LIVE로 주행하면 그 세션을 리플레이할 수 있어요.",
     replayLap: "재생할 랩",
     replaySession: "리플레이 세션",
     replaySpeed: "재생 배속",
     replayAllLaps: "전체 완주 랩 순차 재생 (권장)",
     replayModeBadge: "리플레이",
+    switchLive: "게임 감지됨 · 엔지니어 무전은 LIVE로 전환",
+    toLive: "LIVE로 전환",
+    backToSetup: "설정으로",
+    waitLiveHint: "F1 25에서 UDP 텔레메트리(포트 {port})를 켜고 세션을 시작하면 자동으로 연결돼요. 엔지니어 무전은 LIVE 모드에서 나와요.",
+    waitReplayHint: "리플레이할 녹화가 없어요. '녹화 보관'이 OFF면 세션이 끝날 때 녹화가 지워져요. 직접 주행할 때의 엔지니어 무전은 LIVE 모드에서 나와요.",
     radioTitle: "레드불 엔지니어 팀 라디오",
     radioActive: "무전 송출 중 (RADIO ACTIVE)",
     radioTestConsole: "엔지니어 보이스 테스트 콘솔 (Voice/TTS Tester)",
@@ -191,138 +243,6 @@ const DEFAULT_MANIFEST_CLIPS = [
     "text": "Radio check, Max. Telemetry stream is active, tyres looking good.",
     "trigger": "session_start",
     "url": "/voice/clips/radio_check.mp3"
-  },
-  {
-    "id": "brake_early_5m",
-    "category": "braking",
-    "title": "Brake 5m Early",
-    "filename": "brake_early_5m.mp3",
-    "scenario": "Early Braking by 5m",
-    "badge": "BRAKE -5M",
-    "delta_m": -5,
-    "text": "Braking was about 5 meters early. You can carry slightly more speed on entry.",
-    "url": "/voice/clips/brake_early_5m.mp3"
-  },
-  {
-    "id": "brake_early_10m",
-    "category": "braking",
-    "title": "Brake 10m Early",
-    "filename": "brake_early_10m.mp3",
-    "scenario": "Early Braking by 10m",
-    "badge": "BRAKE -10M",
-    "delta_m": -10,
-    "text": "Braked roughly 10 meters early. Entry speed was compromised.",
-    "url": "/voice/clips/brake_early_10m.mp3"
-  },
-  {
-    "id": "brake_early_15m",
-    "category": "braking",
-    "title": "Brake 15m Early",
-    "filename": "brake_early_15m.mp3",
-    "scenario": "Early Braking by 15m",
-    "badge": "BRAKE -15M",
-    "delta_m": -15,
-    "text": "That was about 15 meters early on the brakes. We are giving away too much speed on entry.",
-    "url": "/voice/clips/brake_early_15m.mp3"
-  },
-  {
-    "id": "brake_early_20m",
-    "category": "braking",
-    "title": "Brake 20m Early",
-    "filename": "brake_early_20m.mp3",
-    "scenario": "Early Braking by 20m",
-    "badge": "BRAKE -20M",
-    "delta_m": -20,
-    "text": "Braking point was 20 meters early. You have plenty of margin to brake later.",
-    "url": "/voice/clips/brake_early_20m.mp3"
-  },
-  {
-    "id": "brake_early_25m",
-    "category": "braking",
-    "title": "Brake 25m Early",
-    "filename": "brake_early_25m.mp3",
-    "scenario": "Early Braking by 25m",
-    "badge": "BRAKE -25M",
-    "delta_m": -25,
-    "text": "Braked 25 meters early into the corner. Push that braking marker further.",
-    "url": "/voice/clips/brake_early_25m.mp3"
-  },
-  {
-    "id": "brake_early_30m",
-    "category": "braking",
-    "title": "Brake 30m Early",
-    "filename": "brake_early_30m.mp3",
-    "scenario": "Early Braking by 30m",
-    "badge": "BRAKE -30M",
-    "delta_m": -30,
-    "text": "Way too conservative on the brakes, 30 meters early. Commit more on entry.",
-    "url": "/voice/clips/brake_early_30m.mp3"
-  },
-  {
-    "id": "brake_late_5m",
-    "category": "braking",
-    "title": "Brake 5m Late",
-    "filename": "brake_late_5m.mp3",
-    "scenario": "Late Braking by 5m",
-    "badge": "BRAKE +5M",
-    "delta_m": 5,
-    "text": "Slightly deep on the brakes, roughly 5 meters late. Apex missed slightly.",
-    "url": "/voice/clips/brake_late_5m.mp3"
-  },
-  {
-    "id": "brake_late_10m",
-    "category": "braking",
-    "title": "Brake 10m Late",
-    "filename": "brake_late_10m.mp3",
-    "scenario": "Late Braking by 10m",
-    "badge": "BRAKE +10M",
-    "delta_m": 10,
-    "text": "Braking was 10 meters late. We missed the optimal apex.",
-    "url": "/voice/clips/brake_late_10m.mp3"
-  },
-  {
-    "id": "brake_late_15m",
-    "category": "braking",
-    "title": "Brake 15m Late",
-    "filename": "brake_late_15m.mp3",
-    "scenario": "Late Braking by 15m",
-    "badge": "BRAKE +15M",
-    "delta_m": 15,
-    "text": "Braked roughly 15 meters late into the turn. Struggling to rotate the car.",
-    "url": "/voice/clips/brake_late_15m.mp3"
-  },
-  {
-    "id": "brake_late_20m",
-    "category": "braking",
-    "title": "Brake 20m Late",
-    "filename": "brake_late_20m.mp3",
-    "scenario": "Late Braking by 20m",
-    "badge": "BRAKE +20M",
-    "delta_m": 20,
-    "text": "That was 20 meters too deep on the brakes. Front tyres scrubbed wide.",
-    "url": "/voice/clips/brake_late_20m.mp3"
-  },
-  {
-    "id": "brake_late_25m",
-    "category": "braking",
-    "title": "Brake 25m Late",
-    "filename": "brake_late_25m.mp3",
-    "scenario": "Late Braking by 25m",
-    "badge": "BRAKE +25M",
-    "delta_m": 25,
-    "text": "25 meters late on the brakes. Serious lockup risk, reset your reference marker.",
-    "url": "/voice/clips/brake_late_25m.mp3"
-  },
-  {
-    "id": "brake_late_30m",
-    "category": "braking",
-    "title": "Brake 30m Late",
-    "filename": "brake_late_30m.mp3",
-    "scenario": "Late Braking by 30m",
-    "badge": "BRAKE +30M",
-    "delta_m": 30,
-    "text": "Massive overshoot, 30 meters late on the brakes. Bring the braking point back.",
-    "url": "/voice/clips/brake_late_30m.mp3"
   },
   {
     "id": "traction_prev_lap",
@@ -501,16 +421,16 @@ const DEFAULT_MANIFEST_CLIPS = [
     "url": "/voice/clips/pace_drop_severe_box.mp3"
   },
   {
-    "id": "gap_ahead_drs",
+    "id": "gap_ahead_overtake",
     "category": "rival_gap",
-    "title": "Car Ahead < 1.0s (DRS)",
-    "filename": "gap_ahead_drs.mp3",
-    "scenario": "Rival Ahead in DRS Range (<1.0s)",
+    "title": "Car Ahead < 1.0s (Overtake)",
+    "filename": "gap_ahead_overtake.mp3",
+    "scenario": "Rival Ahead in Overtake Mode Range (<1.0s)",
     "badge": "AHEAD < 1.0S",
     "target": "ahead",
     "gap_sec": 0.8,
-    "text": "Gap to car ahead is under a second. DRS is available, push now.",
-    "url": "/voice/clips/gap_ahead_drs.mp3"
+    "text": "Gap to car ahead is under a second. Overtake mode is available, push now.",
+    "url": "/voice/clips/gap_ahead_overtake.mp3"
   },
   {
     "id": "gap_ahead_1_5s",
@@ -713,7 +633,6 @@ function RadioTestConsole({
 
   const categories = [
     { id: 'all', label: 'ALL', count: manifestClips.length, color: '#0052FF' },
-    { id: 'braking', label: 'BRAKING (5~30M)', count: manifestClips.filter(c => c.category === 'braking').length, color: '#FF3B30' },
     { id: 'traction', label: 'TRACTION', count: manifestClips.filter(c => c.category === 'traction').length, color: '#FF9500' },
     { id: 'tyre_deg', label: 'TYRE & BOX', count: manifestClips.filter(c => c.category === 'tyre_deg').length, color: '#AF52DE' },
     { id: 'pace_delta', label: 'PACE DELTA', count: manifestClips.filter(c => c.category === 'pace_delta').length, color: '#34C759' },
@@ -857,36 +776,129 @@ function RadioTestConsole({
   );
 }
 
+// Team-radio chime played in front of every engineer line (backend/data/voice/f1_radio.mp3, served at /voice).
+// Decoded once; its leading/trailing silence is trimmed so the voice follows right after the chime.
+// It plays as recorded (not through the radio filter). If the file is missing, lines play without it.
+const RADIO_INTRO_URL = 'http://localhost:8080/voice/f1_radio.mp3';
+const RADIO_INTRO_GAP_S = 0.08;   // pause between the chime and the voice
+let radioIntroPromise = null;
+const loadRadioIntro = (ctx) => {
+  if (!radioIntroPromise) {
+    radioIntroPromise = (async () => {
+      const res = await fetch(RADIO_INTRO_URL);
+      if (!res.ok) return null;
+      const buffer = await ctx.decodeAudioData(await res.arrayBuffer());
+      const thr = 0.01;   // -40 dBFS
+      let on = buffer.length, off = 0;
+      for (let ch = 0; ch < buffer.numberOfChannels; ch++) {
+        const d = buffer.getChannelData(ch);
+        let i = 0; while (i < d.length && Math.abs(d[i]) < thr) i++;
+        let j = d.length - 1; while (j > i && Math.abs(d[j]) < thr) j--;
+        if (i < d.length) { on = Math.min(on, i); off = Math.max(off, j); }
+      }
+      if (on >= off) return null;
+      const start = Math.max(0, on / buffer.sampleRate - 0.01);
+      const end = Math.min(buffer.duration, off / buffer.sampleRate + 0.03);
+      return { buffer, start, duration: end - start };
+    })().catch(() => { radioIntroPromise = null; return null; });
+  }
+  return radioIntroPromise;
+};
+
+// The engineer lines were synthesised at 0.9x (GPT-SoVITS speed_factor 0.9, see project/README.md). Play them at
+// 1/0.9 so they come out at the voice's natural pace; the pitch is kept (browser time-stretch, preservesPitch).
+const VOICE_SPEED = 1.11;
+
+// Cut leading/trailing silence (below about -44 dBFS), keeping short pads so words are not clipped.
+// Used on every decoded line and on each segment before stitching, so joined segments do not leave
+// long pauses between words.
+const trimSilence = (ctx, buf, padStart = 0.03, padEnd = 0.06, thr = 0.006) => {
+  let on = buf.length, off = 0;
+  for (let ch = 0; ch < buf.numberOfChannels; ch++) {
+    const d = buf.getChannelData(ch);
+    let i = 0; while (i < d.length && Math.abs(d[i]) < thr) i++;
+    let j = d.length - 1; while (j > i && Math.abs(d[j]) < thr) j--;
+    if (i < d.length) { on = Math.min(on, i); off = Math.max(off, j); }
+  }
+  if (on >= off) return buf;
+  const sr = buf.sampleRate;
+  const a = Math.max(0, on - Math.round(padStart * sr)), b = Math.min(buf.length, off + Math.round(padEnd * sr));
+  if (a === 0 && b === buf.length) return buf;
+  const out = ctx.createBuffer(buf.numberOfChannels, b - a, sr);
+  for (let ch = 0; ch < buf.numberOfChannels; ch++) out.copyToChannel(buf.getChannelData(ch).subarray(a, b), ch);
+  return out;
+};
+
+// AudioBuffer -> 16-bit PCM WAV object URL, so the line can play through an <audio> element (pitch-kept speed-up).
+const bufferToWavUrl = (buf) => {
+  const ch = buf.numberOfChannels, n = buf.length, bytes = 44 + n * ch * 2;
+  const view = new DataView(new ArrayBuffer(bytes));
+  const str = (o, s) => { for (let i = 0; i < s.length; i++) view.setUint8(o + i, s.charCodeAt(i)); };
+  str(0, 'RIFF'); view.setUint32(4, bytes - 8, true); str(8, 'WAVEfmt ');
+  view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, ch, true);
+  view.setUint32(24, buf.sampleRate, true); view.setUint32(28, buf.sampleRate * ch * 2, true);
+  view.setUint16(32, ch * 2, true); view.setUint16(34, 16, true); str(36, 'data'); view.setUint32(40, n * ch * 2, true);
+  const data = Array.from({ length: ch }, (_, c) => buf.getChannelData(c));
+  let o = 44;
+  for (let i = 0; i < n; i++) for (let c = 0; c < ch; c++, o += 2) {
+    const s = Math.max(-1, Math.min(1, data[c][i]));
+    view.setInt16(o, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+  }
+  return URL.createObjectURL(new Blob([view.buffer], { type: 'audio/wav' }));
+};
+
 function useVoicePlayer() {
   const [isPlayingVoice, setIsPlayingVoice] = useState(false);
   const [currentVoiceClip, setCurrentVoiceClip] = useState(null);
   const [activeVoiceTranscript, setActiveVoiceTranscript] = useState(null);
   const audioRef = useRef(null);
-  const activeSourceNodeRef = useRef(null);
+  const activeSourcesRef = useRef([]);   // chime + voice nodes of the line now playing
+  const playTokenRef = useRef(0);        // a newer line cancels one still loading
 
-  const playRadioBleep = () => {
-    try {
-      const ctx = getAudioContext();
-      if (!ctx) return;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(1750, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(1350, ctx.currentTime + 0.07);
-      gain.gain.setValueAtTime(0.06, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.07);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.08);
-    } catch (e) {}
+  // Chime first, then the voice through the radio filter at VOICE_SPEED with the pitch kept.
+  const startWithRadioIntro = async (ctx, voiceBuffer, token) => {
+    const intro = await loadRadioIntro(ctx);
+    if (token !== playTokenRef.current) return null;
+    const nodes = [];
+    let voiceDelayS = 0.02;
+    if (intro) {
+      const chime = ctx.createBufferSource();
+      chime.buffer = intro.buffer;
+      chime.connect(ctx.destination);
+      chime.start(ctx.currentTime + 0.02, intro.start, intro.duration);
+      nodes.push(chime);
+      voiceDelayS = 0.02 + intro.duration + RADIO_INTRO_GAP_S;
+    }
+    const url = bufferToWavUrl(trimSilence(ctx, voiceBuffer));
+    const voice = new Audio(url);
+    voice.preservesPitch = true;
+    voice.defaultPlaybackRate = VOICE_SPEED;
+    voice.playbackRate = VOICE_SPEED;
+    ctx.createMediaElementSource(voice).connect(createF1RadioFX(ctx, ctx.destination));
+    let released = false;
+    const release = () => { if (!released) { released = true; URL.revokeObjectURL(url); } };
+    const finish = () => {
+      release();
+      if (token !== playTokenRef.current) return;
+      setIsPlayingVoice(false);
+      activeSourcesRef.current = [];
+    };
+    voice.onended = finish;
+    voice.onerror = finish;
+    const timer = setTimeout(() => {
+      if (token === playTokenRef.current) voice.play().catch(finish);
+    }, voiceDelayS * 1000);
+    nodes.push({ stop: () => { clearTimeout(timer); voice.pause(); release(); } });
+    activeSourcesRef.current = nodes;
+    return voice;
   };
 
   const stopVoiceClip = () => {
-    if (activeSourceNodeRef.current) {
-      try { activeSourceNodeRef.current.stop(); } catch (e) {}
-      activeSourceNodeRef.current = null;
+    playTokenRef.current += 1;
+    for (const node of activeSourcesRef.current) {
+      try { node.stop(); } catch (e) {}
     }
+    activeSourcesRef.current = [];
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
@@ -897,7 +909,7 @@ function useVoicePlayer() {
   const playVoiceClip = async (clip) => {
     if (!clip) return;
     stopVoiceClip();
-    playRadioBleep();
+    const token = playTokenRef.current;
 
     setCurrentVoiceClip(clip);
     setActiveVoiceTranscript({
@@ -913,7 +925,8 @@ function useVoicePlayer() {
 
     // Engineer answers / setup advice are built from pre-baked lines; if none of the files exist
     // yet, show the text instead of falling back to an unrelated clip.
-    if ((clip.type === 'qa_answer' || clip.type === 'setup_advice') && !(clip.segments && clip.segments.length)) {
+    // (every engineer_brain event carries `keys`: Q&A, setup advice, race brief, tyre report)
+    if ((clip.keys || clip.type === 'qa_answer' || clip.type === 'setup_advice') && !(clip.segments && clip.segments.length)) {
       setTimeout(() => setIsPlayingVoice(false), 2500);
       return;
     }
@@ -931,7 +944,7 @@ function useVoicePlayer() {
             if (res.ok) {
               const arrayBuf = await res.arrayBuffer();
               const decoded = await ctx.decodeAudioData(arrayBuf);
-              decodedBuffers.push(decoded);
+              decodedBuffers.push(trimSilence(ctx, decoded, 0.02, 0.05));   // no long pauses at the joins
             } else {
               console.warn(`Segment 404: ${fullUrl}, skipping segment`);
             }
@@ -940,24 +953,12 @@ function useVoicePlayer() {
           }
         }
 
+        if (token !== playTokenRef.current) return;
         if (decodedBuffers.length > 0) {
           const stitchedBuffer = stitchAudioBuffers(ctx, decodedBuffers, 35);
           if (stitchedBuffer) {
-            const source = ctx.createBufferSource();
-            source.buffer = stitchedBuffer;
-            activeSourceNodeRef.current = source;
-
-            // Route through F1 Radio Bandpass & Saturation FX
-            const radioFX = createF1RadioFX(ctx, ctx.destination);
-            source.connect(radioFX);
-
-            source.onended = () => {
-              setIsPlayingVoice(false);
-              activeSourceNodeRef.current = null;
-              playRadioBleep();
-            };
-
-            source.start();
+            // radio chime, then the stitched line through the F1 radio bandpass & saturation FX
+            await startWithRadioIntro(ctx, stitchedBuffer, token);
             return;
           }
         }
@@ -977,17 +978,8 @@ function useVoicePlayer() {
         if (res.ok) {
           const arrayBuf = await res.arrayBuffer();
           const decoded = await ctx.decodeAudioData(arrayBuf);
-          const source = ctx.createBufferSource();
-          source.buffer = decoded;
-          activeSourceNodeRef.current = source;
-          const radioFX = createF1RadioFX(ctx, ctx.destination);
-          source.connect(radioFX);
-          source.onended = () => {
-            setIsPlayingVoice(false);
-            activeSourceNodeRef.current = null;
-            playRadioBleep();
-          };
-          source.start();
+          if (token !== playTokenRef.current) return;
+          await startWithRadioIntro(ctx, decoded, token);
           return;
         } else {
           // File not yet present on disk: display transcript and reset after 3s
@@ -1001,11 +993,13 @@ function useVoicePlayer() {
     }
 
     const audio = new Audio(audioUrl);
+    audio.preservesPitch = true;
+    audio.defaultPlaybackRate = VOICE_SPEED;
+    audio.playbackRate = VOICE_SPEED;
     audioRef.current = audio;
 
     audio.onended = () => {
       setIsPlayingVoice(false);
-      playRadioBleep();
     };
 
     audio.onerror = () => {
@@ -1025,7 +1019,6 @@ function useVoicePlayer() {
     setActiveVoiceTranscript,
     playVoiceClip,
     stopVoiceClip,
-    playRadioBleep,
   };
 }
 
@@ -1171,10 +1164,16 @@ function Dashboard({ settings, setSettings, onExit }) {
   useEffect(() => {
     let wsUrl = `ws://localhost:8080/ws?port=${settings.port}&rate=${settings.updateRate}&units=${settings.units}&replay=${settings.useRawReplay}`;
     if (settings.useRawReplay) {
-      wsUrl += `&circuit=${encodeURIComponent(settings.replayCircuit || 'circuit_Catalunya')}&lap=${encodeURIComponent(settings.replayLap || 'all')}&speed=${settings.replaySpeed || 2.0}&loop=true`;
+      wsUrl += `&circuit=${encodeURIComponent(settings.replayCircuit || '')}&lap=${encodeURIComponent(settings.replayLap || 'all')}&speed=${settings.replaySpeed || 2.0}&loop=true`;
       if (settings.replaySession) wsUrl += `&session=${encodeURIComponent(settings.replaySession)}`;
     }
-    const ws = new WebSocket(wsUrl);
+    // LIVE mode reconnects by itself (e.g. after the backend restarts), so the engineer radio never stays
+    // silent behind a dead socket; a replay ends when its data does and is not retried.
+    let ws = null;
+    let disposed = false;
+    let retryTimer = null;
+    const connect = () => {
+    ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
       setConnected(true);
@@ -1234,10 +1233,15 @@ function Dashboard({ settings, setSettings, onExit }) {
 
     ws.onclose = () => {
       setConnected(false);
+      if (!disposed && !settings.useRawReplay) retryTimer = setTimeout(connect, 2000);
     };
+    };
+    connect();
 
     return () => {
-      ws.close();
+      disposed = true;
+      clearTimeout(retryTimer);
+      if (ws) ws.close();
     };
   }, [
     settings.port,
@@ -1287,6 +1291,19 @@ function Dashboard({ settings, setSettings, onExit }) {
         <p style={{ color: 'var(--color-body)', fontSize: '14px', margin: 0 }}>
           ws://localhost:8080/ws · Port {settings.port}
         </p>
+        <p style={{ color: 'var(--color-body)', fontSize: '14px', margin: 0, maxWidth: '560px', textAlign: 'center' }}>
+          {settings.useRawReplay ? t.waitReplayHint : t.waitLiveHint.replace('{port}', settings.port)}
+        </p>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {settings.useRawReplay && (
+            <button className="btn-primary" onClick={() => setSettings({ ...settings, useRawReplay: false })}>
+              {t.toLive}
+            </button>
+          )}
+          <button className="btn-secondary-light" onClick={onExit}>
+            {t.backToSetup}
+          </button>
+        </div>
       </div>
     );
   }
@@ -1297,6 +1314,7 @@ function Dashboard({ settings, setSettings, onExit }) {
     sector_comparisons,
     circuit_corners = [],
     reference_track = [],
+    setup_analysis = null,
   } = data;
   const selectedPlayer =
     players.find((p) => p.id === activePlayerId) || players[0];
@@ -1532,6 +1550,15 @@ function Dashboard({ settings, setSettings, onExit }) {
                 )}
                 <span className="mono-num">[{settings.replaySpeed || 2}x]</span>
               </div>
+            )}
+            {settings.useRawReplay && tv.st && tv.st.live_game_age_s != null && tv.st.live_game_age_s < 5 && (
+              <button
+                onClick={() => setSettings({ ...settings, useRawReplay: false })}
+                className="btn-primary"
+                title={t.switchLive}
+              >
+                🎮 {t.switchLive}
+              </button>
             )}
             <button
               onClick={() => setSettings({ ...settings, tts: !settings.tts })}
@@ -2647,6 +2674,12 @@ function Dashboard({ settings, setSettings, onExit }) {
               </div>
             </div>
           </div>
+          {/* Practice only: setup analysis vs the fastest car of the session */}
+          {setup_analysis && (
+            <div style={{ marginTop: '24px' }}>
+              <SetupAnalysisCard data={setup_analysis} language={settings.language || 'ko'} />
+            </div>
+          )}
         </div>
       </section>
 
@@ -2852,7 +2885,7 @@ function Dashboard({ settings, setSettings, onExit }) {
                           {isLiveLapSelected ? `LIVE Lap ${current_lap}` : `Lap ${selectedLap?.lap}`}
                         </div>
                         <div className="mono-num" style={{ fontSize: '12px', color: 'var(--color-body)' }}>
-                          Braking Point: {selectedCornerDetail.brake_point}m · Apex: {selectedCornerDetail.apex_dist}m · Throttle On: {selectedCornerDetail.throttle_on_dist}m
+                          Braking Point: {selectedCornerDetail.brake_point ? `${selectedCornerDetail.brake_point}m` : '-'} · Apex: {selectedCornerDetail.apex_dist}m · Throttle On: {selectedCornerDetail.throttle_on_dist}m
                         </div>
                       </div>
                     </div>
@@ -3120,7 +3153,7 @@ function Dashboard({ settings, setSettings, onExit }) {
                             {isLiveLapSelected ? `LIVE Lap ${current_lap}` : `Lap ${selectedLap?.lap}`}
                           </span>
                           <span className="mono-num" style={{ fontSize: '12px', color: 'var(--color-on-dark-soft)' }}>
-                            Brake @ {selectedCornerDetail.brake_point}m · Max {selectedCornerDetail.max_g_lat}G
+                            Brake @ {selectedCornerDetail.brake_point ? `${selectedCornerDetail.brake_point}m` : '-'} · Max {selectedCornerDetail.max_g_lat}G
                           </span>
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', fontSize: '12px' }}>
@@ -3384,54 +3417,53 @@ function Dashboard({ settings, setSettings, onExit }) {
 }
 
 function SetupPage({ onStart }) {
+  const [page, setPage] = useState('setup');   // 'setup' | 'qa' (QA tab: TV overlay check)
   const [port, setPort] = useState(20777);
   const [cornerMapOpen, setCornerMapOpen] = useState(false);
-  const [manifestClips, setManifestClips] = useState(DEFAULT_MANIFEST_CLIPS);
-  useEffect(() => {
-    fetch('http://localhost:8080/api/voice/clips')
-      .then((res) => res.json())
-      .then((resData) => {
-        if (resData.clips && resData.clips.length > 0) {
-          setManifestClips(resData.clips);
-        }
-      })
-      .catch(() => {});
-  }, []);
-
-  const {
-    isPlayingVoice,
-    currentVoiceClip,
-    activeVoiceTranscript,
-    setActiveVoiceTranscript,
-    playVoiceClip,
-    stopVoiceClip,
-  } = useVoicePlayer();
   const [tts, setTts] = useState(true);
   const tv = useTvOverlay();
   const [units, setUnits] = useState('metric');
   const [updateRate, setUpdateRate] = useState(60);
   const [voice, setVoice] = useState('redbull');
   const [language, setLanguage] = useState('ko');
-  const [useRawReplay, setUseRawReplay] = useState(true);
+  // LIVE by default (the engineer radio needs it); replay is opt-in and only possible with recordings on disk
+  const [useRawReplay, setUseRawReplay] = useState(false);
   const [availableReplays, setAvailableReplays] = useState([]);
-  const [replayCircuit, setReplayCircuit] = useState('circuit_Catalunya');
+  const [replayCircuit, setReplayCircuit] = useState('');
   const [replayLap, setReplayLap] = useState('all');
   const [replaySession, setReplaySession] = useState('');
   const [replaySpeed, setReplaySpeed] = useState(2.0);
+  // "Keep recordings" (backend state_mgmt/recordings.py): OFF deletes a session's recording when it ends
+  const [rec, setRec] = useState(null);   // { keep, total_mb } — null when the backend has no /api/recordings
   const t = i18n[language];
+
+  useEffect(() => {
+    fetch('http://localhost:8080/api/recordings')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => data && setRec(data))
+      .catch(() => {});
+  }, []);
+  const toggleKeepRecordings = () => {
+    if (!rec) return;
+    fetch('http://localhost:8080/api/recordings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ keep: !rec.keep }),
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => data && setRec(data))
+      .catch(() => {});
+  };
 
   useEffect(() => {
     fetch('http://localhost:8080/api/replays')
       .then((res) => res.json())
       .then((data) => {
+        if (!data.circuits || data.circuits.length === 0) setUseRawReplay(false);
         if (data.circuits && data.circuits.length > 0) {
           setAvailableReplays(data.circuits);
-          const cat = data.circuits.find((c) => c.name.toLowerCase().includes('catalunya'));
-          if (cat) {
-            setReplayCircuit(cat.id);
-          } else {
-            setReplayCircuit(data.circuits[0].id);
-          }
+          // the backend lists the most recently recorded circuit first
+          setReplayCircuit(data.circuits[0].id);
         }
       })
       .catch(() => {});
@@ -3462,6 +3494,22 @@ function SetupPage({ onStart }) {
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button
+              type="button"
+              onClick={() => setPage('setup')}
+              className={`btn-secondary-light ${page === 'setup' ? 'active' : ''}`}
+            >
+              {t.tabSetup}
+            </button>
+            <button
+              type="button"
+              onClick={() => setPage('qa')}
+              className={`btn-secondary-light ${page === 'qa' ? 'active' : ''}`}
+            >
+              {t.tabQa}
+            </button>
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
               onClick={() => setLanguage('ko')}
               className={`btn-secondary-light ${language === 'ko' ? 'active' : ''}`}
             >
@@ -3477,6 +3525,9 @@ function SetupPage({ onStart }) {
         </div>
       </header>
 
+      {page === 'qa' ? (
+        <QaPage language={language} />
+      ) : (
       <div
         style={{
           display: 'flex',
@@ -3515,27 +3566,41 @@ function SetupPage({ onStart }) {
               padding: '20px',
               backgroundColor: 'var(--color-surface-soft)',
               borderRadius: 'var(--rounded-lg)',
-              border: useRawReplay
-                ? '1.5px solid var(--color-primary)'
-                : '1px solid var(--color-hairline)',
+              border: '1.5px solid var(--color-primary)',
               marginBottom: '20px',
             }}
           >
+            {/* Connection mode: LIVE (the game, default; the engineer radio needs it) or REPLAY (recordings) */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
               <div>
                 <div style={{ fontWeight: 600, fontSize: '16px', color: 'var(--color-ink)' }}>
-                  {t.useRawReplay}
+                  {t.modeTitle}
                 </div>
                 <div style={{ fontSize: '13px', color: 'var(--color-body)', marginTop: '4px' }}>
-                  {t.useRawReplayDesc}
+                  {useRawReplay ? t.useRawReplayDesc : t.liveDesc}
                 </div>
+                {availableReplays.length === 0 && (
+                  <div style={{ fontSize: '12px', color: 'var(--color-ink)', marginTop: '6px' }}>
+                    {t.replayNoneHint}
+                  </div>
+                )}
               </div>
-              <button
-                onClick={() => setUseRawReplay(!useRawReplay)}
-                className={`btn-secondary-light ${useRawReplay ? 'active' : ''}`}
-              >
-                {useRawReplay ? 'ENABLED' : 'OFF'}
-              </button>
+              <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+                <button
+                  onClick={() => setUseRawReplay(false)}
+                  className={`btn-secondary-light ${!useRawReplay ? 'active' : ''}`}
+                >
+                  🔴 LIVE
+                </button>
+                <button
+                  onClick={() => setUseRawReplay(true)}
+                  disabled={availableReplays.length === 0}
+                  title={availableReplays.length === 0 ? t.replayNone : undefined}
+                  className={`btn-secondary-light ${useRawReplay ? 'active' : ''}`}
+                >
+                  {t.replayModeBadge}
+                </button>
+              </div>
             </div>
 
             {useRawReplay && (
@@ -3572,10 +3637,7 @@ function SetupPage({ onStart }) {
                         </option>
                       ))
                     ) : (
-                      <>
-                        <option value="circuit_Catalunya">Catalunya (9 Laps)</option>
-                        <option value="circuit_Austria">Austria (1 Lap)</option>
-                      </>
+                      <option value="">{t.replayNone}</option>
                     )}
                   </select>
                 </div>
@@ -3658,6 +3720,37 @@ function SetupPage({ onStart }) {
               </div>
             )}
           </div>
+
+          {/* Keep recordings: OFF (default) deletes a session's recording when the next session starts / the app closes */}
+          {rec && (
+            <div
+              style={{
+                padding: '16px 20px',
+                backgroundColor: 'var(--color-surface-soft)',
+                borderRadius: 'var(--rounded-lg)',
+                border: rec.keep ? '1.5px solid var(--color-primary)' : '1px solid var(--color-hairline)',
+                marginBottom: '20px',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: '15px', color: 'var(--color-ink)' }}>{t.keepRec}</div>
+                  <div style={{ fontSize: '13px', color: 'var(--color-body)', marginTop: '4px' }}>
+                    {rec.keep ? t.keepRecOn : t.keepRecOff}
+                  </div>
+                  <div className="mono-num" style={{ fontSize: '12px', color: 'var(--color-muted)', marginTop: '4px' }}>
+                    {t.keepRecDisk}: {rec.total_mb} MB
+                  </div>
+                </div>
+                <button
+                  onClick={toggleKeepRecordings}
+                  className={`btn-secondary-light ${rec.keep ? 'active' : ''}`}
+                >
+                  {rec.keep ? 'ON' : 'OFF'}
+                </button>
+              </div>
+            </div>
+          )}
 
           <div style={{ marginBottom: '20px' }}>
             <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, fontSize: '14px' }}>
@@ -3785,61 +3878,18 @@ function SetupPage({ onStart }) {
                   style={{ width: '100%' }}
                 >
                   <option value="redbull">Red Bull Engineer — Red Bull Racing</option>
-                  <option value="bono">Bono (Peter Bonnington) — Mercedes-AMG</option>
-                  <option value="adami">Ricky (Riccardo Adami) — Scuderia Ferrari</option>
+                  <option value="bono" disabled>Bono (Peter Bonnington) — Mercedes-AMG ({t.comingSoon})</option>
+                  <option value="adami" disabled>Ricky (Riccardo Adami) — Scuderia Ferrari ({t.comingSoon})</option>
                 </select>
 
-                {/* Engineer Radio Voice Preview & Test Console */}
-                <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--color-hairline)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                    <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-ink)' }}>
-                      📻 {t.radioTestConsole || 'Engineer Radio Test Console (TTS/Voice Tester)'}
-                    </span>
-                    {isPlayingVoice ? (
-                      <button
-                        onClick={stopVoiceClip}
-                        className="voice-test-btn"
-                        style={{ padding: '3px 8px', fontSize: '11px', backgroundColor: 'var(--color-semantic-down)', borderColor: 'var(--color-semantic-down)' }}
-                      >
-                        ⏹ {t.stopRadio || 'STOP'}
-                      </button>
-                    ) : (
-                      <span style={{ fontSize: '11px', color: 'var(--color-muted)' }}>
-                        {manifestClips.length} High-Res Voice Clips
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ fontSize: '12px', color: 'var(--color-muted)', marginBottom: '8px' }}>
-                    {t.radioTestDesc || 'Click any button to test the engineer\'s pit-wall voice clips:'}
-                  </div>
-                  {activeVoiceTranscript && (
-                    <div
-                      style={{
-                        backgroundColor: 'rgba(0,82,255,0.06)',
-                        border: '1px solid rgba(0,82,255,0.2)',
-                        padding: '10px 14px',
-                        borderRadius: 'var(--rounded-md)',
-                        marginBottom: '10px',
-                      }}
-                    >
-                      <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-primary)', marginBottom: '3px' }}>
-                        {activeVoiceTranscript.badge} · {activeVoiceTranscript.scenario}
-                      </div>
-                      <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--color-ink)' }}>
-                        "{activeVoiceTranscript.text}"
-                      </div>
-                    </div>
-                  )}
-                  <RadioTestConsole
-                    manifestClips={manifestClips}
-                    isPlayingVoice={isPlayingVoice}
-                    currentVoiceClip={currentVoiceClip}
-                    onPlayClip={playVoiceClip}
-                    onStopClip={stopVoiceClip}
-                    t={t}
-                    isDarkMode={false}
-                  />
+                <div style={{ marginTop: '14px', fontSize: '12px', fontWeight: 600, color: 'var(--color-body)' }}>
+                  {t.radioPlanTitle}
                 </div>
+                <ul style={{ margin: '6px 0 0', paddingLeft: '18px', fontSize: '12px', color: 'var(--color-body)', lineHeight: 1.6 }}>
+                  {t.radioPlan.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
               </div>
             )}
           </div>
@@ -3864,9 +3914,10 @@ function SetupPage({ onStart }) {
           className="btn-pill-cta"
           style={{ width: '100%', maxWidth: '600px' }}
         >
-          {t.connect}
+          {useRawReplay ? t.startReplay : t.startLive}
         </button>
       </div>
+      )}
       <CornerMapModal open={cornerMapOpen} onClose={() => setCornerMapOpen(false)} language={language} />
     </div>
   );
@@ -3907,7 +3958,7 @@ export default function App() {
     voice: 'redbull',
     language: 'ko',
     useRawReplay: true,
-    replayCircuit: 'circuit_Catalunya',
+    replayCircuit: '',
     replaySession: '',
     replayLap: 'all',
     replaySpeed: 2.0,

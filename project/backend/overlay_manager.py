@@ -122,6 +122,8 @@ class OverlayManager:
         self.http_port = int(http_port or os.environ.get("OVERLAY_HTTP_PORT", 8090))
         self.server_proc = None
         self.window_proc = None
+        self.demo_proc = None      # QA tab: a second overlay server fed by simulated data (server.js --demo)
+        self.demo_mode = None
         self.installing = False
         self.last_error = None
         self.forwarded = 0
@@ -135,6 +137,7 @@ class OverlayManager:
         self._settings_path = os.path.join(self.dir, "engineer-overlay.json")
         self.enabled = self._load_enabled()
         self.last_game_packet = 0.0
+        self.last_live_packet = 0.0     # last packet from the real game (replays excluded)
         self._starting = False
         self._retry_at = 0.0
 
@@ -212,10 +215,12 @@ class OverlayManager:
             self._auto_start_async()          # the game is already sending: show it now
         return self.status()
 
-    def on_game_packet(self):
-        """Called for every parsed game packet (live UDP or replay). Cheap; starts the overlay once."""
+    def on_game_packet(self, live=False):
+        """Called for every parsed game packet (live UDP: live=True, or replay). Cheap; starts the overlay once."""
         now = time.time()
         self.last_game_packet = now
+        if live:
+            self.last_live_packet = now       # the real game (not a replay) is sending
         if not self.enabled or self._starting or now < self._retry_at or self.installing:
             return
         if self.server_running and (self.window_running or not self.electron_installed):
@@ -262,6 +267,7 @@ class OverlayManager:
             "enabled": self.enabled,
             "state": self.state(),
             "game_data_age_s": round(time.time() - self.last_game_packet, 1) if self.last_game_packet else None,
+            "live_game_age_s": round(time.time() - self.last_live_packet, 1) if self.last_live_packet else None,
             "node": bool(self.node),
             "electron_installed": self.electron_installed,
             "installing": self.installing,
@@ -362,7 +368,10 @@ class OverlayManager:
                     "trackId": tid,
                     "trackLength": data.get("lap_length_m"),
                     "source": "f125-engineer circuit_data (official turn numbers)",
-                    "corners": [{"n": int(c["turn"]), "start": int(c["entry_dist"]), "end": int(c["exit_dist"])}
+                    # dir: L / R from the official corner list, drawn as an arrow in the halo's TURN box
+                    "corners": [{"n": int(c["turn"]), "start": int(c["entry_dist"]), "end": int(c["exit_dist"]),
+                                 **({"dir": str(c["direction"])[0].upper()}
+                                    if str(c.get("direction", "")).lower() in ("left", "right") else {})}
                                 for c in corners if c.get("turn") is not None],
                 }
                 with open(dst, "w", encoding="utf-8") as f:
@@ -371,6 +380,24 @@ class OverlayManager:
         except Exception as e:
             logger.warning(f"Overlay turn maps not written: {e}")
         return written
+
+    def toast(self, text):
+        """Short notice at the bottom of the overlay (server.js /api/ui {toast}, shown ~6 s). Sent from a
+        thread, so a caller on the packet path never waits for the overlay server."""
+        if not self.forwarding:
+            return False
+        body = json.dumps({"toast": str(text)[:90]}).encode("utf-8")
+
+        def send():
+            req = urllib.request.Request(f"http://127.0.0.1:{self.http_port}/api/ui", data=body, method="POST",
+                                         headers={"Content-Type": "application/json"})
+            try:
+                urllib.request.urlopen(req, timeout=1.0).close()
+            except Exception as e:
+                logger.debug(f"Overlay toast not shown: {e}")
+
+        threading.Thread(target=send, name="overlay-toast", daemon=True).start()
+        return True
 
     def set_ui(self, key, value):
         """Switch one overlay HUD on/off (server.js /api/ui {set, value})."""
@@ -383,6 +410,90 @@ class OverlayManager:
         except Exception as e:
             logger.warning(f"Overlay UI '{key}' not set: {e}")
             return False
+
+    # ------------------------------------------------------------------ QA tab
+    # A demo overlay server (server.js --demo: a simulated race or qualifying with SC/VSC/red flag phases and a
+    # fastest-lap banner) on its own ports, so every HUD can be checked in the web app without the game and
+    # without touching the real overlay (8090). It is killed with the app like the other overlay processes.
+    DEMO_HTTP_PORT, DEMO_UDP_PORT = 8095, 20795
+
+    @property
+    def demo_running(self):
+        return self.demo_proc is not None and self.demo_proc.poll() is None
+
+    def demo_status(self):
+        return {"running": self.demo_running, "mode": self.demo_mode if self.demo_running else None,
+                "url": f"http://127.0.0.1:{self.DEMO_HTTP_PORT}/"}
+
+    def stop_demo(self):
+        _kill_tree(self.demo_proc)
+        self.demo_proc, self.demo_mode = None, None
+        return self.demo_status()
+
+    def start_demo(self, mode):
+        """mode 'race' or 'quali' (simulated session); anything else stops the demo."""
+        with self._lock:
+            self.stop_demo()
+            if mode not in ("race", "quali"):
+                return self.demo_status()
+            if not self.node:
+                return {**self.demo_status(), "error": "Node.js not found"}
+            if _port_busy_tcp(self.DEMO_HTTP_PORT):
+                return {**self.demo_status(), "error": f"Port {self.DEMO_HTTP_PORT} is already in use"}
+            args = [self.node, "server.js", "--demo", "--no-open"] + (["--quali"] if mode == "quali" else [])
+            self.demo_proc = self._spawn(args, self.dir, {"UDP_PORT": str(self.DEMO_UDP_PORT),
+                                                          "HTTP_PORT": str(self.DEMO_HTTP_PORT), "NO_OPEN": "1"})
+            for _ in range(30):
+                if _port_busy_tcp(self.DEMO_HTTP_PORT) or self.demo_proc.poll() is not None:
+                    break
+                time.sleep(0.1)
+            if not self.demo_running:
+                self.demo_proc = None
+                return {**self.demo_status(), "error": "Demo overlay exited at start - see overlay/overlay-run.log"}
+            self.demo_mode = mode
+        self.post_ui({"set": "halo", "value": True}, source="demo")   # the real overlay turns the halo on too
+        return self.demo_status()
+
+    def _qa_port(self, source):
+        return self.DEMO_HTTP_PORT if source == "demo" else self.http_port
+
+    def post_ui(self, action, source="live"):
+        """POST /api/ui to the real overlay ('live') or the QA demo ('demo') -> its ui state, or None."""
+        body = json.dumps(action).encode("utf-8")
+        req = urllib.request.Request(f"http://127.0.0.1:{self._qa_port(source)}/api/ui", data=body, method="POST",
+                                     headers={"Content-Type": "application/json"})
+        try:
+            with urllib.request.urlopen(req, timeout=1.0) as r:
+                return json.loads(r.read().decode("utf-8"))
+        except Exception as e:
+            logger.debug(f"Overlay UI action not applied ({source}): {e}")
+            return None
+
+    def qa_snapshot(self, source="live"):
+        """What the overlay ('live' = the real one fed by the game, 'demo' = QA demo) has received and shows."""
+        running = self.demo_running if source == "demo" else self.server_running
+        out = {"source": source, "running": running, "url": f"http://127.0.0.1:{self._qa_port(source)}/",
+               "demo": self.demo_status(), "enabled": self.enabled,
+               "live_game_age_s": round(time.time() - self.last_live_packet, 1) if self.last_live_packet else None}
+        if not running:
+            return out
+        try:
+            with urllib.request.urlopen(f"http://127.0.0.1:{self._qa_port(source)}/state", timeout=0.8) as r:
+                st = json.loads(r.read().decode("utf-8"))
+        except Exception as e:
+            out["error"] = str(e)
+            return out
+        dbg = st.get("dbg") or {}
+        out["packets"] = {pid: {"count": n, "size": (dbg.get("sizes") or {}).get(pid),
+                                "parsed": (dbg.get("parsed") or {}).get(pid)}
+                          for pid, n in (dbg.get("counts") or {}).items()}
+        keys = ("connected", "paused", "visible", "sessionType", "isSprintRace", "totalLaps", "sessionTimeLeft",
+                "safetyCar", "safetyDelta", "redFlag", "yellowZones", "gamePaused", "spectating", "player",
+                "viewCar", "numActive", "fastestLap", "best", "car", "ers", "turn", "ui", "lastPacketAt")
+        out["state"] = {k: st.get(k) for k in keys}
+        cars = [c for c in (st.get("cars") or []) if c.get("pos")]
+        out["state"]["cars"] = sorted(cars, key=lambda c: c["pos"])
+        return out
 
     # ------------------------------------------------------------------ start / stop
     def start(self, window=True, halo=True):

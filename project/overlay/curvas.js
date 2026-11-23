@@ -1,15 +1,18 @@
-// Numero da curva (TURN): o jogo nao envia isso na telemetria UDP, entao o overlay APRENDE a pista.
-// Na primeira volta completa e sem pit em uma pista, detecta onde o volante esta esterçado (steer x
-// distancia da volta) e numera as curvas em ordem. Salva em curvas/<trackId>.json (pode ser editado:
-// ajuste start/end/n, ou apague o arquivo para reaprender). A numeracao aprendida pode divergir da
-// oficial (curvas em reta muito rapidas nao sao detectadas; chicanes contam como duas).
+// Turn number (TURN): the game does not send it in the UDP telemetry, so the overlay LEARNS the track.
+// On the first complete lap without a pit stop it finds where the wheel is turned (steer x lap
+// distance) and numbers the corners in order. Saved to curvas/<trackId>.json (editable: adjust
+// start/end/n, or delete the file to relearn). Learned numbers can differ from the official ones
+// (very fast kinks are not detected; chicanes count as two). F1 AI Race Engineer writes the official
+// turn maps for 24 tracks into curvas/ at start, so learning is only a fallback.
+// Each corner may carry dir 'L' / 'R' (official list, or the steering sign when learned: + = right);
+// the halo draws it as an arrow in the TURN box.
 'use strict';
 const fs = require('fs');
 const path = require('path');
 
 const ENTER = 0.10, EXIT = 0.05, MIN_PEAK = 0.15, MIN_LEN = 20, MERGE_GAP = 40, LEAD = 20;
 
-function detectCorners(samples) { // samples: [[dist, steer]] ordenado por dist
+function detectCorners(samples) { // samples: [[dist, steer]] sorted by dist
   const segs = [];
   let cur = null;
   for (const [d, s] of samples) {
@@ -30,13 +33,13 @@ function detectCorners(samples) { // samples: [[dist, steer]] ordenado por dist
     } else merged.push({ ...g });
   }
   return merged.filter(g => g.peak >= MIN_PEAK && g.end - g.start >= MIN_LEN)
-    .map((g, i) => ({ n: i + 1, start: Math.round(g.start), end: Math.round(g.end) }));
+    .map((g, i) => ({ n: i + 1, start: Math.round(g.start), end: Math.round(g.end), dir: g.sign > 0 ? 'R' : 'L' }));
 }
 
 function createTurnTracker(dir) {
   let trackId = null, length = 0, corners = null, learning = [], lapNum = -1, dirty = false;
   const file = id => path.join(dir, `${id}.json`);
-  const out = { n: null, total: 0, status: 'unknown' };
+  const out = { n: null, total: 0, status: 'unknown', dir: null };
 
   function setTrack(id, len) {
     if (id === trackId && len === length) return;
@@ -47,7 +50,7 @@ function createTurnTracker(dir) {
     } catch (_) {}
     out.status = corners ? 'ready' : 'learning';
     out.total = corners ? corners.length : 0;
-    out.n = null;
+    out.n = null; out.dir = null;
   }
 
   function finishLap() {
@@ -70,11 +73,12 @@ function createTurnTracker(dir) {
     if (trackId === null || !Number.isFinite(dist) || !Number.isFinite(steer)) return out;
     if (lap !== lapNum) { finishLap(); learning = []; dirty = pit !== 0 || dist > 300; lapNum = lap; }
     if (pit) dirty = true;
-    if (!corners) { if (dist >= 0) learning.push([dist, steer]); out.n = null; return out; }
-    let n = corners[corners.length - 1].n;
-    for (const c of corners) if (c.start - LEAD <= dist) n = c.n;
-    if (dist < corners[0].start - LEAD) n = corners[corners.length - 1].n;
-    out.n = n;
+    if (!corners) { if (dist >= 0) learning.push([dist, steer]); out.n = null; out.dir = null; return out; }
+    let cur = corners[corners.length - 1];
+    for (const c of corners) if (c.start - LEAD <= dist) cur = c;
+    if (dist < corners[0].start - LEAD) cur = corners[corners.length - 1];
+    out.n = cur.n;
+    out.dir = cur.dir === 'L' || cur.dir === 'R' ? cur.dir : null;
     return out;
   }
   return { setTrack, sample, state: out, detectCorners };

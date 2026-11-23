@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>F1 TV Overlay</title>
 <style>
-  /* Tudo escala pela altura da tela: 1rem = 20px em 1080p. */
+  /* Everything scales with the screen height: 1rem = 20px at 1080p. */
   :root {
     --panel: rgba(14, 14, 20, 0.82);
     --panel-2: rgba(30, 30, 40, 0.88);
@@ -25,7 +25,7 @@
   #root { position: fixed; inset: 0; opacity: 0; transition: opacity .3s; }
   #root.live { opacity: 1; }
 
-  /* Torre de transmissao: proporcoes medidas na referencia enviada pelo usuario. */
+  /* Broadcast timing tower: proportions measured on the reference screenshot. */
   #left { position: absolute; left: 4vw; top: 3.2vh; width: 12.15rem;
     transform: scale(var(--tower-scale, 1)); transform-origin: top left;
     filter: drop-shadow(.18rem .22rem .4rem #0009); }
@@ -93,7 +93,7 @@
     align-items: center; justify-content: center; color: #101115; background: #ddd;
     border: .09rem solid #888; font-size: .48rem; font-weight: 900; line-height: 1; }
   .tyrebox .age { font-size: .43rem; line-height: 1; color: #c7c9ce; }
-  /* qualificacao: torre no estilo da transmissao (tempo do lider, gaps, pneu em letra) + cartoes de volta lancada */
+  /* qualifying: broadcast-style tower (leader's time, gaps, compound letter) + flying-lap cards */
   #root.timed #brandEvent { font: 600 .56rem/1.2 "Bahnschrift", "Arial Narrow", sans-serif; font-style: normal;
     letter-spacing: .01em; white-space: pre-line; text-align: center; text-shadow: none; margin-top: .1rem; }
   #root.timed #lapbox { justify-content: flex-start; font-size: .9rem; padding-left: .7rem; }
@@ -136,19 +136,15 @@
   .qs { display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; font-size: .58rem; font-weight: 800;
     color: #c9ccd2; letter-spacing: .03em; }
   .qs span.sel { color: #fff; }
-  .qbars { display: grid; grid-template-columns: repeat(3, 1fr); gap: .1rem; height: .17rem; background: #000; }
+  .qbars { display: grid; grid-template-columns: repeat(3, 1fr); gap: .15rem; height: .3rem; background: #000; }
   .qbars i { background: #4b4e57; }
   .qbars i.green { background: var(--good); }
   .qbars i.yellow { background: #ffd23f; }
   .qbars i.purple { background: var(--purple); }
   .qbars i.running { background: #fff; animation: pulse .8s infinite alternate; }
 
-  /* pausa e modo de edicao */
+  /* edit mode */
   [data-hud] { translate: calc(var(--dx, 0) * 1vw) calc(var(--dy, 0) * 1vh); }
-  #pauseBadge { position: fixed; top: 1.2vh; left: 50%; transform: translateX(-50%); display: none; z-index: 5;
-    padding: .25rem .8rem; background: #000c; border: 1px solid #ffffff33; border-radius: .2rem;
-    font-size: .72rem; font-weight: 800; letter-spacing: .08em; color: #ffd23f; }
-  #pauseBadge.on { display: block; }
   #editBanner { position: fixed; top: 1.2vh; left: 50%; transform: translateX(-50%); display: none; z-index: 9;
     max-width: 90vw; padding: .5rem .9rem; background: #ffd23f; color: #111; border-radius: .25rem;
     font-size: .78rem; font-weight: 800; text-align: center; box-shadow: 0 .2rem .8rem #000a; }
@@ -156,7 +152,7 @@
   body.edit [data-hud] { outline: .12rem dashed #ffd23f; outline-offset: .25rem; cursor: move; user-select: none;
     pointer-events: auto !important; touch-action: none; }
   body.edit #root { opacity: 1 !important; }
-  /* o halo e um SVG largo: so as partes pintadas recebem o mouse, para nao cobrir as outras HUDs */
+  /* the halo is a wide SVG: only its painted parts take the mouse, so it does not cover the other HUDs */
   body.edit #haloGauge[data-hud] { pointer-events: none !important; }
   body.edit #haloGauge .plate, body.edit #haloGauge circle, body.edit #haloGauge rect { pointer-events: all; }
   .hudtag { display: none; position: absolute; left: 0; top: -1.55rem; padding: .1rem .4rem; background: #ffd23f;
@@ -165,10 +161,10 @@
     background: #ffd23f; border: .1rem solid #111; cursor: nwse-resize; border-radius: .15rem; }
   body.edit .hudtag, body.edit .rz { display: block; }
 
-  #lapCard { position: absolute; right: 1.6rem; bottom: 3vh; display: none;
-    transform: scale(var(--lap-scale, 1)); transform-origin: bottom right;
+  #lapCard { position: absolute; right: 1.6rem; top: 3.4vh; display: none;   /* race only: top right */
+    transform: scale(var(--lap-scale, 1)); transform-origin: top right;
     filter: drop-shadow(.1rem .15rem .3rem #000a); }
-  /* Delta do VSC/SC: aparece apenas quando o pacote de volta fornece delta valido. */
+  /* VSC/SC delta: shown only when the lap-data packet carries a valid delta. */
   #flags { position: absolute; left: 50%; top: 7vh; display: none; flex-direction: column; align-items: center; gap: .3rem;
     transform: translateX(-50%) scale(var(--flags-scale, 1)); transform-origin: top center;
     filter: drop-shadow(.1rem .15rem .3rem #000a); }
@@ -180,22 +176,22 @@
   #deltaPanel .dm { padding: 0 .4rem .35rem; font-size: .65rem; font-weight: 800; letter-spacing: .08em; }
   #deltaPanel.safe .dv { color: #45df88; }
   #deltaPanel.fast .dv { color: #f0404b; }
-  #fastestLap { position: absolute; left: 50%; bottom: 12vh; width: 51rem; height: 5rem; display: none;
+  #fastestLap { position: absolute; left: 50%; bottom: 12vh; width: 32rem; height: 2.4rem; display: none;
     align-items: stretch; transform: translateX(-50%) scale(var(--fastest-scale, 1)); transform-origin: center bottom;
     background: #0e1015f2; color: white; box-shadow: .14rem .22rem .45rem #0009; overflow: hidden; }
   #fastestLap.on, body.edit #fastestLap { display: flex; }
-  #fastestLap .fastTitle { width: 31%; flex: none; display: flex; align-items: center; padding-left: 1.3rem;
+  #fastestLap .fastTitle { width: 31%; flex: none; display: flex; align-items: center; padding-left: .8rem;
     background: #b81bc8; clip-path: polygon(0 0, 87% 0, 100% 50%, 87% 100%, 0 100%);
-    font-size: 1.28rem; font-weight: 900; letter-spacing: .08em; white-space: nowrap; }
-  #fastestLap .fastChevrons { width: 5rem; flex: none; opacity: .7;
-    background: repeating-linear-gradient(50deg, transparent 0 1.1rem, #a522b1 1.1rem 2.25rem, transparent 2.25rem 3.25rem); }
-  #fastestLap .fastName { flex: 1; min-width: 0; display: flex; align-items: center; padding: 0 .6rem;
-    color: var(--fast-color, #f7f7f7); font-size: 1.3rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  #fastestLap .fastLogo { display: flex; align-items: center; justify-content: center; width: 2.5rem;
-    color: var(--fast-color, #f7f7f7); font-size: 1.3rem; font-weight: 900; }
-  #fastestLap .fastLogo svg { width: 2.2rem; }
-  #fastestLap .fastTime { display: flex; align-items: center; padding: 0 1rem 0 .2rem; color: #bd2acb;
-    font-size: 2.05rem; font-weight: 900; white-space: nowrap; }
+    font-size: .8rem; font-weight: 900; letter-spacing: .08em; white-space: nowrap; }
+  #fastestLap .fastChevrons { width: 3.1rem; flex: none; opacity: .7;
+    background: repeating-linear-gradient(50deg, transparent 0 .68rem, #a522b1 .68rem 1.4rem, transparent 1.4rem 2rem); }
+  #fastestLap .fastName { flex: 1; min-width: 0; display: flex; align-items: center; padding: 0 .4rem;
+    color: var(--fast-color, #f7f7f7); font-size: .82rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #fastestLap .fastLogo { display: flex; align-items: center; justify-content: center; width: 1.6rem;
+    color: var(--fast-color, #f7f7f7); font-size: .82rem; font-weight: 900; }
+  #fastestLap .fastLogo svg { width: 1.2rem; }
+  #fastestLap .fastTime { display: flex; align-items: center; padding: 0 .62rem 0 .12rem; color: #bd2acb;
+    font-size: 1.12rem; font-weight: 900; white-space: nowrap; }
   #onboardCard { position: absolute; left: 50%; bottom: 3.5vh;
     transform: translateX(-50%) scale(var(--onboard-scale, 1)); transform-origin: center bottom;
     width: 20rem; height: 4.45rem; display: none; align-items: stretch;
@@ -214,7 +210,7 @@
     color: var(--driver-color, #e10600); background: #1c2024b8; border-left: .1rem solid #ffffff22;
     font: italic 900 3.25rem/1 "Arial Narrow", "Bahnschrift", sans-serif; }
 
-  /* Halo no estilo da transmissao: arco fino, dial central, barras de freio/acelerador, TURN e ACTIVE AERO. */
+  /* Broadcast-style halo: thin arc, centre dial, brake/throttle bars, TURN and ACTIVE AERO. */
   #haloGauge { position: absolute; left: 58%; top: 58%; width: 58rem; height: 19.1rem; display: none;
     transform: translate(-50%, -50%) scale(var(--halo-scale, 1)); transform-origin: center; pointer-events: none;
     overflow: visible; filter: drop-shadow(0 .06rem .12rem #000a); }
@@ -231,7 +227,7 @@
   #haloGauge .gear.active { fill: #fff; filter: drop-shadow(0 0 3px #8fe0ff); }
   #haloGauge .tag { font-size: 8px; letter-spacing: .8px; fill: #6fd0ff; }
   #haloGauge .tag.g { fill: #4be59a; }
-  /* tres estados: off = indisponivel (cinza apagado), ready = disponivel (contorno verde pulsando), on = em uso (verde cheio) */
+  /* three states: off = unavailable (dim grey), ready = available (pulsing green outline), on = in use (solid green) */
   #haloGauge .pill rect { fill: #14263a; stroke: #4a6a82; stroke-width: .8; }
   #haloGauge .pill text { font-size: 7.5px; letter-spacing: .6px; fill: #7f9bb0; }
   #haloGauge .pill[data-state="ready"] rect { fill: #0f3a2b; stroke: #4be59a; stroke-width: 1.2; animation: pillPulse 1s ease-in-out infinite; }
@@ -248,55 +244,53 @@
 <script>if (new URLSearchParams(location.search).get('theme') === 'original') document.getElementById('broadcastTheme').disabled = true;</script>
 </head>
 <body>
-<div id="status">aguardando…</div>
 <div id="toast"></div>
-<div id="pauseBadge">JOGO EM PAUSA · DADOS CONGELADOS</div>
-<div id="editBanner">MODO EDIÇÃO · arraste para mover · canto amarelo ou roda do mouse para redimensionar · duplo clique reseta · Esc ou Ctrl+Alt+E sai<br>(os dados ficam congelados enquanto você edita; pause o jogo no menu dele)</div>
+<div id="editBanner">EDIT MODE · drag to move · yellow corner or mouse wheel to resize · double-click to reset · Esc or Ctrl+Alt+E to exit<br>(data stays frozen while you edit; pause the game from its own menu)</div>
 <div id="root">
-  <div id="left" data-hud="tower" data-label="TORRE">
+  <div id="left" data-hud="tower" data-label="TOWER">
     <div id="brand"><svg id="brandMark" viewBox="0 0 124 44" aria-label="F1" role="img">
       <path d="M10 39 28 17C35 8 42 5 55 5h60l-10 10H56c-7 0-11 1-15 6L26 39Z"/>
       <path d="M31 39 45 23c3-4 7-5 13-5h45l-9 10H61c-4 0-6 1-8 4l-6 7Z"/>
       <path d="m107 18 9-13h8L97 39H80l18-21Z"/>
     </svg><div id="brandEvent">RACE</div></div>
-    <div id="lapbox"><span id="lapTxt">VOLTA –</span><small id="lastTxt"></small></div>
+    <div id="lapbox"><span id="lapTxt">LAP –</span><small id="lastTxt"></small></div>
     <div id="raceBanner"><span class="headline" id="raceBannerTitle"></span><span class="meta" id="raceBannerMeta"></span></div>
     <div id="tower"></div>
   </div>
 
-  <div id="qCards" data-hud="cards" data-label="CARTÕES DE VOLTA"></div>
+  <div id="qCards" data-hud="cards" data-label="LAP CARDS"></div>
 
-  <div id="lapCard" data-hud="lap" data-label="CARTÃO DA VOLTA"></div>
+  <div id="lapCard" data-hud="lap" data-label="LAP CARD"></div>
   <div id="flags" data-hud="flags" data-label="DELTA VSC / SC">
     <div id="deltaPanel"><span class="dh" id="deltaHeader">VIRTUAL SAFETY CAR · DELTA</span>
-      <strong class="dv" id="deltaValue">+0.000</strong><span class="dm" id="deltaMessage">MANTENHA DELTA POSITIVO</span></div>
+      <strong class="dv" id="deltaValue">+0.000</strong><span class="dm" id="deltaMessage">KEEP DELTA POSITIVE</span></div>
   </div>
-  <div id="fastestLap" data-hud="fastest" data-label="VOLTA MAIS RÁPIDA" aria-live="polite">
+  <div id="fastestLap" data-hud="fastest" data-label="FASTEST LAP" aria-live="polite">
     <span class="fastTitle">FASTEST LAP</span><span class="fastChevrons"></span>
-    <span id="fastName" class="fastName">PILOTO</span><span id="fastLogo" class="fastLogo"></span>
+    <span id="fastName" class="fastName">DRIVER</span><span id="fastLogo" class="fastLogo"></span>
     <span id="fastTime" class="fastTime">1:00.000</span>
   </div>
-  <div id="onboardCard" data-hud="onboard" data-label="CARTÃO ONBOARD" aria-label="Identificacao do piloto onboard">
+  <div id="onboardCard" data-hud="onboard" data-label="ONBOARD CARD" aria-label="Onboard driver">
     <div id="driverText"><span id="driverFirst"></span><strong id="driverLast"></strong>
       <div id="driverTeam"><span id="driverTeamName"></span><span id="driverLogo"></span></div>
     </div><div id="driverNumber"></div>
   </div>
-  <svg id="haloGauge" data-hud="halo" viewBox="0 0 760 250" role="img" aria-label="Instrumentos projetados sobre o halo">
+  <svg id="haloGauge" data-hud="halo" viewBox="0 0 760 250" role="img" aria-label="Halo instruments">
     <path class="arc" d="M30 160 C150 62 268 14 380 10 C492 14 610 62 730 160"/>
-    <!-- TURN (esquerda) -->
+    <!-- TURN (left) -->
     <g transform="rotate(-9 190 170)">
       <path class="plate" d="M96 150 h74 a6 6 0 0 1 6 6 v34 a6 6 0 0 1 -6 6 h-74 a6 6 0 0 1 -6 -6 v-34 a6 6 0 0 1 6 -6 z"/>
       <text x="106" y="165" class="lbl">TURN</text>
       <text id="haloTurn" x="106" y="188" class="mid" style="font-size:22px">—</text>
       <text id="haloTurnTotal" x="146" y="188" class="tiny" style="fill:#9fd8f5"></text>
     </g>
-    <!-- RECHARGE + freio -->
+    <!-- RECHARGE + brake -->
     <g id="haloBrakeBars"></g>
     <path class="plate" d="M246 66 h30 l-4 76 h-30 z"/>
     <text x="0" y="0" class="lbl" transform="translate(268 132) rotate(-90)" style="font-size:7px">RECHARGE</text>
     <text x="236" y="176" text-anchor="end" class="tag" transform="rotate(-6 236 176)">BRAKE</text>
     <text id="haloBrakeText" x="236" y="186" text-anchor="end" class="tiny" style="fill:#9fd8f5">0%</text>
-    <!-- DEPLOY + acelerador -->
+    <!-- DEPLOY + throttle -->
     <g id="haloThrottleBars"></g>
     <path class="plate" d="M484 66 h30 l4 76 h-30 z"/>
     <text x="0" y="0" class="lbl" transform="translate(500 80) rotate(90)" style="font-size:7px">DEPLOY</text>
@@ -304,7 +298,7 @@
     <rect id="haloDeployFill" x="490" y="146" width="0" height="3" fill="#38d98a"/>
     <text x="524" y="176" class="tag g" transform="rotate(6 524 176)">THROTTLE</text>
     <text id="haloThrottleText" x="524" y="186" class="tiny" style="fill:#a6f0c9">0%</text>
-    <!-- dial central -->
+    <!-- centre dial -->
     <circle cx="380" cy="100" r="64" class="plate"/>
     <circle cx="380" cy="100" r="58" class="ring"/>
     <text x="380" y="50" text-anchor="middle" class="lbl">KM/H</text>
@@ -318,7 +312,7 @@
     <rect id="haloErsFill" x="358" y="146" width="0" height="12" rx="2" fill="#2f9be0"/>
     <path d="M382 147 l-5 6 h4 l-2 5 7-7 h-4 l2-4z" fill="#fff"/>
     <text id="haloErsText" x="380" y="172" text-anchor="middle" class="tiny" style="fill:#9fd8f5">ERS 0%</text>
-    <!-- ACTIVE AERO + marchas + RPM (direita) -->
+    <!-- ACTIVE AERO + gears + RPM (right) -->
     <g transform="rotate(10 600 160)">
       <path class="plate" d="M548 100 h170 a6 6 0 0 1 6 6 v92 a6 6 0 0 1 -6 6 h-170 a6 6 0 0 1 -6 -6 v-92 a6 6 0 0 1 6 -6 z"/>
       <text id="haloAeroLabel" x="556" y="116" class="lbl">ACTIVE</text>
@@ -341,7 +335,7 @@
   const GAP_MODE = q.get('gap') === 'leader' ? 'leader' : 'interval';
   if (q.has('debug')) document.body.classList.add('debug');
 
-  // Cores antigas como fallback; o parser usa a primeira cor da pintura quando disponivel.
+  // Fallback team colours; the parser uses the livery's first colour when it is available.
   const TEAM = { 0: '#27f4d2', 1: '#e8002d', 2: '#3671c6', 3: '#64c4ff', 4: '#229971',
                  5: '#ff87bc', 6: '#6692ff', 7: '#b6babd', 8: '#ff8000', 9: '#52e252' };
   const TEAM_INFO = {
@@ -362,10 +356,10 @@
   const TYRE = { 16: ['S', '#ff3b30'], 17: ['M', '#ffd23f'], 18: ['H', '#f2f2f2'],
                  7: ['I', '#19d36b'], 8: ['W', '#4aa8ff'] };
 
-  // tipos de sessao do F1 24/25 (campo sessionType do pacote de sessao)
-  const SESSION = { 1: 'TL1', 2: 'TL2', 3: 'TL3', 4: 'TREINO', 5: 'Q1', 6: 'Q2', 7: 'Q3', 8: 'QUALY', 9: 'QUALY',
-                    10: 'SQ1', 11: 'SQ2', 12: 'SQ3', 13: 'SQ', 14: 'SQ', 15: 'CORRIDA', 16: 'CORRIDA',
-                    17: 'CORRIDA', 18: 'TIME TRIAL' };
+  // F1 24/25/26 session types (sessionType field of the session packet)
+  const SESSION = { 1: 'FP1', 2: 'FP2', 3: 'FP3', 4: 'PRACTICE', 5: 'Q1', 6: 'Q2', 7: 'Q3', 8: 'QUALI', 9: 'QUALI',
+                    10: 'SQ1', 11: 'SQ2', 12: 'SQ3', 13: 'SQ', 14: 'SQ', 15: 'RACE', 16: 'RACE',
+                    17: 'RACE', 18: 'TIME TRIAL' };
 
   const $q = (id) => document.getElementById(id);
   const root = document.getElementById('root');
@@ -385,7 +379,7 @@
   cutBand.id = 'cutBand'; cutBand.textContent = 'Elimination Zone';
   tower.appendChild(cutBand);
 
-  // cartao de volta no estilo da transmissao (usado nos 3 cartoes da qualy e no cartao da volta)
+  // broadcast-style lap card (used by the 3 quali cards and by my race lap card)
   function makeCard(parent) {
     const d = document.createElement('div');
     d.className = 'qc hide';
@@ -399,15 +393,14 @@
   }
   const qcards = [makeCard($q('qCards')), makeCard($q('qCards')), makeCard($q('qCards'))];
   const lapCardView = makeCard($q('lapCard'));
-  const cardState = {};   // por piloto: ultimo setor visto e delta mostrado ao fechar o setor
-  const raceCardState = {}; // corrida: transicoes de setor independentes dos cartoes da qualy
+  const cardState = {};   // per driver: last sector seen and the delta shown when a sector closes
+  const raceCardState = {}; // race: sector transitions kept apart from the quali cards
   const raceFinish = { sessionUid: '', lapNum: 0, until: 0 };
 
   const $ = (id) => document.getElementById(id);
   const el = {
     brandEvent: $('brandEvent'), lapTxt: $('lapTxt'), lastTxt: $('lastTxt'),
-    status: $('status'),
-    left: $('left'), lapCard: $('lapCard'), flags: $('flags'), toast: $('toast'), qCards: $('qCards'), pauseBadge: $('pauseBadge'),
+    left: $('left'), lapCard: $('lapCard'), flags: $('flags'), toast: $('toast'), qCards: $('qCards'),
     raceBanner: $('raceBanner'), raceBannerTitle: $('raceBannerTitle'), raceBannerMeta: $('raceBannerMeta'),
     fastestLap: $('fastestLap'), fastName: $('fastName'), fastLogo: $('fastLogo'), fastTime: $('fastTime'),
     onboardCard: $('onboardCard'), driverFirst: $('driverFirst'), driverLast: $('driverLast'),
@@ -431,7 +424,7 @@
     gear.textContent = i === 0 ? 'N' : String(i);
     el.haloGears.appendChild(gear);
   }
-  // barras verticais em leque: i=0 fica junto ao dial e as seguintes se afastam (freio azul, acelerador verde)
+  // fan of vertical bars: i=0 sits next to the dial and the next ones move away (brake blue, throttle green)
   for (let i = 0; i < 12; i++) {
     const t = i / 11, h = 74 - t * 26;
     for (const [parent, side, color] of [[el.haloBrakeBars, -1, '#4ab8f0'], [el.haloThrottleBars, 1, '#2fe08f']]) {
@@ -471,7 +464,7 @@
     if (key === 'm') action({ cycleMode: true });
   });
 
-  let drag = null;   // arrasto em andamento no modo de edicao: { id, mode, ... }
+  let drag = null;   // drag in progress in edit mode: { id, mode, ... }
   const fmtTenth = (ms) => {
     const t = Math.max(0, Math.round(ms / 100));
     return Math.floor(t / 600) + ':' + String(Math.floor((t % 600) / 10)).padStart(2, '0') + '.' + (t % 10);
@@ -483,8 +476,8 @@
     return k === 0 ? r.bl1 : (r.bl2 ? r.bl1 + r.bl2 : 0);
   };
 
-  // piloto de referencia: na qualy, quem esta na zona de eliminacao mira o ultimo que passa e os demais o lider;
-  // fora da qualy, a melhor volta da sessao
+  // reference driver: in quali, a driver in the elimination zone is compared with the last car through, the others
+  // with the leader; outside quali, with the session's best lap
   function refFor(c, s, list, cut, timed) {
     const pool = timed ? list : s.cars.filter(x => x.bestLap > 0).sort((x, y) => x.bestLap - y.bestLap);
     let ref = timed ? ((cut > 0 && (c.pos > cut || !c.bestLap)) ? list[cut - 1] : list[0]) : pool[0];
@@ -507,11 +500,11 @@
     const t = TYRE[c.tyre];
     q.tyre.textContent = t ? t[0] : '';
     q.tyre.style.color = t ? t[1] : '';
-    if (!live) {   // fora de volta lancada: mostra o estado e a melhor volta
+    if (!live) {   // not on a flying lap: show the state and the best lap
       q.big.textContent = { 0: 'BOXES', 2: 'IN LAP', 3: 'OUT LAP', 4: 'ON TRACK' }[c.status] || 'BOXES';
       q.big.className = 'qbig txt';
       q.refTime.textContent = c.bestLap ? fmtLap(c.bestLap) : '';
-      q.refName.textContent = c.bestLap ? 'MELHOR VOLTA' : '';
+      q.refName.textContent = c.bestLap ? 'BEST LAP' : '';
       q.bars.forEach(b => { b.className = ''; });
       q.labels.forEach((l, j) => { l.textContent = 'S' + (j + 1); l.classList.remove('sel'); });
       return;
@@ -545,7 +538,7 @@
   function renderCards(s, list, limit, cut, show, edit) {
     el.qCards.style.display = show ? 'flex' : 'none';
     if (!show) return;
-    // o piloto do jogador sempre ocupa o primeiro cartao; os outros dois sao quem esta em volta lancada
+    // the player's car always takes the first card; the other two are cars on a flying lap
     const mine = s.cars[s.viewCar ?? s.player];
     const others = s.cars.filter(c => c.idx < limit && c !== mine && c.status === 1 && c.curLap > 0)
       .sort((a, b) => b.curLap - a.curLap);
@@ -561,8 +554,8 @@
     });
   }
 
-  // Na corrida, a cor acompanha o ultimo setor concluido; no inicio da volta,
-  // compara a ultima volta completa com o melhor pessoal e o melhor da sessao.
+  // In a race the colour follows the last completed sector; at the start of a lap it
+  // compares the last complete lap with the personal best and the session best.
   function lapCardResult(c, s, finished) {
     if (c.invalid) return 'yellow';
     const result = (value, own, global) => !value ? '' : global > 0 && value <= global ? 'purple'
@@ -575,7 +568,9 @@
     return result(c.lastLap, c.bestLap, s.best?.lap);
   }
 
-  // cartao da volta: o mesmo formato, so para o piloto do jogador, em corrida
+  // my lap card: the same format, only for the player's car, in a race.
+  // Only the player's own times: sector deltas against their own best lap, and the right-hand column
+  // shows their best lap (never another driver's name or time).
   function renderLapCard(s, list, cut, timed) {
     const mine = s.cars[s.player];
     const ok = mine && (mine.name || mine.pos);
@@ -594,7 +589,9 @@
       raceFinish.until = now + 5000;
     }
     const finished = mine.completedLapNum > 0 && now < raceFinish.until;
-    fillCard(lapCardView, mine, s, refFor(mine, s, list, cut, timed), now, true);
+    fillCard(lapCardView, mine, s, mine.bestLap ? mine : null, now, true);
+    lapCardView.refTime.textContent = mine.bestLap ? fmtLap(mine.bestLap) : '';
+    lapCardView.refName.textContent = mine.bestLap ? 'BEST LAP' : '';
     if (finished) {
       lapCardView.big.textContent = fmtLap(mine.lastLap);
       lapCardView.big.className = 'qbig';
@@ -630,7 +627,23 @@
     $('deltaPanel').className = deltaOn ? 'on ' + (delta.seconds >= 0 ? 'safe' : 'fast') : '';
     $('deltaHeader').textContent = s.safetyCar === 2 ? 'VIRTUAL SAFETY CAR · DELTA' : 'SAFETY CAR · DELTA';
     $('deltaValue').textContent = (delta.seconds >= 0 ? '+' : '−') + Math.abs(delta.seconds || 0).toFixed(3);
-    $('deltaMessage').textContent = delta.seconds >= 0 ? 'DELTA POSITIVO' : 'REDUZA A VELOCIDADE';
+    $('deltaMessage').textContent = delta.seconds >= 0 ? 'DELTA POSITIVE' : 'SLOW DOWN';
+  }
+
+  // The fastest-lap banner and the SC / VSC delta panel both sit at the top centre. While both are on screen
+  // and would touch, the banner moves down to just under the panel (also after either was moved or resized
+  // in edit mode); it goes back once the panel is gone. Not in edit mode, where HUDs are placed by hand.
+  function keepFastestClear(edit) {
+    const banner = el.fastestLap;
+    let push = 0;
+    if (!edit && banner.classList.contains('on') && el.flags.style.display !== 'none') {
+      const f = el.flags.getBoundingClientRect(), b = banner.getBoundingClientRect();
+      const current = parseFloat(banner.style.marginTop) || 0;
+      const top = b.top - current, gap = innerHeight * 0.012;
+      if (f.height && b.height && b.left < f.right && b.right > f.left && top < f.bottom + gap) push = Math.ceil(f.bottom + gap - top);
+    }
+    const value = push ? push + 'px' : '';
+    if (banner.style.marginTop !== value) banner.style.marginTop = value;
   }
 
   function renderFastest(s, show, edit) {
@@ -639,7 +652,7 @@
     el.fastestLap.classList.toggle('on', show && active);
     if (!active && !edit) return;
     const c = event && s.cars[event.idx];
-    const surname = (c?.name || c?.code || 'PILOTO').toUpperCase();
+    const surname = (c?.name || c?.code || 'DRIVER').toUpperCase();
     const key = surname.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     el.fastName.textContent = (FIRST_NAMES[key] ? FIRST_NAMES[key] + ' ' : '') + surname;
     el.fastTime.textContent = event ? fmtLap(event.lapMs) : '1:00.000';
@@ -654,7 +667,7 @@
   function render(s) {
     const ui0 = s.ui || { all: true, tower: true, lap: true, onboard: false, halo: false, cards: true, flags: true, fastest: true, mode: 'auto' };
     const edit = !!ui0.edit;
-    // no modo de edicao todas as HUDs aparecem, para poder mover e redimensionar cada uma
+    // in edit mode every HUD is shown so each one can be moved and resized
     const ui = edit ? { ...ui0, all: true, tower: true, lap: true, onboard: true, halo: true, cards: true, flags: true, fastest: true } : ui0;
     const scales = s.hudScales || {};
     root.style.setProperty('--tower-scale', scales.tower || 1);
@@ -670,23 +683,15 @@
     }
     const hasData = s.visible !== undefined ? !!s.visible : !!s.connected;
     root.classList.toggle('live', (hasData || edit) && ui.all);
-    el.pauseBadge.classList.toggle('on', !!(s.paused || s.gamePaused) && !edit && ui.all);
     el.left.style.display = ui.tower ? '' : 'none';
     el.onboardCard.style.display = ui.onboard ? 'flex' : 'none';
     el.haloGauge.style.display = ui.halo ? 'block' : 'none';
     el.toast.textContent = ui.toast || '';
     el.toast.classList.toggle('show', !!ui.toast && Date.now() < ui.toastUntil);
-    // diagnostico (so aparece com ?debug): quais pacotes chegam; "✗" = tamanho fora do esperado
-    const dbg = s.dbg || { counts: {}, parsed: {} };
-    const ids = Object.keys(dbg.counts).sort((a, b) => a - b)
-      .map((k) => k + ':' + dbg.counts[k] + (dbg.parsed[k] === false ? '✗' : ''));
-    el.status.textContent = s.connected
-      ? 'ao vivo · formato ' + s.format + ' · sessão ' + s.sessionType + ' · pacotes ' + ids.join(' ')
-      : s.paused ? 'jogo em pausa (dados congelados)' : 'sem dados do jogo';
 
-    // treino/qualy (tipos 1-14 e time trial): ordena pelo melhor tempo. Corrida: pela posicao.
+    // practice/quali (types 1-14 and time trial): sorted by best time. Race: by position.
     const timed = ui.mode === 'quali' || (ui.mode !== 'race' && ((s.sessionType >= 1 && s.sessionType <= 14) || s.sessionType === 18));
-    el.lapCard.style.display = ui.lap && ([15, 16, 17].includes(s.sessionType) || edit) ? 'block' : 'none';
+    el.lapCard.style.display = ui.lap && (!timed || edit) ? 'block' : 'none';   // race: only the player's card
     root.classList.toggle('timed', timed);
     el.brandEvent.textContent = s.isSprintRace ? 'SPRINT' : timed ? 'FIA Formula 1\nWorld Championship' : 'RACE';
     const limit = s.numActive > 0 ? s.numActive : s.cars.length;
@@ -747,6 +752,7 @@
     renderLapCard(s, list, cut, timed);
     renderFlags(s, ui.flags, edit);
     renderFastest(s, ui.fastest, edit);
+    keepFastestClear(edit);
 
     const me = s.cars[s.viewCar ?? s.player];
     if (me) {
@@ -755,7 +761,7 @@
         : 'LAP ' + (me.lap || '—') + (s.totalLaps ? ' / ' + s.totalLaps : '');
       el.lastTxt.textContent = timed ? 'BEST LAP' : 'INTERVAL';
       const teamInfo = TEAM_INFO[me.team] || ['TEAM', '•'];
-      const surname = (me.name || me.code || 'PILOTO').toUpperCase();
+      const surname = (me.name || me.code || 'DRIVER').toUpperCase();
       const key = surname.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       el.driverFirst.textContent = FIRST_NAMES[key] || '';
       el.driverLast.textContent = surname;
@@ -771,7 +777,7 @@
     }
 
     const car = s.car;
-    // ERS/bateria: experimental (escala de 4 MJ do 2025; 2026 pode diferir)
+    // ERS/battery: experimental (4 MJ scale from 2025; 2026 may differ)
     const pct = Math.max(0, Math.min(1, s.ers.store / 4000000));
     const haloLayout = (s.haloLayouts || {})[String(me?.team)] || (s.haloLayouts || {}).default || { x: 58, y: 58, scale: 1 };
     if (!(drag && drag.id === 'halo')) { el.haloGauge.style.left = haloLayout.x + '%'; el.haloGauge.style.top = haloLayout.y + '%'; }
@@ -789,7 +795,7 @@
     setPill('haloOvertakePill', otActive ? 'on' : otReady ? 'ready' : 'off');
     el.haloOvertake.textContent = otActive ? 'OVERTAKE ON' : otReady ? 'OVERTAKE READY'
       : is26 && car.overtakeActivationDistance > 0 ? 'OVERTAKE ' + car.overtakeActivationDistance + ' M' : 'OVERTAKE OFF';
-    // 2026: asa ativa. 2025: DRS.
+    // 2026: active aero. 2025: DRS.
     let aeroState = 'off', aeroText = 'CLOSED';
     if (is26) {
       $('haloAeroLabel').textContent = 'ACTIVE'; $('haloAeroLabel2').textContent = 'AERO';
@@ -811,7 +817,9 @@
     const steer = Number.isFinite(car.steer) ? car.steer : 0;
     const turn = s.turn || {};
     $('haloTurn').textContent = turn.n ? 'T' + turn.n : turn.status === 'learning' ? '…' : '—';
-    $('haloTurnTotal').textContent = turn.n && turn.total ? '/' + turn.total : turn.status === 'learning' ? 'APRENDENDO' : '';
+    const turnDir = turn.n && (turn.dir === 'L' || turn.dir === 'R') ? turn.dir : '';   // corner direction (arrow)
+    if ($('haloTurn').dataset.dir !== turnDir) $('haloTurn').dataset.dir = turnDir;
+    $('haloTurnTotal').textContent = turn.n && turn.total ? '/' + turn.total : turn.status === 'learning' ? 'LEARNING' : '';
     el.haloThrottleText.textContent = Math.round(throttle * 100) + '%';
     el.haloBrakeText.textContent = Math.round(brake * 100) + '%';
     el.haloDeployFill.setAttribute('width', boostActive ? 22 : 0);
@@ -823,7 +831,7 @@
       });
   }
 
-  // ---------- modo de edicao: mover, redimensionar e resetar cada HUD ----------
+  // ---------- edit mode: move, resize and reset each HUD ----------
   const HUDS = { tower: el.left, lap: el.lapCard, onboard: el.onboardCard, cards: el.qCards, flags: el.flags,
     fastest: el.fastestLap, halo: el.haloGauge };
   const SCALE_VAR = { tower: '--tower-scale', lap: '--lap-scale', onboard: '--onboard-scale', cards: '--cards-scale',
@@ -917,7 +925,7 @@
         const edit = !!(s.ui && s.ui.edit);
         document.body.classList.toggle('edit', edit);
         let view = s;
-        if (edit) {   // edicao: dados congelados, so layout e controles continuam vivos
+        if (edit) {   // editing: data frozen, only layout and controls stay live
           if (!frozen) frozen = s;
           view = { ...frozen, ui: s.ui, hudScales: s.hudScales, hudOffsets: s.hudOffsets, haloLayouts: s.haloLayouts,
             visible: true, paused: false };
@@ -926,7 +934,7 @@
         render(view);
       } catch (_) {}
     };
-    es.onerror = () => { root.classList.remove('live'); el.status.textContent = 'servidor offline'; };
+    es.onerror = () => { root.classList.remove('live'); };
   }
   connect();
 })();

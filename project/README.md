@@ -152,7 +152,7 @@ ightarrow$ `[Braking was about]` + `[13]` + `[meters early on entry.]`를 35ms �
 * **F1 Team Radio FX Chain**:
   * **BiquadFilter (Bandpass 350Hz ~ 3400Hz)**: 실제 F1 중계 팀 라디오의 좁은 주파수 대역 통과.
   * **Waveshaper (Tanh 1.25)**: 무전기 특유의 따뜻하고 바삭한 아날로그 새츄레이션/디스토션.
-  * **Team Radio Bleep FX**: 무전 시작/종료 시 F1 무전 비프음 연출.
+  * **Team Radio 차임**: 모든 무전 앞에 `backend/data/voice/f1_radio.mp3` 무전 차임을 그대로 재생(앞뒤 무음은 잘라서 바로 음성이 이어짐). 예전의 합성 비프음("피융")은 제거. 파일이 없으면 차임 없이 음성만 재생.
 
 ---
 
@@ -201,6 +201,7 @@ backend/data/voice/
 #### 생성(추론) 설정
 * 기준 음성(prompt): `GP_1` 첫 문장 *"Braking was about thirteen meters early into turn one…"*
 * `temperature 0.6`, `top_k 5`, `top_p 0.8`, `repetition_penalty 1.35`, **`speed_factor 0.9`** (원본이 빨라서 10% 감속)
+  → 들어 보니 무전으로는 느려서, **앱이 1/0.9 = 1.11배로 재생**(음높이 유지, `VOICE_SPEED` in `frontend/src/App.jsx`). 파일 앞뒤 무음과 조각 이음매 무음도 재생할 때 잘라 냄. 다시 생성한다면 `speed_factor 1.0`으로 만들고 `VOICE_SPEED`를 1로 돌리면 됨
 * 숫자는 단어로 바꿔 입력 (`13` → *thirteen*, `0.8` → *zero point eight*)
 * **문장마다 최대 6번 생성 → Whisper가 원문과 가장 일치하게 알아들은 take를 채택** (일치율 0.95 이상이면 조기 종료). 결과는 `GPT-SoVITS\output\f125_bake_report.csv`에 문장별 점수로 기록.
 * 무음 트리밍 + RMS −18 dBFS 정규화 후 mp3 저장
@@ -229,10 +230,11 @@ cd C:\Users\jahjang\python\GPT-SoVITS
 
 ---
 
-### 5. 코너 통과 시 무전 (Corner-exit Radio)
-* 차량이 각 코너의 출구(+15m)를 지나는 순간, **그 코너의 이번 랩 브레이킹 지점**을 **기준 랩**(이번 세션에서 실제로 기록된 랩 중 가장 빠른 랩)의 같은 코너와 비교합니다.
-* 차이가 **5~45m**면 *"Braking was about 13 meters early on entry."* / *"Braking was roughly 9 meters late into the apex."* 무전. (5m 미만은 노이즈, 45m 초과는 감지 오류로 보고 무시)
-* 기준 랩이 생기기 전(세션 첫 랩)에는 브레이킹 무전이 나오지 않습니다.
+### 5. 랩 디브리프 무전 (Lap Debrief Radio)
+* 코너마다 "몇 m 일찍/늦게 밟았다"를 말하지 않고, 실제 엔지니어처럼 **랩을 마친 뒤** 무엇이 문제였는지 말합니다 (`backend/state_mgmt/lap_debrief.py`).
+* 방금 랩과 내 베스트 랩의 거리별 시간 차이를 코너마다 나눠(앞뒤 코너 에이펙스의 중간까지, 킹크는 앞 코너에 포함) **가장 많이 잃은 코너**를 찾고, 원인을 브레이킹 지점(8m 이상 늦음/이름) → 코너 최저 속도 → 탈출 속도 순으로 판단합니다.
+* 프랙티스: 0.4초 이상(한 섹터 0.3초 이상) 잃은 랩만 말하고, 베스트 랩이면 타임시트 순위. 퀄리파잉: 푸시 랩마다 섹터·코너·원인, 같은 코너가 반복되면 "그 코너에 집중". 레이스: 직전 랩보다 0.45~1.0초 느려졌을 때 원인 코너.
+* 세션 첫 기록 랩은 비교 대상이 없어 말하지 않고, 피트·SC 랩과 쿨다운 랩(베스트의 107% 초과)도 빼요.
 * 앞차 갭 무전은 **랩당 1회, 메인 스트레이트(150~600m)** 에서 10초 미만일 때만.
 * 무전 사이 최소 간격 6초. 리플레이에서는 아직 재생되지 않은 랩의 데이터를 트리거 계산에서 제외.
 

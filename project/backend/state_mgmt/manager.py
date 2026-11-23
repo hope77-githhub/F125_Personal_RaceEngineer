@@ -1,6 +1,6 @@
 from circuit_data.manager import CircuitDataManager
-from state_mgmt.sessions import frame_session_uid, packet_session_uid, session_name, session_group
-from state_mgmt import engineer_brain
+from state_mgmt.sessions import frame_session_uid, packet_session_uid, session_name, session_group, latest_recorded_circuit
+from state_mgmt import engineer_brain, setup_analysis, lap_debrief
 import math
 import logging
 import os
@@ -184,9 +184,7 @@ class StateManager:
         self._last_voice_trigger_time = 0.0
         self._triggered_voice_conditions = set()
         self._current_voice_event = None
-        # Corner-exit radio: last seen player lap distance / lap number, to detect crossing a corner exit
-        self._voice_prev_dist = -1.0
-        self._voice_prev_lap = -1
+        self._debrief_prev_turn = None   # turn named by the last lap debrief (qualifying: "still costing us")
 
         # Session identity (m_sessionUID in every packet header, m_sessionType in the Session packet).
         # Lap history, references and radio state belong to ONE session; a new UID starts fresh.
@@ -200,7 +198,9 @@ class StateManager:
 
         if auto_preload:
             try:
-                self.preload_circuit_laps("circuit_Catalunya")
+                # Whatever was recorded last and is still on disk (a deleted circuit folder is skipped).
+                data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
+                self.preload_circuit_laps(latest_recorded_circuit(data_dir))
             except Exception as e:
                 logger.warning(f"Initial preload skipped: {e}")
 
@@ -289,6 +289,11 @@ class StateManager:
             pass
         if self.session is not None and safe_int(getattr(self.session, "m_safetyCarStatus", 0)) in (1, 2):
             flags["sc"] = True  # 1 = full safety car, 2 = virtual safety car
+        try:
+            if safe_int(getattr(self.lap_data.m_lapData[self.player_car_index], "m_currentLapInvalid", 0)):
+                flags["invalid"] = True   # deleted lap (track limits): never a best or a reference
+        except Exception:
+            pass
 
     def _accumulate_tyre_temps(self):
         lap_num = self._player_lap_num()
@@ -358,9 +363,7 @@ class StateManager:
         self._triggered_voice_conditions = set()
         self._current_voice_event = None
         self._last_voice_trigger_time = 0.0
-        self._voice_prev_dist = -1.0
-        self._voice_prev_lap = -1
-        self._ref_corner_cache = None
+        self._debrief_prev_turn = None
         self._preloaded_session_uid = None
         self._lap_flags = {}
         self._lap_tyre_acc = {}
@@ -416,6 +419,7 @@ class StateManager:
                 rpm = safe_int(tele.m_engineRPM, speed_and_gear_to_rpm(spd, gear))
                 thr = clamp_percent(tele.m_throttle)
                 brk = clamp_percent(tele.m_brake)
+                brk_est = False
                 steer = round(safe_float(tele.m_steer, 0.0), 3)
             elif prev and abs(curr_dist - prev["dist"]) > 0.3 and curr_dist > prev["dist"]:
                 dd = curr_dist - prev["dist"]
@@ -428,6 +432,9 @@ class StateManager:
                 accel = dv_ms / max(0.08, dt)
                 gear = speed_to_gear(spd)
                 rpm = speed_and_gear_to_rpm(spd, gear)
+                # No fresh CarTelemetry: brake is guessed from deceleration, which also fires on a
+                # plain lift at high speed (drag), so it is flagged and never used for braking calls.
+                brk_est = True
                 if accel < -2.0:
                     brk = max(5, min(100, int(round((-accel - 1.5) / 28.0 * 100))))
                     thr = 0
@@ -445,6 +452,7 @@ class StateManager:
                 rpm = prev["rpm"]
                 thr = prev["throttle"]
                 brk = prev["brake"]
+                brk_est = prev.get("brk_est", False)
                 steer = prev["steer"]
             else:
                 spd = safe_int(tele.m_speed, 0) if tele else 0
@@ -452,6 +460,7 @@ class StateManager:
                 rpm = safe_int(tele.m_engineRPM, 4500) if tele else 4500
                 thr = clamp_percent(tele.m_throttle) if tele else 0
                 brk = clamp_percent(tele.m_brake) if tele else 0
+                brk_est = False
                 steer = round(safe_float(tele.m_steer, 0.0), 3) if tele else 0.0
 
             if p0_fresh and mot and (abs(safe_float(mot.m_worldPositionX)) > 1.0 or abs(safe_float(mot.m_worldPositionZ)) > 1.0):
@@ -480,6 +489,7 @@ class StateManager:
                     "rpm": rpm,
                     "throttle": thr,
                     "brake": brk,
+                    "brk_est": brk_est,
                     "steer": steer,
                     "x": x,
                     "z": z,
@@ -532,9 +542,11 @@ class StateManager:
                     gear = speed_to_gear(spd)
                 thr = clamp_percent(item["td"].get("m_throttle", 0))
                 brk = clamp_percent(item["td"].get("m_brake", 0))
+                brk_est = False
                 steer = round(safe_float(item["td"].get("m_steer", 0)), 3)
             else:
                 gear = speed_to_gear(spd)
+                brk_est = True
                 if accel < -2.0:
                     brk = max(5, min(100, int(round((-accel - 1.5) / 28.0 * 100))))
                     thr = 0
@@ -561,7 +573,7 @@ class StateManager:
                 v_ms = spd / 3.6
                 g_lat = round(max(-5.5, min(5.5, (v_ms * v_ms * curv) / 9.81)), 2)
 
-            points.append({
+            pt = {
                 "distance_m": round(dist, 1),
                 "sector": self._get_sector_name(dist, track_len),
                 "speed": spd,
@@ -572,7 +584,10 @@ class StateManager:
                 "x": x,
                 "z": z,
                 "g_lat": g_lat,
-            })
+            }
+            if brk_est and brk > 0:
+                pt["brk_est"] = True
+            points.append(pt)
         return points
 
     def preload_circuit_laps(self, circuit_folder_or_name, player_idx=None, session_uid=None):
@@ -1186,19 +1201,14 @@ class StateManager:
                 p for p in valid_points
                 if search_start <= p.get("distance_m", 0) <= search_end and p.get("brake", 0) > 5
             ]
+            # brake_source: "pedal" = the game reported brake pressure; "estimated" = guessed from
+            # deceleration (can be a lift); None = no braking at all, so there is no braking point.
             if brake_cands:
                 brake_point = round(brake_cands[0].get("distance_m", entry_t), 1)
+                brake_source = "estimated" if brake_cands[0].get("brk_est") else "pedal"
             else:
-                # Check if speed drops into the corner (lift/deceleration zone)
-                approach_pts = [p for p in valid_points if search_start <= p.get("distance_m", 0) <= search_end]
-                if len(approach_pts) >= 2:
-                    peak_pt = max(approach_pts, key=lambda p: p.get("speed", 0))
-                    if peak_pt.get("speed", 0) >= apex_pt.get("speed", 0) + 6:
-                        brake_point = round(peak_pt.get("distance_m", entry_t), 1)
-                    else:
-                        brake_point = round(entry_pt.get("distance_m", entry_t), 1)
-                else:
-                    brake_point = round(entry_pt.get("distance_m", entry_t), 1)
+                brake_point = None
+                brake_source = None
 
             # Throttle re-application point at/after apex
             thr_cands = [
@@ -1233,7 +1243,7 @@ class StateManager:
                         r_bc = [p for p in r_valid if search_start <= p.get("distance_m", 0) <= search_end and p.get("brake", 0) > 5]
                         r_brk = max((p.get("brake", 0) for p in r_bc), default=safe_int(re_pt.get("brake", 0)))
                         r_thr = safe_int(rx_pt.get("throttle", 80))
-                        r_bp = round(r_bc[0].get("distance_m", entry_t), 1) if r_bc else round(re_pt.get("distance_m", entry_t), 1)
+                        r_bp = round(r_bc[0].get("distance_m", entry_t), 1) if r_bc else None
                         return {
                             "entry_speed": safe_int(re_pt.get("speed", e_spd)),
                             "apex_speed": safe_int(ra_pt.get("speed", a_spd)),
@@ -1252,7 +1262,7 @@ class StateManager:
                     "gear": safe_int(apex_pt.get("gear", 3)),
                     "brake": max(0, min(100, e_brk + delta_s * 2)),
                     "throttle": max(0, min(100, safe_int(exit_pt.get("throttle", 80)) - delta_s * 2)),
-                    "brake_point": round(brake_point - delta_s * 1.8, 1) if brake_point else round(entry_t, 1),
+                    "brake_point": round(brake_point - delta_s * 1.8, 1) if brake_point else None,
                 }
 
             ahead_comp = eval_rival(ahead_points, offset_seed=1)
@@ -1294,6 +1304,7 @@ class StateManager:
                 "exit_throttle": safe_int(exit_pt.get("throttle", 0)),
                 "exit_brake": safe_int(exit_pt.get("brake", 0)),
                 "brake_point": brake_point,
+                "brake_source": brake_source,
                 "throttle_on_dist": throttle_on_dist,
                 "max_g_lat": max_g,
                 "passed": True,
@@ -1388,6 +1399,8 @@ class StateManager:
                     "g_lat": round(g_lat, 3),
                     "g_lon": round(g_lon, 3),
                 }
+                if kin and kin.get("brk_est") and brake_pct > 0:
+                    point["brk_est"] = True
                 self.telemetry_buffer[i].append(point)
                 self.last_recorded_distance[i] = curr_dist
 
@@ -1477,7 +1490,8 @@ class StateManager:
                 slowest = min(c_list, key=lambda c: safe_int(c.get("apex_speed", 999), 999))
                 corner_tip = (
                     f" Peak lateral load at {hardest['name']} ({hardest['max_g_lat']}G, Apex {hardest['apex_speed']} km/h). "
-                    f"Focus exit traction out of {slowest['name']} (Apex {slowest['apex_speed']} km/h, Brake @ {slowest['brake_point']}m)."
+                    f"Focus exit traction out of {slowest['name']} (Apex {slowest['apex_speed']} km/h"
+                    + (f", Brake @ {slowest['brake_point']}m)." if slowest.get("brake_point") else ").")
                 )
 
         if max_w > 45:
@@ -1693,7 +1707,108 @@ class StateManager:
             "circuit_corners": getattr(self, "circuit_corners", []),
             "voice_event": voice_event,
             "voice_clips": ENGINEER_VOICE_CLIPS,
+            "setup_analysis": self.practice_setup_analysis(),
         }
+
+    def _driver_name(self, idx):
+        try:
+            raw = self.participants.m_participants[idx].m_name
+            name = raw.decode("utf-8", errors="ignore").rstrip("\x00") if isinstance(raw, bytes) else str(raw)
+            return name or f"Car {idx + 1}"
+        except Exception:
+            return f"Car {idx + 1}"
+
+    def _best_lap(self, idx):
+        """Fastest recorded lap of a car that still has its telemetry samples (needed for the comparison)."""
+        laps = [h for h in self.lap_history.get(idx, []) if safe_int(h.get("time_ms", 0)) > 0
+                and len(h.get("telemetry_points") or []) >= 30 and not (h.get("flags") or {}).get("pit")
+                and not (h.get("flags") or {}).get("invalid")]
+        return min(laps, key=lambda h: safe_int(h["time_ms"])) if laps else None
+
+    def _official_best(self, idx):
+        """(best lap ms, lap number) of a car from the game's own session history (packet 11): the timesheet
+        time, valid laps only. (0, 0) when the game has not sent that car's history yet."""
+        h = self.session_history.get(idx)
+        try:
+            n = safe_int(getattr(h, "m_bestLapTimeLapNum", 0))
+            if 1 <= n <= safe_int(getattr(h, "m_numLaps", 0)) and n <= len(h.m_lapHistoryData):
+                ms = safe_int(h.m_lapHistoryData[n - 1].m_lapTimeInMS)
+                if ms > 0:
+                    return ms, n
+        except Exception:
+            pass
+        return 0, 0
+
+    def _recorded_lap(self, idx, lap_num):
+        """A lap we recorded with its telemetry (needed for the speed / braking comparison), or None."""
+        for h in self.lap_history.get(idx, []):
+            if safe_int(h.get("lap", 0)) == lap_num and len(h.get("telemetry_points") or []) >= 30:
+                return h
+        return None
+
+    def practice_timesheet(self):
+        """Practice / qualifying order exactly as the game's timesheet: the game's own position (lap data
+        m_carPosition, which in these sessions is the timesheet order) and each car's official best lap (packet
+        11, invalid laps never count); a car whose history has not arrived yet falls back to its best recorded lap.
+        -> [{"idx", "ms", "lap"}] in timesheet order (cars without a time are left out)."""
+        try:
+            n_cars = safe_int(getattr(self.participants, "m_numActiveCars", 0)) or 22 if self.participants else 22
+        except Exception:
+            n_cars = 22
+        rows = []
+        for i in range(min(24, max(n_cars, self.player_car_index + 1))):
+            ms, lap = self._official_best(i)
+            if not ms:
+                rec = self._best_lap(i)
+                if rec:
+                    ms, lap = safe_int(rec["time_ms"]), safe_int(rec.get("lap", 0))
+            if ms > 0:
+                rows.append({"idx": i, "ms": ms, "lap": lap})
+
+        def game_pos(i):
+            try:
+                return safe_int(self.lap_data.m_lapData[i].m_carPosition, 0) or 99
+            except Exception:
+                return 99
+        rows.sort(key=lambda r: (game_pos(r["idx"]), r["ms"]))
+        return rows
+
+    def practice_setup_analysis(self):
+        """Practice only: our best lap vs the fastest car of the session (FP ranking) + our tyres ->
+        setup_analysis.analyze(). The ranking is the game's timesheet (official best laps); the speed comparison
+        uses the fastest car whose best lap we recorded. Recomputed whenever any best lap or our lap count changes."""
+        if session_group(self.session_type) != "practice":
+            return None
+        p = self.player_car_index
+        sheet = self.practice_timesheet()
+        hist = self._completed_laps(p)
+        key = (tuple((r["idx"], r["ms"]) for r in sheet), len(hist), self.session_uid)
+        cached = getattr(self, "_setup_analysis_cache", None)
+        if cached and cached[0] == key:
+            return cached[1]
+
+        def lap_for(r):   # the official best lap if we recorded it, else the car's best recorded lap
+            return self._recorded_lap(r["idx"], r["lap"]) or self._best_lap(r["idx"])
+
+        top = sheet[0]["ms"] if sheet else 0
+        ranking = [{"pos": k + 1, "idx": r["idx"], "name": self._driver_name(r["idx"]), "you": r["idx"] == p,
+                    "lap": r["lap"], "best": self._format_ms(r["ms"]), "gap": round((r["ms"] - top) / 1000.0, 3)}
+                   for k, r in enumerate(sheet)]
+        mine_row = next((r for r in sheet if r["idx"] == p), None)
+        mine = lap_for(mine_row) if mine_row else self._best_lap(p)
+        ref_row = next((r for r in sheet if r["idx"] != p and lap_for(r)), None)
+        ref_idx = ref_row["idx"] if ref_row else None
+        ref_lap = lap_for(ref_row) if ref_row else None
+        result = None
+        if mine:
+            corners = [c for c in (mine.get("corners") or []) if c.get("nom_entry_dist") is not None]
+            res = setup_analysis.analyze(mine, ref_lap, engineer_brain.tyre_state(hist),
+                                         self._player_setup_dict(), corners, ranking)
+            you = next((r for r in ranking if r["you"]), None)
+            ref = next((r for r in ranking if r["idx"] == ref_idx), None)
+            result = {**res, "you": you, "reference": ref, "cars_ranked": len(ranking)}
+        self._setup_analysis_cache = (key, result)
+        return result
 
     def load_voice_manifest(self):
         """
@@ -1745,7 +1860,7 @@ class StateManager:
         return f"/voice/segments/numbers/1.mp3"
 
     def _phrase_url(self, key):
-        """Full pre-baked sentence for a templated value (e.g. brake_early_13), or None if not baked.
+        """Full pre-baked sentence for a templated value (e.g. gap_ahead_1_4), or None if not baked.
         Preferred over prefix+number+suffix stitching because it keeps natural intonation."""
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         if os.path.exists(os.path.join(base_dir, "data", "voice", "phrases", f"{key}.mp3")):
@@ -1766,121 +1881,15 @@ class StateManager:
             return hist
         return [h for h in hist if safe_int(h.get("lap", 0)) < cur_lap]
 
-    def _corner_exit_voice_event(self, emit=True, min_diff=5.0):
-        """When the player crosses a corner's exit, compare that corner's braking point on this lap
-        with the reference (fastest other) lap and return a braking radio event if it differs by >= 5 m.
-        Must be called every frame (it tracks lap distance); with emit=False it only tracks."""
-        p = self.player_car_index
-        if not (self.lap_data and hasattr(self.lap_data, "m_lapData")) or not self.circuit_corners:
-            return None
-        # Only tracks with real corner definitions; others fall back to Catalunya's corners,
-        # which would put braking calls in the wrong places.
-        if not self.circuit_data_manager.has_corner_data(self.current_track_id):
-            return None
-        try:
-            lap = self.lap_data.m_lapData[p]
-            dist = safe_float(lap.m_lapDistance, -1.0)
-            cur_lap = safe_int(lap.m_currentLapNum, 0)
-        except Exception:
-            return None
-
-        prev_dist, prev_lap = self._voice_prev_dist, self._voice_prev_lap
-        self._voice_prev_dist, self._voice_prev_lap = dist, cur_lap
-        if dist < 0 or prev_dist < 0 or cur_lap != prev_lap or dist <= prev_dist:
-            return None
-
-        crossed = None
-        for idx, c in enumerate(self.circuit_corners):
-            gate = safe_float(c.get("exit_dist", 0)) + 15.0
-            if prev_dist < gate <= dist:
-                crossed = idx
-        if crossed is None or not emit:
-            return None
-
-        # Reference = fastest lap recorded live in this session (preloaded cache laps were sampled
-        # differently, so their braking points are not comparable with the live buffer).
-        refs = [h for h in self.lap_history.get(p, []) if safe_int(h.get("lap", 0)) != cur_lap
-                and h.get("source") == "live" and h.get("telemetry_points")
-                and safe_int(h.get("time_ms", 0) or h.get("lap_time_ms", 0)) > 0]
-        if not refs:
-            return None
-        ref_lap = min(refs, key=lambda h: safe_int(h.get("time_ms", 0) or h.get("lap_time_ms", 0)))
-        # Analyse the reference lap's raw telemetry with the SAME detector used for the live lap,
-        # so both braking points are measured identically (cached per reference lap).
-        cache = getattr(self, "_ref_corner_cache", None)
-        if cache is None or cache.get("lap") != ref_lap.get("lap"):
-            pts = ref_lap.get("telemetry_points") or []
-            cache = {"lap": ref_lap.get("lap"),
-                     "corners": self._analyze_corners(pts, is_player=True) if pts else ref_lap.get("corners", [])}
-            self._ref_corner_cache = cache
-        ref_corners = cache["corners"]
-        if crossed >= len(ref_corners) or not ref_corners[crossed].get("passed"):
-            return None
-        ref_bp = safe_float(ref_corners[crossed].get("brake_point", 0))
-
-        live = self._analyze_corners(self.telemetry_buffer.get(p, []), is_player=True)
-        if crossed >= len(live) or not live[crossed].get("passed"):
-            return None
-        cur_bp = safe_float(live[crossed].get("brake_point", 0))
-        if ref_bp <= 0 or cur_bp <= 0:
-            return None
-
-        diff = cur_bp - ref_bp  # positive = braked later (deeper) than the reference lap
-        corner_name = self.circuit_corners[crossed].get("name", f"Turn {crossed + 1}")
-        cond_key = f"corner_brake_{cur_lap}_{crossed}"
-        # < 5 m is noise-level; > 45 m is almost always a mis-detected braking point (lift/coast,
-        # flashback, restarted lap), so the engineer stays quiet rather than give a wrong call.
-        if not (min_diff <= abs(diff) <= 45.0) or cond_key in self._triggered_voice_conditions:
-            return None
-        self._triggered_voice_conditions.add(cond_key)
-        ev = self.build_modular_stitched_event("braking", diff)
-        if ev:
-            ev["corner"] = corner_name
-            ev["title"] = f"{corner_name}: {ev['title']}"
-            ev["scenario"] = (f"{corner_name} lap {cur_lap}: brake @ {cur_bp:.0f} m vs reference lap "
-                              f"{ref_lap.get('lap')} @ {ref_bp:.0f} m")
-            ev["triggered_by"] = "corner_exit"
-        return ev
-
     def build_modular_stitched_event(self, event_type, value, extra=None):
         """
         Builds a modular audio stitching event with exact values and crossfade audio segments.
-        Example: value = -13.4m -> "Braking was about 13 meters early on entry."
-                 segments = [prefix, "13", suffix]
+        Example: gap_ahead 1.4 -> "Gap to car ahead is 1.4 seconds." (pre-baked phrase, else prefix + number + suffix)
         """
         now = time.time()
         self._last_voice_trigger_time = now
 
-        if event_type == "braking":
-            delta_m = safe_float(value)
-            is_early = (delta_m < 0)
-            m_abs = max(1, min(40, int(round(abs(delta_m)))))
-            if is_early:
-                prefix = "/voice/segments/prefixes/brake_early.mp3"
-                suffix = "/voice/segments/suffixes/meters_early_entry.mp3"
-                text = f"Braking was about {m_abs} meters early on entry."
-            else:
-                prefix = "/voice/segments/prefixes/brake_late.mp3"
-                suffix = "/voice/segments/suffixes/meters_late_apex.mp3"
-                text = f"Braking was roughly {m_abs} meters late into the apex."
-
-            num_file = self._resolve_number_segment_file(m_abs)
-            phrase = self._phrase_url(f"brake_{'early' if is_early else 'late'}_{m_abs}")
-            return {
-                "id": f"stitch_brake_{'early' if is_early else 'late'}_{m_abs}m",
-                "type": "modular_stitched",
-                "category": "braking",
-                "title": f"Braking {'Early' if is_early else 'Late'} ({m_abs}m)",
-                "badge": f"BRAKE {'-' if is_early else '+'}{m_abs}M",
-                "text": text,
-                "segments": [phrase] if phrase else [prefix, num_file, suffix],
-                "fallback_url": "/voice/clips/radio_check.mp3",
-                "measured_val": round(delta_m, 1),
-                "timestamp": now,
-                "event_id": f"stitch_brk_{int(now*1000)}"
-            }
-
-        elif event_type == "gap_ahead":
+        if event_type == "gap_ahead":
             gap_sec = max(0.2, safe_float(value))
             gap_rounded = round(gap_sec, 1)
             num_key = str(gap_rounded).replace(".", "_")
@@ -1889,9 +1898,10 @@ class StateManager:
             phrase = self._phrase_url(f"gap_ahead_{num_key}")
 
             if gap_rounded < 1.0:
-                suffix = "/voice/segments/suffixes/seconds_drs.mp3"
-                text = f"Gap to car ahead is {gap_rounded} seconds, DRS available."
-                badge = f"AHEAD {gap_rounded}S (DRS)"
+                # 2026 rules: no DRS; overtake mode is available within one second of the car ahead
+                suffix = "/voice/segments/suffixes/seconds_overtake.mp3"
+                text = f"Gap to car ahead is {gap_rounded} seconds, overtake mode available."
+                badge = f"AHEAD {gap_rounded}S (OVERTAKE)"
             else:
                 suffix = "/voice/segments/suffixes/seconds.mp3"
                 text = f"Gap to car ahead is {gap_rounded} seconds."
@@ -2035,20 +2045,17 @@ class StateManager:
             if rows:
                 snap["last_sectors_ms"] = rows[-1][1]
                 snap["best_sectors_ms"] = min(rows, key=lambda r: r[0])[1]
-        # biggest braking difference on the last lap vs the best live lap (same detector)
-        live = [h for h in snap["laps"] if h.get("source") == "live" and h.get("telemetry_points") and safe_int(h.get("time_ms", 0)) > 0]
-        if len(live) >= 2 and self.circuit_data_manager.has_corner_data(self.current_track_id):
+        # the turn where the last lap lost the most time against the best lap, and why (lap_debrief)
+        live = [h for h in snap["laps"] if self._clean_lap(h)]
+        corners = self._debrief_corners()
+        if len(live) >= 2 and corners:
             last = live[-1]
             best = min(live[:-1], key=lambda h: safe_int(h.get("time_ms", 0)))
-            c_last = self._analyze_corners(last["telemetry_points"], is_player=True)
-            c_best = self._analyze_corners(best["telemetry_points"], is_player=True)
-            worst = None
-            for i, (a, b) in enumerate(zip(c_last, c_best)):
-                if a.get("passed") and b.get("passed") and a.get("brake_point") and b.get("brake_point"):
-                    d = safe_float(a["brake_point"]) - safe_float(b["brake_point"])
-                    if 5 <= abs(d) <= 40 and (worst is None or abs(d) > abs(worst["diff_m"])):
-                        worst = {"turn": safe_int(a.get("turn", i + 1), i + 1), "diff_m": d}
-            snap["worst_corner"] = worst
+            res = lap_debrief.analyze(last, best, corners, self._sector_starts())
+            worst = res and res["worst"]
+            if worst and worst["loss"] >= engineer_brain.NAMED_CORNER_LOSS:
+                snap["worst_corner"] = worst
+                snap["worst_corner_text"] = lap_debrief.describe(worst)
         return snap
 
     def answer_question(self, text):
@@ -2059,16 +2066,168 @@ class StateManager:
         ev["intent"] = res["intent"]
         return ev
 
-    # Which radio-call families the engineer uses in each session type.
-    #  practice   : learn the track - braking per corner, lap pace, traction, tyre wear on long runs
-    #  qualifying : push laps only - braking per corner and lap pace
-    #  race       : race craft - gaps, tyres, box calls, pace drop; braking only for bigger misses
+    # Which radio-call families the engineer uses in each session type (no per-corner braking metres: a real
+    # engineer names the turn that cost the time, after the lap).
+    #  practice   : car and pace - a lap debrief when a lap loses a lot (how much, which turn, why), a new best
+    #               with the timesheet position, setup calls (tyres, downforce, balance, traction), the long-run
+    #               tyre life, high tyre wear
+    #  qualifying : every push lap - off your best by how much, in which sector, at which turn and why, and
+    #               "focus on that one" when the same turn costs time again
+    #  race       : race craft - setup brief before the start, gap to the car ahead, tyre wear per lap and
+    #               strategy, box calls, pace: the turn and cause of a big lap loss
     SESSION_RADIO_PLAN = {
-        "practice": {"corner_brake", "pace_info", "traction", "tyre_deg", "setup"},
-        "qualifying": {"corner_brake", "pace_info"},
-        "race": {"corner_brake", "pace_info", "pace_box", "traction", "tyre_deg", "box", "gap"},
+        "practice": {"lap_debrief", "setup", "stint", "tyre_deg"},
+        "qualifying": {"lap_debrief"},
+        "race": {"race_brief", "race_pace", "tyre_deg", "box", "gap", "tyre_report"},
     }
-    CORNER_BRAKE_MIN_M = {"practice": 5.0, "qualifying": 5.0, "race": 10.0}
+    DEBRIEF_WINDOW_M = (150.0, 1200.0)       # lap distance after the line where the lap debrief is given
+    PRACTICE_TALK_M = (150.0, 3000.0)        # practice setup / long-run calls (after the debrief)
+
+    def _sector_starts(self):
+        try:
+            return (safe_float(self.session.m_sector2LapDistanceStart), safe_float(self.session.m_sector3LapDistanceStart))
+        except Exception:
+            return None
+
+    def _debrief_corners(self):
+        """Corner map for naming turns: the official one (24 tracks), else a learned one (reverse layouts, Madrid).
+        Never the fallback map of another track, which would name the wrong turn."""
+        if self.circuit_corners and self.circuit_data_manager.has_corner_data(self.current_track_id):
+            return self.circuit_corners
+        return self._learned_corners()
+
+    OVERLAY_TURN_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+                                    "overlay", "curvas")
+
+    def _learned_corners(self):
+        """Tracks without official corner data: the overlay's learned turn map when it has one (the same numbers
+        as the halo's TURN box), else corners learned from our own best clean lap's steering (also written for the
+        overlay). Cached per track and session; [] until there is a clean lap."""
+        tid = self.current_track_id
+        cache = getattr(self, "_learned_corner_cache", None)
+        if cache and cache[0] == (tid, self.session_uid):
+            return cache[1]
+        corners = self._overlay_turn_map(tid)
+        if not corners:
+            laps = [h for h in self.lap_history.get(self.player_car_index, []) if self._clean_lap(h)]
+            if not laps:
+                return []
+            corners = lap_debrief.learn_corners(min(laps, key=lambda h: safe_int(h["time_ms"]))["telemetry_points"])
+            if corners:
+                self._write_overlay_turn_map(tid, corners)
+        if corners:
+            self._learned_corner_cache = ((tid, self.session_uid), corners)
+        return corners
+
+    def _overlay_turn_map(self, tid):
+        try:
+            with open(os.path.join(self.OVERLAY_TURN_DIR, f"{tid}.json"), encoding="utf-8") as f:
+                data = json.load(f)
+            out = []
+            for c in data.get("corners") or []:
+                s, e = float(c["start"]), float(c["end"])
+                out.append({"turn": int(c["n"]), "name": f"Turn {int(c['n'])}", "type": "corner", "entry_dist": s,
+                            "apex_dist": (s + e) / 2, "exit_dist": e,
+                            "direction": {"L": "Left", "R": "Right"}.get(c.get("dir"))})
+            return out
+        except Exception:
+            return []
+
+    def _write_overlay_turn_map(self, tid, corners):
+        path = os.path.join(self.OVERLAY_TURN_DIR, f"{tid}.json")
+        if os.path.exists(path) or not os.path.isdir(self.OVERLAY_TURN_DIR):
+            return
+        try:
+            length = safe_int(getattr(self.session, "m_trackLength", 0)) if self.session else 0
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump({"trackId": tid, "trackLength": length, "learned": True,
+                           "source": "f125-engineer learned from steering",
+                           "corners": [{"n": c["turn"], "start": c["entry_dist"], "end": c["exit_dist"],
+                                        "dir": c["direction"][0]} for c in corners]}, f, indent=1)
+        except Exception as e:
+            logger.warning(f"Learned turn map not written: {e}")
+
+    @staticmethod
+    def _clean_lap(h, allow_invalid=False):
+        """A timed lap with telemetry, without a pit stop or safety car (and not deleted for track limits)."""
+        f = h.get("flags") or {}
+        return (safe_int(h.get("time_ms", 0)) > 0 and len(h.get("telemetry_points") or []) >= 30
+                and not f.get("pit") and not f.get("sc") and (allow_invalid or not f.get("invalid")))
+
+    def _timesheet_position(self):
+        """(our timesheet position, gap to P1 in s) or (None, None) with fewer than 2 timed cars."""
+        sheet = self.practice_timesheet()
+        if len(sheet) < 2:
+            return None, None
+        k = next((k for k, r in enumerate(sheet) if r["idx"] == self.player_car_index), None)
+        if k is None:
+            return None, None
+        return k + 1, round((sheet[k]["ms"] - sheet[0]["ms"]) / 1000.0, 3)
+
+    def _set_event(self, ev, now):
+        self._last_voice_trigger_time = now
+        self._current_voice_event = ev
+        return ev
+
+    def _lap_debrief_event(self, group, hist, now):
+        """Practice / qualifying / time trial: once after each clean lap, between 150 and 1200 m into the next."""
+        last = hist[-1]
+        lap_no = safe_int(last.get("lap", 0))
+        cond_key = f"debrief_{lap_no}"
+        if cond_key in self._triggered_voice_conditions:
+            return None
+        try:
+            dist = safe_float(self.lap_data.m_lapData[self.player_car_index].m_lapDistance, -1.0)
+        except Exception:
+            dist = -1.0
+        if not self.DEBRIEF_WINDOW_M[0] <= dist <= self.DEBRIEF_WINDOW_M[1]:
+            return None
+        self._triggered_voice_conditions.add(cond_key)
+        if not self._clean_lap(last, allow_invalid=True):
+            return None                      # out / in lap or safety car
+        prev = [h for h in hist[:-1] if self._clean_lap(h)]
+        best = min(prev, key=lambda h: safe_int(h["time_ms"])) if prev else None
+        last_ms, best_ms = safe_int(last["time_ms"]), safe_int(best["time_ms"]) if best else 0
+        if best and last_ms > best_ms * 1.07:
+            return None                      # cool-down lap
+        invalid = bool((last.get("flags") or {}).get("invalid"))
+        is_pb = bool(best) and last_ms < best_ms
+        if invalid and group == "practice" and not is_pb:
+            return None                      # practice: only a deleted best lap is worth a call
+        rank, gap_top = self._timesheet_position()
+        analysis = None
+        details = [f"Lap {lap_no} {self._format_ms(last_ms)}" + (" (deleted: track limits)" if invalid else "")
+                   + (f" vs best lap {best.get('lap')} {self._format_ms(best_ms)}: {(last_ms - best_ms) / 1000.0:+.3f}s"
+                      if best else " (first timed lap)")]
+        if rank:
+            details.append(f"Timesheet P{rank}, {gap_top:+.3f}s to P1")
+        if best and not invalid:
+            analysis = lap_debrief.analyze(last, best, self._debrief_corners(), self._sector_starts()) or {
+                "lap_delta": round((last_ms - best_ms) / 1000.0, 3), "sectors": None, "corners": [], "worst": None}
+            if analysis.get("sectors"):
+                details.append("Sectors vs best: " + ", ".join(f"S{i + 1} {d:+.2f}s" for i, d in enumerate(analysis["sectors"])))
+            details += [lap_debrief.describe(r) for r in analysis["corners"][:3] if r["loss"] >= 0.05]
+        res = engineer_brain.lap_debrief(group, analysis, is_pb, self._debrief_prev_turn, rank, details,
+                                         gap_top=gap_top, first=best is None, invalid=invalid)
+        if not res:
+            return None
+        self._debrief_prev_turn = res.get("turn")
+        ev = self._brain_event(res["keys"], res["text"], res["text_ko"], kind="lap_debrief",
+                               title=f"Lap {lap_no} debrief", badge="DEBRIEF", details=res["details"], now=now)
+        return self._set_event(ev, now)
+
+    def _race_lap_loss_event(self, last, prev, now):
+        """Race: a lap 0.45-1.0 s slower than the one before -> the turn that cost the time and why, or None."""
+        if not (self._clean_lap(last, allow_invalid=True) and self._clean_lap(prev, allow_invalid=True)):
+            return None
+        analysis = lap_debrief.analyze(last, prev, self._debrief_corners(), self._sector_starts())
+        details = [lap_debrief.describe(r) for r in (analysis or {}).get("corners", [])[:3] if r["loss"] >= 0.05]
+        res = engineer_brain.lap_debrief("race", analysis, False, details=details)
+        if not res:
+            return None
+        ev = self._brain_event(res["keys"], res["text"], res["text_ko"], kind="lap_debrief",
+                               title=f"Lap {last.get('lap')}: time lost", badge="PACE", details=res["details"], now=now)
+        return self._set_event(ev, now)
 
     def evaluate_voice_triggers(self, is_replay=False):
         """
@@ -2077,17 +2236,12 @@ class StateManager:
         to dynamically trigger the most accurate English Red Bull engineer radio voice clip from manifest.json.
         """
         now = time.time()
-        # Cooldown between automatic radio calls (one call is ~3-5 s long). The corner tracker still
-        # runs every frame so it never misses a corner exit; it just stays quiet during the cooldown.
+        # Cooldown between automatic radio calls (one call is ~3-5 s long)
         cooldown_ok = now - self._last_voice_trigger_time >= 6.0
         group = session_group(self.session_type)
+        if safe_int(self.session_type) == 18:
+            group = "qualifying"   # time trial: every lap is a push lap, no tyre wear or rivals to talk about
         plan = self.SESSION_RADIO_PLAN.get(group, self.SESSION_RADIO_PLAN["practice"])
-        corner_ev = self._corner_exit_voice_event(
-            emit=cooldown_ok and "session_start" in self._triggered_voice_conditions and "corner_brake" in plan,
-            min_diff=self.CORNER_BRAKE_MIN_M.get(group, 5.0))
-        if corner_ev:
-            self._current_voice_event = corner_ev
-            return corner_ev
         if not cooldown_ok:
             return self._current_voice_event
 
@@ -2111,6 +2265,16 @@ class StateManager:
         if "session_start" not in self._triggered_voice_conditions:
             self._triggered_voice_conditions.add("session_start")
             return emit_event("radio_check", "session_start")
+
+        # 1b. Race: setup brief for today's track temperature and weather, before the start only
+        if "race_brief" in plan and "race_brief" not in self._triggered_voice_conditions:
+            self._triggered_voice_conditions.add("race_brief")
+            if self._race_not_started():
+                ev = self._race_brief_event(now)
+                if ev:
+                    self._last_voice_trigger_time = now
+                    self._current_voice_event = ev
+                    return ev
 
         # Extract player telemetry state
         player_idx = self.player_car_index
@@ -2158,6 +2322,8 @@ class StateManager:
                     return emit_event("tyre_soft_deg_10pct", "critical_wear_10")
                 elif tyre_name == "Hard":
                     return emit_event("tyre_hard_deg_10pct", "critical_wear_10")
+                elif tyre_name in ("Inter", "Wet"):
+                    return emit_event(f"tyre_{tyre_name.lower()}_deg_10pct", "critical_wear_10")
                 else:
                     return emit_event("tyre_med_deg_10pct", "critical_wear_10")
         elif wear_rate_per_lap >= 5.0:
@@ -2168,6 +2334,8 @@ class StateManager:
                     return emit_event("tyre_soft_deg_5pct", "high_wear_5")
                 elif tyre_name == "Hard":
                     return emit_event("tyre_hard_deg_5pct", "high_wear_5")
+                elif tyre_name in ("Inter", "Wet"):
+                    return emit_event(f"tyre_{tyre_name.lower()}_deg_5pct", "high_wear_5")
                 else:
                     return emit_event("tyre_med_deg_5pct", "high_wear_5")
 
@@ -2181,21 +2349,32 @@ class StateManager:
             self._triggered_voice_conditions.add("box_window_open")
             return emit_event("box_window_open", "pit_window_open")
 
-        # 4. Pace Delta Tracking (Delta vs previous lap)
-        if num_completed_laps >= 2 and "pace_info" in plan:
+        try:
+            p_lap_now = self.lap_data.m_lapData[player_idx]
+            lap_dist = safe_float(getattr(p_lap_now, "m_lapDistance", -1.0), -1.0)
+            cur_lap = safe_int(getattr(p_lap_now, "m_currentLapNum", 0))
+        except Exception:
+            lap_dist, cur_lap = -1.0, 0
+
+        # 4. Lap debrief (practice / qualifying): after each clean lap, how far off the best it was, where the
+        #    time went and why (lap_debrief.py); a new best in practice adds the timesheet position
+        if "lap_debrief" in plan and hist:
+            ev = self._lap_debrief_event(group, hist, now)
+            if ev:
+                return ev
+
+        # 5. Race pace vs the previous lap (SC / VSC and pit laps excluded): >= 1.0 s slower -> box call;
+        #    0.45-1.0 s slower -> the turn that cost the time and why (the plain pace-drop call when no turn
+        #    stands out); 0.2-1.0 s faster -> pace is strong
+        if num_completed_laps >= 2 and "race_pace" in plan:
             # lap_history entries store "time_ms" (older caches used "lap_time_ms")
             last_lap_ms = safe_int(hist[-1].get("time_ms", 0) or hist[-1].get("lap_time_ms", 0))
             prev_lap_ms = safe_int(hist[-2].get("time_ms", 0) or hist[-2].get("lap_time_ms", 0))
-            # Safety car / VSC or a pit stop makes lap-to-lap pace meaningless (and must never
-            # turn into a "box this lap" call)
             disturbed = any((h.get("flags") or {}).get("sc") or (h.get("flags") or {}).get("pit")
                             for h in hist[-2:])
             if last_lap_ms > 0 and prev_lap_ms > 0 and not disturbed:
                 pace_delta_sec = (last_lap_ms - prev_lap_ms) / 1000.0
-
-                # 1.0s or more drop -> MANDATORY TYRE CHANGE BOX ORDER (race only; in practice /
-                # qualifying a slow lap is usually a cool-down or out lap, not worn tyres)
-                if pace_delta_sec >= 1.0 and "pace_box" in plan:
+                if 1.0 <= pace_delta_sec < 3.0:      # 3 s+ is an incident (spin, off, damage), not tyres
                     cond_key = f"pace_drop_1s_{num_completed_laps}"
                     if cond_key not in self._triggered_voice_conditions:
                         self._triggered_voice_conditions.add(cond_key)
@@ -2207,43 +2386,45 @@ class StateManager:
                     cond_key = f"pace_drop_half_{num_completed_laps}"
                     if cond_key not in self._triggered_voice_conditions:
                         self._triggered_voice_conditions.add(cond_key)
-                        return emit_event("pace_drop_half_sec", "pace_drop_half_sec")
+                        ev = self._race_lap_loss_event(hist[-1], hist[-2], now)
+                        return ev or emit_event("pace_drop_half_sec", "pace_drop_half_sec")
                 elif -1.0 < pace_delta_sec <= -0.2:  # clip says "negative two tenths"
                     cond_key = f"pace_green_{num_completed_laps}"
                     if cond_key not in self._triggered_voice_conditions:
                         self._triggered_voice_conditions.add(cond_key)
                         return emit_event("pace_green", "pace_improvement")
 
-        # 5. Braking feedback is given per corner as the car exits it
-        #    (see _corner_exit_voice_event), compared with the reference lap.
+        # 6. Practice setup calls (after the debrief, 150-3000 m into the lap): at most one per lap, the same
+        #    call at most once every 4 laps. Our tyres first (temperatures / wear, docs/SETUP_GUIDE.md §3), then
+        #    the comparison with the fastest car (setup_analysis: downforce level, balance, traction).
+        talk = self.PRACTICE_TALK_M[0] <= lap_dist <= self.PRACTICE_TALK_M[1]
+        if "setup" in plan and num_completed_laps >= 2 and talk and f"setup_lap_{cur_lap}" not in self._triggered_voice_conditions:
+            rec = engineer_brain.setup_recommendation(hist, self._player_setup_dict())
+            for rule, key, details in engineer_brain.setup_radio(rec, self.practice_setup_analysis()):
+                cond_key = f"setup_{rule}_{num_completed_laps // 4}"
+                if cond_key in self._triggered_voice_conditions:
+                    continue
+                self._triggered_voice_conditions.update({cond_key, f"setup_lap_{cur_lap}"})
+                en, ko = engineer_brain.SETUP_TEXT[key]
+                ev = self._brain_event([key], en, ko, kind="setup_advice", title=f"Setup: {rule.replace('_', ' ')}",
+                                       badge="SETUP", details=details, now=now)
+                return self._set_event(ev, now)
 
-        # 5b. Practice setup advice (docs/SETUP_GUIDE.md): on the main straight, one rule at a time,
-        #     the same rule at most once every 4 laps.
-        if "setup" in plan and num_completed_laps >= 2:
+        # 7a. Practice long run: every 3 laps on a set that is 3+ laps old, the wear per lap and how many laps
+        #     the set would last
+        if "stint" in plan and talk and wear and self.car_status:
+            cond_key = f"stint_{cur_lap // 3}"
             try:
-                lap_dist = safe_float(self.lap_data.m_lapData[player_idx].m_lapDistance, -1.0)
+                age = safe_int(self.car_status.m_carStatusData[player_idx].m_tyresAgeLaps)
             except Exception:
-                lap_dist = -1.0
-            if 150.0 <= lap_dist <= 600.0:
-                rec = engineer_brain.setup_recommendation(hist, self._player_setup_dict())
-                if rec and rec["rule"] != "balance_ok":
-                    cond_key = f"setup_{rec['rule']}_{num_completed_laps // 4}"
-                    if cond_key not in self._triggered_voice_conditions:
-                        self._triggered_voice_conditions.add(cond_key)
-                        ev = self._brain_event(rec["key"] and [rec["key"]], rec["text"], rec["text_ko"],
-                                               kind="setup_advice", title=f"Setup: {rec['rule'].replace('_', ' ')}",
-                                               badge="SETUP", details=rec["changes"], now=now)
-                        self._last_voice_trigger_time = now
-                        self._current_voice_event = ev
-                        return ev
-
-        # 6. Exit Traction Feedback (When throttle pickup is delayed or slip detected)
-        if hist and "traction" in plan and "traction_feedback" not in self._triggered_voice_conditions:
-            last_lap = hist[-1]
-            slowest_corner = min(last_lap.get("corners", []), key=lambda c: safe_int(c.get("exit_speed", 999), 999), default=None)
-            if slowest_corner and safe_int(slowest_corner.get("exit_speed", 999)) < 110:
-                self._triggered_voice_conditions.add("traction_feedback")
-                return emit_event("traction_prev_lap", "exit_traction_loss")
+                age = 0
+            if age >= 3 and cond_key not in self._triggered_voice_conditions:
+                self._triggered_voice_conditions.add(cond_key)
+                res = engineer_brain.stint_projection(wear, age)
+                if res:
+                    ev = self._brain_event(res["keys"], res["text"], res["text_ko"], kind="stint",
+                                           title="Long run: tyre life", badge="TYRES", details=res["details"], now=now)
+                    return self._set_event(ev, now)
 
         # 7. Rival Gap Quantization (race only - in practice/qualifying "car ahead" is meaningless)
         if "gap" in plan and self.lap_data and hasattr(self.lap_data, "m_lapData"):
@@ -2267,4 +2448,65 @@ class StateManager:
             except Exception:
                 pass
 
+        # 8. Race: tyre wear per lap on this set, once a lap after the gap call (700-1500 m); a strategy call
+        #    is added (at most every 3 laps) when that rate reaches the wear limit before the ideal pit lap
+        if "tyre_report" in plan and self.lap_data and self.car_status and self.car_damage:
+            try:
+                p_lap = self.lap_data.m_lapData[player_idx]
+                lap_dist = safe_float(getattr(p_lap, "m_lapDistance", -1.0), -1.0)
+                cur_lap = safe_int(getattr(p_lap, "m_currentLapNum", 0))
+                cond_key = f"tyre_report_lap{cur_lap}"
+                if 700.0 <= lap_dist <= 1500.0 and cond_key not in self._triggered_voice_conditions:
+                    self._triggered_voice_conditions.add(cond_key)
+                    age = safe_int(self.car_status.m_carStatusData[player_idx].m_tyresAgeLaps)
+                    wear4 = [safe_float(w) for w in self.car_damage.m_carDamageData[player_idx].m_tyresWear]
+                    strat_key = f"tyre_strategy_{cur_lap // 3}"
+                    res = engineer_brain.tyre_report(
+                        wear4, age, cur_lap,
+                        safe_int(getattr(self.session, "m_pitStopWindowIdealLap", 0)) if self.session else 0,
+                        safe_int(getattr(self.session, "m_pitStopWindowLatestLap", 0)) if self.session else 0,
+                        with_strategy=strat_key not in self._triggered_voice_conditions)
+                    if res:
+                        if res["strategy"]:
+                            self._triggered_voice_conditions.add(strat_key)
+                        ev = self._brain_event(res["keys"], res["text"], res["text_ko"], kind="tyre_report",
+                                               title="Tyre strategy" if res["strategy"] else "Tyre wear per lap",
+                                               badge="STRATEGY" if res["strategy"] else "TYRES",
+                                               details=res["details"], now=now)
+                        self._last_voice_trigger_time = now
+                        self._current_voice_event = ev
+                        return ev
+            except Exception:
+                pass
+
         return self._current_voice_event
+
+    def _race_not_started(self):
+        """On the grid / formation lap: lap 1 and the lap clock not running yet."""
+        try:
+            pl = self.lap_data.m_lapData[self.player_car_index]
+            return (safe_int(getattr(pl, "m_currentLapNum", 0)) <= 1
+                    and safe_int(getattr(pl, "m_currentLapTimeInMS", 0)) <= 1000)
+        except Exception:
+            return False
+
+    def _race_rain_chance(self):
+        """Highest rain % in the weather forecast samples for this (race) session."""
+        s = self.session
+        try:
+            n = min(safe_int(s.m_numWeatherForecastSamples), len(s.m_weatherForecastSamples))
+            vals = [safe_int(x.m_rainPercentage) for x in s.m_weatherForecastSamples[:n]
+                    if safe_int(x.m_sessionType) == safe_int(self.session_type)]
+            return max(vals) if vals else 0
+        except Exception:
+            return 0
+
+    def _race_brief_event(self, now):
+        s = self.session
+        if s is None:
+            return None
+        res = engineer_brain.race_brief(safe_int(getattr(s, "m_weather", 0)), safe_int(getattr(s, "m_trackTemperature", 0)),
+                                        safe_int(getattr(s, "m_airTemperature", 0)), self._race_rain_chance(),
+                                        self._player_setup_dict())
+        return self._brain_event(res["keys"], res["text"], res["text_ko"], kind="race_brief",
+                                 title="Race brief: setup", badge="SETUP", details=res["details"], now=now)

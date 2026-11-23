@@ -1,4 +1,4 @@
-# Artefatos locais e dados do jogador
+# Local artefacts and player data
 /backup-before-*/
 /f1-overlay-2026.zip
 /dump/
@@ -8,7 +8,7 @@
 /halo-layouts.json
 /halo-layouts-before-redesign.json
 
-# Dependências e arquivos temporários
+# Dependencies and temporary files
 /node_modules/
 /janela/node_modules/
 *.log

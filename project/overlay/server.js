@@ -1,13 +1,13 @@
-// F1 25 TV Overlay - servidor de telemetria (zero dependencias, so Node 18+)
+// F1 25 TV Overlay - telemetry server (no dependencies, Node 18+ only)
 //
-// Fluxo: F1 25 --UDP--> este servidor --SSE (HTTP)--> overlay.html
+// Flow: F1 25 --UDP--> this server --SSE (HTTP)--> overlay.html
 //
-// Uso:
-//   node server.js            escuta a telemetria do jogo (UDP 20777)
-//   node server.js --demo     dados falsos, para testar o visual sem o jogo
-//   node server.js --debug    mostra no terminal o tamanho dos pacotes recebidos
+// Usage:
+//   node server.js            listens to the game's telemetry (UDP 20777)
+//   node server.js --demo     simulated data, to check the look without the game
+//   node server.js --debug    prints the size of every received packet
 //
-// Layout 2026 conferido com os dumps reais; 2025 conserva o layout anterior.
+// 2026 layout checked against real dumps; 2025 keeps the previous layout.
 
 'use strict';
 
@@ -21,11 +21,11 @@ const turns = createTurnTracker(path.join(__dirname, 'curvas'));
 const UDP_PORT = Number(process.env.UDP_PORT || 20777);
 const HTTP_PORT = Number(process.env.HTTP_PORT || 8080);
 const DEMO = process.argv.includes('--demo');
-const QUALI = process.argv.includes('--quali');   // so com --demo: simula uma qualy
+const QUALI = process.argv.includes('--quali');   // only with --demo: simulates qualifying
 const DEBUG = process.argv.includes('--debug');
 const NO_OPEN = process.argv.includes('--no-open') || process.env.NO_OPEN === '1';
-const DUMP = process.argv.includes('--dump');     // salva 1 pacote de cada tipo em ./dump
-const RECORD = process.argv.includes('--record'); // amostra dados do jogador em ./dump
+const DUMP = process.argv.includes('--dump');     // saves 1 packet of each type to ./dump
+const RECORD = process.argv.includes('--record'); // samples the player's data to ./dump
 
 const MAX_CARS = 24;
 const HEADER = 29;
@@ -34,28 +34,28 @@ const UI_KEYS = ['all', 'tower', 'lap', 'onboard', 'halo', 'cards', 'flags', 'fa
 const HALO_FILE = path.join(__dirname, 'halo-layouts.json');
 const HUD_SCALE_FILE = path.join(__dirname, 'hud-scales.json');
 const HUD_OFFSET_FILE = path.join(__dirname, 'hud-offsets.json');
-const hudOffsets = {};   // deslocamento de cada HUD em % da tela: { tower: { dx, dy } }
+const hudOffsets = {};   // offset of each HUD in % of the screen: { tower: { dx, dy } }
 try {
   const saved = JSON.parse(fs.readFileSync(HUD_OFFSET_FILE, 'utf8'));
   for (const key of ['tower', 'onboard', 'lap', 'cards', 'flags', 'fastest']) {
     const o = saved[key];
     if (o && Number.isFinite(o.dx) && Number.isFinite(o.dy)) hudOffsets[key] = { dx: o.dx, dy: o.dy };
   }
-} catch (_) { /* primeira execucao */ }
+} catch (_) { /* first run */ }
 let haloLayouts = { default: { x: 58, y: 58, scale: 1 } };
 try {
   const saved = JSON.parse(fs.readFileSync(HALO_FILE, 'utf8'));
   if (saved && typeof saved === 'object' && saved.default) haloLayouts = saved;
-} catch (_) { /* primeira execucao */ }
+} catch (_) { /* first run */ }
 const hudScales = { tower: 1, onboard: 1, halo: 1, lap: 1, cards: 1, flags: 1, fastest: 1 };
 try {
   const saved = JSON.parse(fs.readFileSync(HUD_SCALE_FILE, 'utf8'));
   for (const key of Object.keys(hudScales)) {
     if (Number.isFinite(saved[key]) && saved[key] >= 0.3 && saved[key] <= 3) hudScales[key] = saved[key];
   }
-} catch (_) { /* primeira execucao */ }
+} catch (_) { /* first run */ }
 
-// ---------------------------------------------------------------- estado ---
+// ----------------------------------------------------------------- state ---
 
 const state = {
   connected: false,
@@ -69,23 +69,23 @@ const state = {
   isSprintRace: false,
   weekendSessions: [],
   totalLaps: 0,
-  safetyCar: 0,     // 0 nenhum, 1 safety car, 2 VSC, 3 volta de formacao
+  safetyCar: 0,     // 0 none, 1 safety car, 2 VSC, 3 formation lap
   safetyDelta: { seconds: null, available: false, updatedAt: 0, lastNonZeroAt: 0 },
   redFlag: false,
-  fastestLap: null, // anuncio temporario do evento FTLP, separado do recorde em state.best
-  yellowZones: 0,   // quantos setores de fiscal estao com bandeira amarela
+  fastestLap: null, // temporary FTLP announcement, separate from the record in state.best
+  yellowZones: 0,   // how many marshal sectors show a yellow flag
   gamePaused: false,
   sessionTimeLeft: 0,
   numActive: 0,
-  dbg: { counts: {}, sizes: {}, parsed: {} },   // diagnostico: quantos pacotes de cada id chegaram
+  dbg: { counts: {}, sizes: {}, parsed: {} },   // diagnostics: how many packets of each id arrived
   ui: { all: true, tower: true, lap: true, onboard: false, halo: false, flags: true, fastest: true,
-    mode: 'auto', cards: true, edit: false, toast: '', toastUntil: 0 },
+    mode: 'auto', cards: true, edit: false, toast: '', toastUntil: 0, autofit: 0 },
   turn: turns.state,
   haloLayouts,
   hudScales,
   hudOffsets,
-  visible: false,   // ja chegou dado do jogo (a HUD fica na tela mesmo com o jogo em pausa)
-  paused: false,    // sem pacotes ha mais de 3 s: dados congelados
+  visible: false,   // game data has arrived (the HUD stays on screen even while the game is paused)
+  paused: false,    // no packets for more than 3 s: data frozen
   best: { lap: 0, s1: 0, s2: 0, s3: 0 },
   car: { speed: 0, gear: 0, rpm: 0, maxRpm: 13000, throttle: 0, brake: 0, drs: 0,
     aeroMode: null, aeroAvailable: null, aeroActivationDistance: 0,
@@ -105,7 +105,7 @@ const state = {
 
 // -------------------------------------------------------------- parsers ---
 
-// Aceita apenas as combinacoes documentadas; tamanho divisivel sozinho nao valida um layout.
+// Accepts only the documented combinations; a size that merely divides evenly does not validate a layout.
 function layoutOf(len, trailing, known) {
   for (const [count, stride] of known) {
     if (HEADER + trailing + count * stride === len) return { count, stride };
@@ -118,7 +118,7 @@ function note(id, len, layout) {
   state.dbg.parsed[id] = layout !== null;
   if (!DEBUG || seenPackets.has(id) || layout === 0) return;
   seenPackets.add(id);
-  console.log(`[debug] id=${id} tamanho=${len} layout=${layout ? `${layout.count} carros x ${layout.stride}` : 'NAO BATE'}`);
+  console.log(`[debug] id=${id} size=${len} layout=${layout ? `${layout.count} cars x ${layout.stride}` : 'NO MATCH'}`);
 }
 
 function msPlusMin(buf, off) {
@@ -175,8 +175,8 @@ function parseLapData(buf) { // id 2
       // F1 AI Race Engineer: with a known turn map, follow the lap distance on every lap-data packet
       // (telemetry packets alone can be sparse, e.g. in recordings)
       if (turns.state.status === 'ready') turns.sample(c.lap, state.car.lapDistance, state.car.steer || 0, c.pit || 0);
-      // O jogo fornece segundos de delta, mas nao um bit de "delta ativo".
-      // Zero durante SC pode significar que o delta deixou de ser exigido.
+      // The game gives the delta in seconds, but no "delta active" bit.
+      // Zero during an SC can mean the delta is no longer required.
       const delta = buf.readFloatLE(o + 28);
       if ((state.safetyCar === 1 || state.safetyCar === 2) && Number.isFinite(delta) && Math.abs(delta) < 300) {
         state.safetyDelta.seconds = delta;
@@ -245,14 +245,14 @@ function parseCarStatus(buf, player) { // id 7
     const o = HEADER + player * layout.stride;
     const m = buf.readUInt16LE(o + 17);
     if (m > 0) state.car.maxRpm = m;
-    state.ers.store = buf.readFloatLE(o + 37);   // joules (experimental p/ 2026)
+    state.ers.store = buf.readFloatLE(o + 37);   // joules (experimental for 2026)
     state.ers.mode = buf.readUInt8(o + 41);
-    state.car.fiaFlag = buf.readInt8(o + 28);   // bandeira mostrada ao jogador: 3 = amarela
+    state.car.fiaFlag = buf.readInt8(o + 28);   // flag shown to the player: 3 = yellow
     state.car.drsAllowed = state.format === 2026 ? 0 : buf.readUInt8(o + 22);
   }
 }
 
-function parseCarTelemetry2(buf, player) { // id 16: aero ativo e modo ultrapassagem do 2026
+function parseCarTelemetry2(buf, player) { // id 16: 2026 active aero and overtake mode
   const layout = layoutOf(buf.length, 0, [[24, 10]]);
   note(16, buf.length, layout);
   if (!layout || player >= layout.count) return;
@@ -267,7 +267,7 @@ function parseCarTelemetry2(buf, player) { // id 16: aero ativo e modo ultrapass
   car.regulations2026 = buf.readUInt8(o + 8);
 }
 
-function parseSession(buf) { // id 1: so o tipo de sessao (treino / qualy / corrida...)
+function parseSession(buf) { // id 1: session type (practice / quali / race...), laps, flags
   note(1, buf.length, buf.length >= 43 ? 0 : null);
   if (buf.length >= 43) {
     state.totalLaps = buf.readUInt8(32);
@@ -289,8 +289,8 @@ function parseSession(buf) { // id 1: so o tipo de sessao (treino / qualy / corr
     }
     const viewed = buf.readUInt8(45);
     state.viewCar = state.spectating && viewed < MAX_CARS ? viewed : state.player;
-    // O id 15 e usado tanto para corrida normal quanto Sprint. Num fim de
-    // semana Sprint, a estrutura inclui tambem a corrida 16 (Race 2).
+    // Type 15 is used for both a normal race and the Sprint. On a Sprint
+    // weekend the weekend structure also contains race 16 (Race 2).
     if (buf.length >= 745) {
       const count = Math.min(12, buf.readUInt8(732));
       state.weekendSessions = [...buf.subarray(733, 733 + count)];
@@ -302,8 +302,8 @@ function parseSession(buf) { // id 1: so o tipo de sessao (treino / qualy / corr
   }
 }
 
-// id 11: historico de voltas de UM carro por pacote (o jogo vai rodando pelos carros).
-// A melhor volta valida e indicada por "bestLapTimeLapNum" (1-based; 0 = ainda sem volta).
+// id 11: lap history of ONE car per packet (the game cycles through the cars).
+// The best valid lap is given by "bestLapTimeLapNum" (1-based; 0 = no lap yet).
 function parseSessionHistory(buf) {
   note(11, buf.length, buf.length >= 50 ? 0 : null);
   if (buf.length < 50) return;
@@ -336,7 +336,7 @@ const dumpedIds = new Set();
 const lastRecorded = {};
 let lastFastestKey = '';
 
-function parseEvent(buf) { // id 3: eventos pontuais da transmissao
+function parseEvent(buf) { // id 3: one-off broadcast events
   note(3, buf.length, buf.length >= 33 ? 0 : null);
   if (buf.length < 33) return;
   const code = buf.toString('ascii', HEADER, HEADER + 4);
@@ -398,13 +398,13 @@ function handlePacket(buf) {
   state.dbg.sizes[id] = buf.length;
   if (DEBUG && !seenIds.has(id)) {
     seenIds.add(id);
-    console.log(`[debug] chegou pacote id=${id} tamanho=${buf.length} (formato ${state.format}, jogador=${player})`);
+    console.log(`[debug] packet id=${id} size=${buf.length} (format ${state.format}, player=${player})`);
   }
   if (DUMP && !dumpedIds.has(id)) {
     dumpedIds.add(id);
     const dir = path.join(__dirname, 'dump');
     fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(path.join(dir, `id${id}-tam${buf.length}.bin`), buf);
+    fs.writeFileSync(path.join(dir, `id${id}-size${buf.length}.bin`), buf);
   }
   if (RECORD && [2, 6, 7].includes(id) && player < MAX_CARS && Date.now() - (lastRecorded[id] || 0) >= 500) {
     const layouts = { 2: layoutOf(buf.length, 2, [[24, 57], [22, 57]]),
@@ -428,7 +428,7 @@ function handlePacket(buf) {
     else if (id === 7) parseCarStatus(buf, state.viewCar);
     else if (id === 16) parseCarTelemetry2(buf, state.viewCar);
   } catch (err) {
-    if (DEBUG) console.log('[debug] erro ao ler pacote', id, err.message);
+    if (DEBUG) console.log('[debug] could not read packet', id, err.message);
   }
 }
 
@@ -449,14 +449,14 @@ function startDemo() {
   state.player = 0;
   state.connected = true;
   state.numActive = names.length;
-  state.sessionType = QUALI ? 6 : 15;   // 6 = Q2, 15 = corrida
+  state.sessionType = QUALI ? 6 : 15;   // 6 = Q2, 15 = race
   state.weekendSessions = QUALI ? [5, 6, 7, 15] : [5, 6, 7, 15];
   state.isSprintRace = false;
   state.totalLaps = 57;
   state.format = 2026;
   state.sessionTimeLeft = QUALI ? 720 : 0;
   if (QUALI) {
-    // melhores voltas falsas; os 3 ultimos ainda sem tempo
+    // fake best laps; the last 3 cars have no time yet
     names.forEach((_, i) => {
       const c = state.cars[i];
       c.bestLap = i < names.length - 3 ? 88000 + ((i * 7) % 17) * 190 + 340 : 0;
@@ -495,7 +495,7 @@ function startDemo() {
     });
     state.cars.slice(names.length).forEach((c) => { c.pos = 0; });
     if (QUALI) {
-      // na qualy a posicao vem do melhor tempo; todos "nos boxes"
+      // in quali the position comes from the best time; everyone "in the pits"
       const byBest = names.map((_, i) => i).sort((a, b) => (state.cars[a].bestLap || 1e9) - (state.cars[b].bestLap || 1e9));
       byBest.forEach((idx, p) => { state.cars[idx].pos = p + 1; state.cars[idx].pit = 0;
         state.cars[idx].status = Math.floor(t / 12 + idx / 3) % 3 === 0 ? 0 : 1; });
@@ -518,7 +518,7 @@ function startDemo() {
     car.regulations2026 = 1;
     state.ers.store = Math.round(2_000_000 + Math.sin(t / 5) * 1_800_000);
     state.ers.mode = k > 0.78 ? 3 : 1;
-    // Demo das situacoes de pista: VSC, SC com delta, SC sem delta e bandeira vermelha.
+    // Demo of track situations: VSC, SC with delta, SC without delta and red flag.
     const phase = Math.floor(t / 8) % 6;
     state.safetyCar = phase === 2 ? 2 : phase === 3 || phase === 4 ? 1 : 0;
     state.yellowZones = phase === 1 ? 2 : 0;
@@ -534,6 +534,7 @@ function startDemo() {
     }
     car.steer = Math.sin(t / 1.3) * 0.5;
     state.turn.status = 'ready'; state.turn.total = 19; state.turn.n = 1 + Math.floor(((t / 6) % 1) * 19);
+    state.turn.dir = [1, 2, 5, 8, 11, 14, 17].includes(state.turn.n) ? 'L' : 'R';   // demo: a mix of left and right
     const demoLaps = state.cars.slice(0, names.length).map(c => c.bestLap).filter(Boolean);
     state.best = { lap: demoLaps.length ? Math.min(...demoLaps) : 0,
       s1: 27500, s2: 29500, s3: 31000 };
@@ -551,18 +552,21 @@ function updateUi(action) {
   let label = '';
   if (UI_KEYS.includes(action.toggle)) {
     ui[action.toggle] = !ui[action.toggle];
-    label = `${action.toggle.toUpperCase()}: ${ui[action.toggle] ? 'LIGADO' : 'DESLIGADO'}`;
+    label = `${action.toggle.toUpperCase()}: ${ui[action.toggle] ? 'ON' : 'OFF'}`;
   } else if (UI_KEYS.includes(action.set) && typeof action.value === 'boolean') {   // F1 AI Race Engineer: set, not toggle
     ui[action.set] = action.value;
-    label = `${action.set.toUpperCase()}: ${action.value ? 'LIGADO' : 'DESLIGADO'}`;
+    label = `${action.set.toUpperCase()}: ${action.value ? 'ON' : 'OFF'}`;
+  } else if (action.autofit === true) {   // halo auto-fit request: the overlay window (janela/main.js) runs it
+    ui.autofit = (ui.autofit || 0) + 1;
+    label = 'HALO AUTO-FIT...';
   } else if (typeof action.toast === 'string') {
     label = action.toast.slice(0, 90);
   } else if (action.cycleMode === true) {
     ui.mode = { auto: 'quali', quali: 'race', race: 'auto' }[ui.mode];
-    label = `MODO: ${ui.mode.toUpperCase()}`;
+    label = `MODE: ${ui.mode.toUpperCase()}`;
   } else if (['auto', 'quali', 'race'].includes(action.mode)) {
     ui.mode = action.mode;
-    label = `MODO: ${ui.mode.toUpperCase()}`;
+    label = `MODE: ${ui.mode.toUpperCase()}`;
   } else return false;
   ui.toast = label;
   ui.toastUntil = Date.now() + (typeof action.toast === 'string' ? 6000 : 1800);
@@ -614,14 +618,14 @@ function refreshLink() {
   const idle = Date.now() - state.lastPacketAt;
   state.connected = idle < 3000;
   state.paused = state.lastPacketAt > 0 && idle >= 3000;
-  // fica visivel (congelada) por ate 15 min sem pacotes: pausa longa nao some com a HUD
+  // stays visible (frozen) for up to 15 min without packets: a long pause does not hide the HUD
   state.visible = state.lastPacketAt > 0 && idle < 15 * 60 * 1000;
   const delta = state.safetyDelta;
   delta.available = (state.safetyCar === 1 || state.safetyCar === 2)
     && Date.now() - delta.updatedAt < 1000 && Date.now() - delta.lastNonZeroAt < 1000;
 }
 
-// Abre o painel de controle no navegador padrao (so um endereco fixo local; ignora falhas).
+// Opens the control panel in the default browser (a fixed local address only; failures are ignored).
 function openControlPanel(url) {
   try {
     const { spawn } = require('child_process');
@@ -630,7 +634,7 @@ function openControlPanel(url) {
     const child = spawn(cmd[0], cmd[1], { stdio: 'ignore', detached: true, windowsHide: true });
     child.on('error', () => {});
     child.unref();
-  } catch (_) { /* sem navegador: abra o endereco manualmente */ }
+  } catch (_) { /* no browser: open the address manually */ }
 }
 
 const server = http.createServer((req, res) => {
@@ -650,7 +654,7 @@ const server = http.createServer((req, res) => {
       res.writeHead(ok ? 200 : 400, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
       res.end(JSON.stringify(ok ? (url === '/api/ui' ? state.ui
         : url === '/api/halo-layout' ? state.haloLayouts
-        : url === '/api/offset' ? state.hudOffsets : state.hudScales) : { error: 'acao invalida' }));
+        : url === '/api/offset' ? state.hudOffsets : state.hudScales) : { error: 'invalid action' }));
     });
   } else if (req.method === 'GET' && (url === '/theme-broadcast.css' || url === '/theme-broadcast.js')) {
     // F1 AI Race Engineer: broadcast theme (stylesheet + helper script)
@@ -689,7 +693,7 @@ const server = http.createServer((req, res) => {
     });
   } else if (req.method === 'GET' && (url === '/' || url === '/overlay.html' || url === '/control')) {
     fs.readFile(path.join(__dirname, url === '/control' ? 'control.html' : 'overlay.html'), (err, data) => {
-      if (err) { res.writeHead(500); res.end('overlay.html nao encontrado'); return; }
+      if (err) { res.writeHead(500); res.end('overlay.html not found'); return; }
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
       res.end(data);
     });
@@ -710,7 +714,7 @@ const server = http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(state));
   } else {
-    res.writeHead(404); res.end('nao encontrado');
+    res.writeHead(404); res.end('not found');
   }
 });
 
@@ -723,20 +727,20 @@ if (require.main === module) {
   }, 50);
 
   server.listen(HTTP_PORT, '127.0.0.1', () => {
-    console.log(`Overlay:  http://127.0.0.1:${HTTP_PORT}/   (use como Browser Source no OBS)`);
-    console.log(`Painel de controle: http://127.0.0.1:${HTTP_PORT}/control`);
+    console.log(`Overlay:  http://127.0.0.1:${HTTP_PORT}/   (works as an OBS Browser Source)`);
+    console.log(`Control panel: http://127.0.0.1:${HTTP_PORT}/control`);
     if (!NO_OPEN) openControlPanel(`http://127.0.0.1:${HTTP_PORT}/control`);
   });
 
   if (DEMO) {
-    console.log('Modo DEMO: dados falsos, sem ler o jogo.');
+    console.log('DEMO mode: simulated data, the game is not read.');
     startDemo();
   } else {
     const udp = dgram.createSocket('udp4');
     udp.on('message', handlePacket);
-    udp.on('error', (e) => { console.error('Erro UDP:', e.message); process.exit(1); });
+    udp.on('error', (e) => { console.error('UDP error:', e.message); process.exit(1); });
     udp.bind(UDP_PORT, '0.0.0.0', () => {
-      console.log(`Ouvindo telemetria UDP na porta ${UDP_PORT}. No jogo: IP 127.0.0.1, porta ${UDP_PORT}.`);
+      console.log(`Listening for UDP telemetry on port ${UDP_PORT}. In the game: IP 127.0.0.1, port ${UDP_PORT}.`);
     });
   }
 }

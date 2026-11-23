@@ -314,6 +314,12 @@ body {
   color: var(--color-on-primary);
 }
 
+/* a disabled button must not look clickable (e.g. REPLAY with no recordings) */
+.btn-secondary-light:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .btn-secondary-dark {
   background-color: var(--color-surface-dark-elevated);
   color: var(--color-on-dark);

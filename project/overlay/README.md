@@ -1,139 +1,160 @@
-# F1 25 TV Overlay
+# TV Overlay
 
-**Overlay gratuito e de código aberto para F1 25**, inspirado nos gráficos de uma transmissão de Fórmula 1. Qualquer pessoa pode baixar, usar, modificar e compartilhar o programa, inclusive sem pagar. O **código** está sob a [licença MIT](LICENSE).
+A broadcast-style HUD for **F1 25** drawn from the game's UDP telemetry. It runs in a transparent window on top of
+the game (Electron) or as an OBS Browser Source. It never touches the game's files or memory.
 
-O programa lê a telemetria UDP do jogo e desenha a HUD em uma janela transparente sobre ele ou em uma fonte de navegador no OBS. Não modifica arquivos nem a memória do F1 25. É um projeto independente de fã; não é um produto oficial da Formula 1, FIA ou EA.
+Part of **F1 AI Race Engineer**. The overlay started from the open-source
+[f1-25-tv-overlay](https://github.com/thenotrealuser/f1-25-tv-overlay) (MIT licence, see [`LICENSE`](LICENSE) and
+[`UPSTREAM.md`](UPSTREAM.md)) and has been reworked for this app. It is an independent fan project, not an official
+product of Formula 1, the FIA, EA or any team.
 
-> **Sobre as imagens abaixo:** são prints de referência enviados durante o desenvolvimento, **não capturas do overlay em funcionamento**. Eles ajudam a explicar o visual desejado. São imagens de terceiros e não fazem parte da licença MIT do código.
+## Running it with F1 AI Race Engineer
 
-## Referências visuais
+There is one switch: **📺 TV** in the web app (the setup screen card or the dashboard header). It is **ON by default**
+and remembered between runs.
 
-| Torre de tempos | HUD no halo |
-|:---:|:---:|
-| <img src="docs/referencias/torre.png" alt="Referência de torre de tempos à esquerda da transmissão" width="500"> | <img src="docs/referencias/halo.png" alt="Referência de instrumentos sobre o halo em câmera onboard" width="500"> |
-
-| Identificação onboard | Cartão de volta |
-|:---:|:---:|
-| <img src="docs/referencias/onboard.png" alt="Referência de nome, equipe e número do piloto onboard" width="500"> | <img src="docs/referencias/cartao-volta.png" alt="Referência de cartão de volta com tempo e setores" width="500"> |
-
-| Virtual Safety Car | Safety Car |
-|:---:|:---:|
-| <img src="docs/referencias/vsc.png" alt="Referência de VSC integrado à torre" width="500"> | <img src="docs/referencias/safety-car.png" alt="Referência de Safety Car integrado à torre" width="500"> |
-
-| Bandeira vermelha | Volta mais rápida |
-|:---:|:---:|
-| <img src="docs/referencias/bandeira-vermelha.png" alt="Referência de bandeira vermelha integrada à torre" width="500"> | <img src="docs/referencias/volta-mais-rapida.png" alt="Referência da faixa roxa de volta mais rápida" width="500"> |
-
-## O que já existe
-
-- **Torre de tempos:** posições, intervalos, pneus, pit, volta e identificação das equipes. O cabeçalho mostra `SPRINT` somente na Sprint Race e `RACE` na corrida normal.
-- **Qualificação e treinos:** torre por melhor tempo, zona de eliminação aproximada, cronômetro de volta lançada e cartões com setores e comparação de tempos.
-- **Corrida:** cartão de volta do jogador com S1/S2 em tempo real e S3 calculado ao concluir a volta. Amarelo indica setor mais lento, verde melhora pessoal e roxo melhor setor da sessão, quando há dados para comparar.
-- **Onboard:** cartão com nome, equipe e número do piloto observado; instrumentos sobre o halo com velocidade, marcha, RPM, freio, acelerador, ERS, Boost, Overtake e asa ativa conforme os pacotes recebidos.
-- **Direção de prova:** bandeira amarela, VSC, Safety Car e bandeira vermelha integrados à torre; painel de delta de VSC/SC apenas quando o jogo fornece valor recente; anúncio temporário de volta mais rápida.
-- **Ajustes:** cada HUD pode ser ligada/desligada, movida e redimensionada. O halo tem posição e escala por equipe para encaixar em câmeras de carros diferentes.
-- **Demonstração:** dados simulados para visualizar os componentes mesmo sem abrir o jogo.
-
-## Requisitos
-
-- Windows e **F1 25** com telemetria UDP ativada. Para os dados e recursos de 2026, selecione o formato **2026 Season Pack** no jogo.
-- Node.js com `node` e `npm` disponíveis no terminal. O servidor usa Node 18 ou superior; a instalação do Electron pode exigir uma versão mais recente de Node.js/npm.
-- Conexão com a internet **na primeira execução** para instalar o Electron na pasta `janela`.
-- O jogo em **Janela (Tela Cheia)** para a janela transparente aparecer sobre ele. No OBS, use a alternativa Browser Source descrita abaixo.
-
-## Instalação rápida
-
-1. Baixe o repositório pelo botão **Code → Download ZIP** do GitHub e extraia, ou clone:
-
-   ```powershell
-   git clone https://github.com/thenotrealuser/f1-25-tv-overlay.git
-   cd f1-25-tv-overlay
-   ```
-
-2. No F1 25, abra **Configurações → Configurações de telemetria** e configure:
-
-   | Opção | Valor |
-   |---|---|
-   | Telemetria UDP | Ligada |
-   | IP de destino | `127.0.0.1` |
-   | Porta | `20777` |
-   | Frequência | `20 Hz` |
-   | Formato | `2026`, para o 2026 Season Pack |
-   | Modo de transmissão | `Não` |
-
-3. Dê dois cliques em **`iniciar-overlay.bat`**. Na primeira vez, o script instala o Electron. Deixe a janela do servidor aberta.
-4. Entre numa sessão do jogo. O painel de controle abre em `http://127.0.0.1:8080/control` e o overlay aparece sobre o jogo.
-
-Para encerrar, feche a janela do Electron e a janela do servidor. Os ajustes de posição e tamanho permanecem salvos localmente.
-
-### Navegador ou OBS
-
-Para usar apenas o servidor, execute `iniciar.bat` e abra `http://127.0.0.1:8080/`. No OBS, adicione uma **Browser Source** com essa URL, fundo transparente e resolução da fonte igual à da sua cena (por exemplo, 1920×1080). O painel de controle continua em `/control`.
-
-### Ver sem o jogo
-
-Execute `iniciar-demo.bat` para simular uma corrida. Para uma qualificação simulada, execute `node server.js --demo --quali`. A demo mostra estados e animações, mas não comprova o comportamento do jogo real.
-
-## Painel, tamanhos e atalhos
-
-O endereço `http://127.0.0.1:8080/control` permite ligar ou desligar torre, cartões da qualificação, cartão da corrida, identificação onboard, halo, avisos/delta e faixa de volta mais rápida. O modo **Automático** acompanha o tipo de sessão; os modos **Qualificação** e **Corrida** permitem escolher manualmente a apresentação.
-
-Em **Tamanho de cada HUD**, ajuste cada peça entre `0,3×` e `3×`. O halo também tem ajustes horizontal, vertical e de escala por equipe. No **modo de edição**, pause o jogo pelo menu, arraste as HUDs, use o canto amarelo ou a roda do mouse para redimensionar e dê duplo clique para restaurar a posição. Saia com `Esc` ou o mesmo atalho de edição. O cartão da volta pode aparecer no modo de edição para posicionamento; durante o jogo ele só é exibido em corrida.
-
-| Atalho global, com a janela Electron aberta | Ação |
+| Step | What happens |
 |---|---|
-| `Ctrl+Alt+H`, `Ctrl+Shift+H` ou `Ctrl+Alt+F10` | HUD inteira |
-| `Ctrl+Alt+T` | Torre |
-| `Ctrl+Alt+F` | Avisos na torre e delta VSC/SC |
-| `Ctrl+Alt+V` | Faixa de volta mais rápida |
-| `Ctrl+Alt+L` | Cartão da volta do jogador |
-| `Ctrl+Alt+O` | Identificação onboard |
-| `Ctrl+Alt+G` | Instrumentos do halo |
-| `Ctrl+Alt+K` | Cartões da qualificação |
-| `Ctrl+Alt+M` | Alternar modo de apresentação |
-| `Ctrl+Alt+E` ou `Ctrl+Shift+E` | Entrar ou sair do modo de edição |
+| App starts | The app listens for the game on UDP `20777`. Nothing is drawn yet. |
+| First game packet | The overlay starts by itself: server on `http://127.0.0.1:8090/`, transparent window on top of the game. |
+| While you drive | The app forwards every game packet to the overlay on UDP `20778`. Replays are forwarded too, so you can try it without the game. |
+| Switch OFF / app closed | The overlay window and server close. |
 
-Com a página do overlay em foco no navegador, as teclas `H`, `T`, `F`, `V`, `L`, `O`, `G`, `K` e `M` acionam as opções correspondentes. Posição e escala são salvas em `hud-offsets.json`, `hud-scales.json` e `halo-layouts.json`. Esses arquivos são pessoais e ficam fora do Git.
+The overlay window (Electron, about 370 MB) is downloaded **once**, only when you press **Install** on the TV card.
+At start the app writes the official turn maps of 24 tracks into `curvas/`, so the TURN number is right from the first lap. Each turn also carries its direction, drawn as a left or right arrow above the number.
 
-## De onde vêm as informações
+Run the game in **Windowed (Fullscreen)** / borderless mode so the window can sit on top of it (no window can draw
+over exclusive fullscreen). While the switch is ON the window keeps itself above the game — after Alt+Tab, a minimise
+or show-desktop it takes the top again within half a second, without ever taking the game's focus.
+
+## What it shows
+
+- **Timing tower** — positions, intervals, tyres, pit and retirements. The header reads `SPRINT` in a sprint race and
+  `FIA Formula 1 World Championship` otherwise; practice and qualifying show the session (`FP1`, `Q2`, …) and the time
+  left, plus the elimination-zone line in Q1/Q2.
+- **Lap cards**
+  - *Practice / qualifying:* up to 3 cards at the **top centre** — your car first, then cars on a flying lap. Each
+    shows the live lap time, the reference time and driver, a 5-second delta when a sector closes, and S1/S2/S3 bars
+    (green = personal best, purple = session best, yellow = slower).
+  - *Race:* one card at the top right with **only your own times** — live lap time, sector delta against your own
+    best lap, `BEST LAP`, and sector colours. S3 is worked out when you cross the line (last lap − S1 − S2) and the
+    closed lap stays on screen for 5 s.
+- **Halo HUD** (fitted to F1 25's TV Pod camera: the arc traces the car's halo, the dial hangs under its top bar,
+  gears and RPM run down its right leg, names down its left leg) — speed in km/h and mph, gear, an RPM bar scaled to the car's max RPM,
+  brake (left) and throttle (right) gauges around the dial, ERS, Boost / Overtake / Active Aero states
+  (DRS in the 2025 format), the official turn number, and the names of your car and the car ahead.
+  Pill states: grey = unavailable, pulsing green outline = ready, solid green = in use, yellow = active-aero zone ahead.
+- **Race control** — yellow flag, Safety Car, VSC and red flag in the tower header; a VSC/SC delta panel only while the
+  game sends a recent delta; an 8-second purple fastest-lap banner near the top of the screen.
+- **Onboard card** — name, team and number of the viewed driver (off by default; the game does not report the camera).
+
+## Control panel and hotkeys
+
+Open `http://127.0.0.1:8090/control` (standalone: port `8080`). Every HUD can be switched on/off, moved and resized
+(0.3× to 3×); the halo also has a position and size per team. **Automatic** mode follows the session type;
+**Qualifying** and **Race** force a layout.
+
+| Global hotkey (overlay window open) | Action |
+|---|---|
+| `Ctrl+Alt+H`, `Ctrl+Shift+H` or `Ctrl+Alt+F10` | Whole HUD |
+| `Ctrl+Alt+T` | Timing tower |
+| `Ctrl+Alt+K` | Lap cards (practice / qualifying) |
+| `Ctrl+Alt+L` | My lap card (race) |
+| `Ctrl+Alt+G` | Halo |
+| `Ctrl+Alt+O` | Onboard card |
+| `Ctrl+Alt+F` | Tower alerts and VSC/SC delta |
+| `Ctrl+Alt+V` | Fastest-lap banner |
+| `Ctrl+Alt+M` | Cycle Automatic → Qualifying → Race |
+| `Ctrl+Alt+E` or `Ctrl+Shift+E` | Edit mode |
+| `Ctrl+Alt+A` or `Ctrl+Alt+F9` | Halo auto-fit (see below) |
+
+Each action has a second hotkey in case another program has taken one; a short notice at the bottom of the screen
+says whether they all registered. With the overlay page focused in a browser, the keys `H T K L G O F V M` do the same.
+
+**Edit mode:** pause the game from its own menu, press `Ctrl+Alt+E`, drag a HUD to move it, use the yellow corner or
+the mouse wheel to resize it, double-click to reset, and leave with `Esc`. Data stays frozen while you edit. Positions
+and sizes are saved in `hud-offsets.json`, `hud-scales.json` and `halo-layouts.json` (personal, never committed).
+
+**Halo auto-fit:** the overlay can find your car's halo on screen by itself. The first time you drive a team that
+has no halo profile yet (halo HUD on, 80+ km/h), the window hides its HUD for a quarter of a second, captures the
+screen, finds the halo's top bar (`halo-fit.js`) and saves the HUD's position and size for that team. Press
+`Ctrl+Alt+A` (or the **Auto-fit to my car** button in `/control`) to do it again, e.g. after changing the camera or
+monitor. It needs a clear view of the halo: with a menu or another window over it nothing is changed and a notice
+says so. The result is a normal per-team profile, so edit mode and `/control` can still fine-tune it.
+
+Page options: `?gap=leader` shows the gap to the leader instead of the car ahead, `?rows=10` limits the tower to ten
+rows, `?theme=original` turns the broadcast theme off.
+
+## Running it on its own
+
+Don't run these while F1 AI Race Engineer is running — both want UDP port `20777`.
+
+| Launcher | What it does |
+|---|---|
+| `start-overlay.bat` | Installs Electron on the first run, starts the server and the transparent window |
+| `start-server.bat` | Server only: open `http://127.0.0.1:8080/` in a browser or add it to OBS as a Browser Source (transparent, same size as your scene) |
+| `start-demo.bat` | Simulated race, no game needed (`node server.js --demo --quali` for qualifying) |
+
+Game settings (Settings → Telemetry): UDP telemetry **On**, broadcast mode **Off**, IP `127.0.0.1`, port `20777`,
+20–60 Hz, format **2026** for the 2026 Season Pack.
+
+## Where the data comes from
 
 ```text
-F1 25 ──UDP 20777──> server.js ──HTTP/SSE 8080──> overlay.html / Electron / OBS
-                                      └────────────> control.html
+F1 25 ──UDP──> server.js ──HTTP/SSE──> overlay.html  (Electron window / browser / OBS)
+                               └─────> control.html
 ```
 
-O servidor usa o pacote de sessão para tipo de sessão, voltas, bandeiras e Safety Car; o pacote de voltas para posições, tempos, setores e delta; o histórico para melhores marcas; a telemetria e o status do carro para halo e pneus; e eventos para volta mais rápida e bandeira vermelha. O S3 da volta recém-encerrada é calculado de `última volta − S1 − S2`, porque o pacote de volta não traz o S3 atual pronto.
-
-O protocolo não possui um sinal separado de **“delta obrigatório agora”**. O painel de VSC/SC só aparece com valor não nulo recente; durante um Safety Car sem delta ele fica oculto. Um delta exatamente zero por mais de um segundo também pode fazê-lo sumir, mesmo que ainda seja exigido.
-
-A especificação usada é a [telemetria UDP 2026 publicada pela EA](https://forums.ea.com/t5/s/tghpe58374/attachments/tghpe58374/f1-games-game-info-hub-en/61/8/2026%20Season%20Pack%20Telemetry%20Output%20Structures%20(1).txt). A interpretação do sinal do delta segue a [explicação da FIA](https://www.fia.com/news/fia-insights-developing-new-delta-for-double-yellow-flag-zones).
-
-## Limites conhecidos
-
-- A telemetria não informa qual câmera está ativa; ligue o cartão onboard e o halo manualmente quando usar câmera do carro.
-- A posição visual do halo varia entre equipes, carros, câmeras e resoluções. Ajuste o perfil da equipe no painel.
-- O número de curva é aprendido pela posição do carro na pista e pode divergir da numeração oficial. O arquivo local `curvas/<id>.json` pode ser editado ou removido para reaprender.
-- Os dados de freio e acelerador seguem os valores recebidos. Se o jogo/dispositivo enviar apenas `0%` e `100%`, as barras também serão binárias.
-- A escala de bateria 2026 ainda é experimental. A compatibilidade com o formato 2025 mantém um parser anterior, sem captura real validada nesta versão.
-- As transições de SC/VSC, bandeira vermelha, volta mais rápida e o S3 em uma corrida completa ainda precisam de mais capturas reais de telemetria. A demo não substitui essa verificação.
-
-## Se algo não aparecer
-
-| Sintoma | Verifique |
+| Packet | Used for |
 |---|---|
-| Nada na tela | Servidor aberto, sessão iniciada, telemetria UDP ligada, IP/porta/formato corretos e HUD inteira ligada (`Ctrl+Alt+H`). |
-| Painel diz “Sem dados do jogo” | Configurações UDP do F1 25 e bloqueio da porta `20777` por outro programa. |
-| HUD aparece no navegador, mas não sobre o jogo | Use **Janela (Tela Cheia)** e confirme que o Electron abriu. |
-| Halo desalinhado | Abra `/control`, selecione a equipe e ajuste posição/tamanho no modo de edição. |
-| Cartão de volta não aparece | Ele só aparece durante corrida; confira `Ctrl+Alt+L` e o botão correspondente em `/control`. |
-| Uma tecla não funciona | Outro programa pode ter reservado o atalho; use o botão no painel. |
+| Session (1) | session type, total laps, time left, SC/VSC state, marshal-zone yellow flags |
+| Lap data (2) | positions, lap and sector times, pit state, VSC/SC delta, lap distance (turn number) |
+| Event (3) | `FTLP` fastest lap, `RDFL` red flag, `SCAR` safety car |
+| Participants (4) | names, teams, numbers |
+| Car telemetry (6) | speed, gear, RPM, brake, throttle, steering |
+| Car status (7) | tyres, ERS store and mode (Boost), flag shown to the player, max RPM |
+| Session history (11) | best laps and best sectors |
+| Car telemetry 2 (16) | 2026 active aero and overtake state and activation distances |
 
-Para diagnóstico, `diagnostico.bat` grava pacotes UDP em `dump/`. Essa pasta é local, ignorada pelo Git e **não deve ser publicada sem revisão**, pois pode conter dados da sua sessão. Os scripts `verificar-dump.js` e `replay-dump.js` só trabalham com capturas presentes localmente.
+Spec: [EA 2026 Season Pack UDP structures](https://forums.ea.com/t5/s/tghpe58374/attachments/tghpe58374/f1-games-game-info-hub-en/61/8/2026%20Season%20Pack%20Telemetry%20Output%20Structures%20(1).txt).
+Delta sign: [FIA explanation](https://www.fia.com/news/fia-insights-developing-new-delta-for-double-yellow-flag-zones).
 
-## Grátis, licença e imagens
+The game sends no "delta required now" flag. The delta panel therefore needs a recent non-zero value; a delta that
+stays at exactly zero for over a second can hide it even if it is still required.
 
-**Este overlay é FREE: gratuito para qualquer pessoa usar.** O código e a documentação original deste projeto são distribuídos sob a [licença MIT](LICENSE), que permite usar, copiar, alterar e redistribuir o software, mantendo o aviso de licença. Não há cobrança nem ativação.
+## Diagnostics and checks
 
-Os prints em `docs/referencias/` mostram material de terceiros fornecido como referência visual. **Eles não estão cobertos pela licença MIT do código** e não são necessários para executar o overlay. Nomes, marcas, logotipos e imagens de Formula 1, FIA, EA e equipes pertencem aos respectivos titulares. Este projeto não tem afiliação ou endosso dessas organizações.
+| Command | Purpose |
+|---|---|
+| `diagnose.bat` | Records one packet per type to `dump/id*-size*.bin` and samples your car every 500 ms to `dump/player-samples.jsonl`. `dump/` is local and git-ignored — it can contain your session data, so review it before sharing. |
+| `node check-dump.js` | Checks parsing of the packets recorded in `dump/` |
+| `node check-turns.js` | Tests turn learning on a synthetic track |
+| `node check-halo-fit.js` | Tests the halo auto-fit on synthetic TV Pod frames (positions, sizes, ultrawide, covered halo) |
+| `node check-window.js` | Checks that the window starts and registers its hotkeys, without opening it |
+| `node server.js` + `node replay-dump.js` | Replays the recorded packets to a local server (a frozen sample, not a moving lap) |
 
-Contribuições e relatos de problemas são bem-vindos nas Issues e Pull Requests do repositório. Para o histórico técnico e decisões de implementação, veja [`programa.md`](programa.md).
+## Known limits
+
+- The telemetry does not say which camera is active: switch the onboard card and the halo by hand.
+- The halo position differs between teams, cars, cameras and resolutions: calibrate it per team in `/control` or edit mode.
+- Brake and throttle follow the values the game sends; a device that only sends 0 % / 100 % gives binary bars.
+- The 2026 battery scale is experimental. The 2025 format keeps the older parser and has not been checked with a real capture.
+- SC/VSC, red-flag and fastest-lap transitions and S3 over a full race still need real captures to confirm.
+- On tracks without an official turn map the overlay learns the corners on the first clean lap; learned numbers can
+  differ from the official ones (edit or delete `curvas/<trackId>.json` to relearn).
+
+## If something does not appear
+
+| Symptom | Check |
+|---|---|
+| Nothing on screen | TV switch ON, a session started, UDP telemetry on with the right IP/port/format, whole HUD on (`Ctrl+Alt+H`) |
+| Shows in a browser but not over the game | Game in Windowed (Fullscreen); the overlay window is installed and running |
+| Halo misaligned | `/control` → pick the team and adjust, or edit mode |
+| Race lap card missing | It only shows in races; check `Ctrl+Alt+L` and the button in `/control` |
+| A hotkey does nothing | Another program took it: use the second hotkey or the button in `/control` |
+
+## Licence and artwork
+
+The original overlay code is MIT-licensed; its licence text must stay in [`LICENSE`](LICENSE). Formula 1, FIA, EA and
+team names, marks, logos and fonts belong to their owners. Official artwork is never committed: put your own files in
+[`local-assets/`](local-assets/README.md) (git-ignored) for personal use.
