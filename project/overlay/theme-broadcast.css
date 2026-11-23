@@ -134,46 +134,91 @@ body.has-team-logos .row .team { padding: .4rem .1rem; }
 /* practice / qualifying lap cards: never more than 3, at the bottom centre of the screen like the TV feed */
 #qCards { top: auto; bottom: 1.5vh; transform-origin: center bottom; }
 #qCards .qc:nth-child(n+4) { display: none !important; }
-#haloGauge .rf-arc { fill: none; stroke: #fff; stroke-width: 1.3; opacity: .85; }
-/* TURN / ACTIVE AERO panels: a faint glass panel with a thin steel-blue edge */
-#haloGauge .rf-panel { fill: #0a1830; fill-opacity: .28; stroke: #9ab8de; stroke-width: .8; stroke-opacity: .5; }
-#haloGauge .rf-paneltxt { fill: #cfe6ff; }
-/* RECHARGE / DEPLOY frames: dark blue with a bright blue edge, letters light blue */
-#haloGauge .rf-frame { fill: #0a2d55; fill-opacity: .72; stroke: #2f9cf0; stroke-width: 1.3; }
-/* brake / throttle columns: dark plate, unlit bars slate grey */
-#haloGauge .rf-barplate { fill: #08121f; fill-opacity: .55; stroke: #6f8aa8; stroke-width: .6; stroke-opacity: .35; }
-#haloGauge #rfHalo .seg-off { fill: #3a4656; fill-opacity: .8; stroke: none; }
-/* guide curves the names run along (never drawn), dividers between the cells of a section */
+/* thin white arc over the halo, fading out at its ends (gradient #rfArcX) */
+#haloGauge .rf-arc { fill: none; stroke: url(#rfArcX); stroke-width: 1.1; }
+#haloGauge #rfHalo .rf-a0 { stop-color: #fff; stop-opacity: 0; }
+#haloGauge #rfHalo .rf-a1 { stop-color: #fff; stop-opacity: .85; }
+/* ---- the glass: one translucent surface over the whole halo (no boxes, no dividers). Body navy, a lighter strip
+   along the upper curve, a darker one towards the bottom, a faint bright line on the top edge; the mask
+   (#rfRibMask, gradient #rfFadeX) fades it out towards both ends. */
+#haloGauge #rfHalo .rf-s0 { stop-color: #000; }
+#haloGauge #rfHalo .rf-s1 { stop-color: #fff; }
+#haloGauge .rf-rib { fill: #0a2244; fill-opacity: .36; }
+#haloGauge .rf-rib-hi { fill: #4f9cf0; fill-opacity: .12; }
+#haloGauge .rf-rib-lo { fill: #01050c; fill-opacity: .1; }
+#haloGauge .rf-rib-edge { fill: none; stroke: url(#rfLineX); stroke-width: .9; }
+#haloGauge #rfHalo .rf-l0 { stop-color: #9fd6ff; stop-opacity: 0; }
+#haloGauge #rfHalo .rf-l1 { stop-color: #9fd6ff; stop-opacity: .55; }
+#haloGauge .rf-paneltxt { fill: #eaf4ff; }
+/* text sits straight on the glass: only a light dark halo behind it for bright liveries and kerbs */
+#haloGauge #rfHalo .rf-paneltxt, #haloGauge #rfHalo .rf-name, #haloGauge #rfHalo .gear, #haloGauge #rfHalo .rf-turn,
+#haloGauge #rfHalo .rf-tag, #haloGauge #rfHalo .rf-tick, #haloGauge #rfHalo .rf-lbl:not(.sm) {
+  paint-order: stroke; stroke: #030a16; stroke-width: 1.6px; stroke-linejoin: round; stroke-opacity: .55; }
+/* lens behind the dial and its gauges: a shade lighter than the glass, the rim fading out */
+#haloGauge .rf-lens { fill: url(#rfLens); }
+#haloGauge #rfHalo .rf-n0 { stop-color: #0e2a52; stop-opacity: .34; }
+#haloGauge #rfHalo .rf-n1 { stop-color: #0e2a52; stop-opacity: .34; }
+#haloGauge #rfHalo .rf-n2 { stop-color: #14386a; stop-opacity: .22; }
+#haloGauge #rfHalo .rf-n3 { stop-color: #14386a; stop-opacity: 0; }
+/* RECHARGE / DEPLOY frames: dim while idle; the one the ERS is doing (theme-broadcast.js sets data-ers on #rfHalo
+   from the battery level: rising = recharge, falling = deploy) turns bright blue with a soft pulse */
+#haloGauge .rf-frame { fill: #0a2d55; fill-opacity: .32; stroke: #2f9cf0; stroke-width: 1.1; stroke-opacity: .45;
+  transition: fill-opacity .2s, stroke-opacity .2s; }
+#haloGauge #rfHalo .rf-ersside .rf-vlbl { fill: #4f86b8; transition: fill .2s; }
+#haloGauge #rfHalo[data-ers="recharge"] .rf-recharge .rf-frame,
+#haloGauge #rfHalo[data-ers="deploy"] .rf-deploy .rf-frame { --glow: #3aa8ff; fill: #1966c4; fill-opacity: .62; stroke: #8fd6ff;
+  stroke-opacity: 1; stroke-width: 1.4; animation: rfGlow .6s ease-in-out infinite alternate; }
+#haloGauge #rfHalo[data-ers="recharge"] .rf-recharge .rf-vlbl,
+#haloGauge #rfHalo[data-ers="deploy"] .rf-deploy .rf-vlbl { fill: #fff; }
+/* brake / throttle areas: a translucent frame with a soft light edge, so they stand apart a little on the glass */
+#haloGauge .rf-colframe { fill: #0b1d3a; fill-opacity: .3; stroke: #8ccaff; stroke-width: 1; stroke-opacity: .5; }
+/* unlit brake / throttle bars: slate, inside their frames */
+#haloGauge #rfHalo .seg-off { fill: #33435a; fill-opacity: .78; stroke: none; }
+/* glass dial: lighter at the centre, deeper blue towards the rim, a soft blue glow around it */
+#haloGauge #rfHalo .rf-dial { fill: url(#rfDialGlass); stroke: none; }
+#haloGauge #rfHalo .rf-d0 { stop-color: #12305a; stop-opacity: .82; }
+#haloGauge #rfHalo .rf-d1 { stop-color: #0a1f3f; stop-opacity: .86; }
+#haloGauge #rfHalo .rf-d2 { stop-color: #1a4a86; stop-opacity: .9; }
+#haloGauge .rf-dialglow { fill: none; stroke: #3d9cff; stroke-width: 5; stroke-opacity: .14; }
+#haloGauge #rfHalo .ring { stroke: #7cc8ff; stroke-width: 1.2; stroke-opacity: .85; fill: none; }
+/* guide curves the names run along (never drawn) */
 #haloGauge .rf-guide { fill: none; stroke: none; }
-#haloGauge .rf-divider { fill: none; stroke: #9ab8de; stroke-width: .8; stroke-opacity: .35; }
-/* ACTIVE AERO cell: invisible until active aero / DRS is available or open (state rules below) */
-#haloGauge .rf-aerocell { fill: none; stroke: none; }
-/* viewed car's name band in its team colour */
-#haloGauge .rf-band { fill: var(--rf-team, #3671c6); fill-opacity: .14; stroke: var(--rf-team, #3671c6); stroke-width: 1.3; }
-#haloGauge .rf-lbl { font-size: 9px; font-weight: 700; letter-spacing: .6px; fill: #e3f3ff; }
+#haloGauge .rf-aerobox text { font-size: 12px; font-weight: 800; letter-spacing: .8px; }
+/* ACTIVE AERO: no box; a soft glow on the glass behind it while active aero / DRS is coming, ready or open */
+#haloGauge .rf-aeroglow { fill: url(#rfAeroGlow); opacity: 0; transition: opacity .25s; }
+#haloGauge #rfHalo .rf-ag1 { stop-color: var(--rf-aero-glow, #2dff94); stop-opacity: .55; }
+#haloGauge #rfHalo .rf-ag0 { stop-color: var(--rf-aero-glow, #2dff94); stop-opacity: 0; }
+/* viewed car: a soft glow of its team colour behind the name and a thin underline, fading at both ends */
+#haloGauge .rf-me-glow { fill: url(#rfTeamX); filter: url(#rfSoft); }
+#haloGauge .rf-me-line { fill: none; stroke: url(#rfTeamLineX); stroke-width: 1.4; stroke-linecap: round; }
+#haloGauge #rfHalo .rf-t0 { stop-color: var(--rf-team, #3671c6); stop-opacity: 0; }
+#haloGauge #rfHalo .rf-t1 { stop-color: var(--rf-team, #3671c6); stop-opacity: .26; }
+#haloGauge #rfHalo .rf-u0 { stop-color: var(--rf-team, #3671c6); stop-opacity: 0; }
+#haloGauge #rfHalo .rf-u1 { stop-color: var(--rf-team, #3671c6); stop-opacity: .95; }
+#haloGauge .rf-lbl { font-size: 10.5px; font-weight: 700; letter-spacing: .6px; fill: #e3f3ff; }
 #haloGauge .rf-vlbl { font-size: 7px; font-weight: 700; fill: #6cc4ff; }
-#haloGauge .rf-tag { font-size: 8px; font-weight: 700; letter-spacing: .7px; fill: #eef6ff; }
+#haloGauge .rf-tag { font-size: 9px; font-weight: 700; letter-spacing: .7px; fill: #eef6ff; }
 #haloGauge .rf-tag.g { fill: #eefff6; }
 #haloGauge .rf-lbl.sm { font-size: 8px; }
 #haloGauge .rf-big { font-size: 23px; font-weight: 800; fill: #fff; }
 #haloGauge .rf-mid { font-size: 19px; font-weight: 800; fill: #fff; }
 #haloGauge #rfHalo .pill text { font-weight: 700; letter-spacing: .5px; }
 #haloGauge .rf-tickmark { fill: none; stroke: #93a9bb; stroke-width: 1.1; opacity: .55; }
-#haloGauge .rf-turn { font-size: 18px; font-weight: 800; fill: #fff; }
+#haloGauge .rf-turn { font-size: 21px; font-weight: 800; fill: #fff; }
 /* corner direction arrow above the turn number (theme-broadcast.js) */
 #haloGauge .rf-turnarrow .stem { fill: none; stroke: #fff; stroke-width: 3.2; stroke-linejoin: round; }
 #haloGauge .rf-turnarrow .head { fill: #fff; }
-#haloGauge .rf-tick { font-size: 7px; font-weight: 600; fill: #c8d2dc; }
-#haloGauge .rf-name { font-size: 13px; font-weight: 700; letter-spacing: .8px; fill: #f2f6ff; }
+#haloGauge .rf-tick { font-size: 8.5px; font-weight: 700; fill: #dbe3ec; }
+#haloGauge .rf-name { font-size: 14px; font-weight: 700; letter-spacing: .8px; fill: #f2f6ff; }
 #haloGauge .rf-name .rf-pos { font-weight: 500; }
-#haloGauge .rf-name.dim { fill: #b9bec8; opacity: .85; }
-#haloGauge .rf-name.me { font-size: 15px; }
-#haloGauge .rf-rpmbg, #haloGauge .rf-rpmfill { fill: none; stroke-width: 3; stroke-linecap: round; }
-#haloGauge .rf-rpmbg { stroke: #8d97a6; opacity: .45; }
-#haloGauge .rf-rpmfill { stroke: var(--rf-team, #6cc4ff); filter: drop-shadow(0 0 2px var(--rf-team, #2f9be0)); }
+#haloGauge .rf-name.dim { fill: #c9ced8; }
+#haloGauge .rf-name.me { font-size: 16.5px; }
+#haloGauge .rf-rpmbg, #haloGauge .rf-rpmfill { fill: none; stroke-width: 2.6; stroke-linecap: round; }
+#haloGauge .rf-rpmbg { stroke: #8d97a6; opacity: .38; }
+#haloGauge .rf-rpmfill { stroke: var(--rf-team, #6cc4ff); filter: drop-shadow(0 0 1.5px var(--rf-team, #2f9be0)); }
 #haloGauge .rf-ers { font-size: 8px; font-weight: 800; letter-spacing: .2px; fill: #fff;
   paint-order: stroke; stroke: #062a47; stroke-width: 1.6px; stroke-linejoin: round; }
-#haloGauge .rf-aero { fill: none; stroke: #e8eef5; stroke-width: 1.6; stroke-linecap: round; opacity: .8; }
+#haloGauge .rf-aero { fill: none; stroke: #e8eef5; stroke-width: 2.4; stroke-linecap: round; opacity: .9; }
 #haloGauge .rf-aero[data-state="soon"] { stroke: #f0b43a; opacity: 1; }
 #haloGauge .rf-aero[data-state="ready"] { stroke: #4be59a; opacity: 1; }
 #haloGauge .rf-aero[data-state="on"] { stroke: #22d97a; opacity: 1; filter: drop-shadow(0 0 2px #2dff94); }
@@ -184,21 +229,27 @@ body.has-team-logos .row .team { padding: .4rem .1rem; }
 @keyframes rfGlow { from { filter: drop-shadow(0 0 1px var(--glow)); } to { filter: drop-shadow(0 0 7px var(--glow)); } }
 @keyframes rfFlow { to { stroke-dashoffset: -15; } }
 @keyframes rfRipple { 0%, 100% { opacity: .2; } 35% { opacity: 1; } }
-/* active aero (2026) / DRS: the box lights up and its lines stream like air over an open flap */
-#haloGauge #rfHalo[data-aero="soon"] .rf-aeropanel { stroke: #f0b43a; stroke-opacity: 1; }
-#haloGauge #rfHalo[data-aero="ready"] .rf-aeropanel { stroke: #4be59a; stroke-opacity: 1; }
-#haloGauge #rfHalo[data-aero="on"] .rf-aeropanel { --glow: #2dff94; fill: #0b4a2c; fill-opacity: .9; stroke: #2dff94;
-  stroke-opacity: 1; stroke-width: 1.6; animation: rfGlow .55s ease-in-out infinite alternate; }
+/* active aero (2026) / DRS: the glass behind it glows (amber coming, green ready, bright pulsing green open) and its
+   lines stream like air over an open flap */
+@keyframes rfBreath { from { opacity: .55; } to { opacity: 1; } }
+#haloGauge #rfHalo[data-aero="soon"] { --rf-aero-glow: #f0b43a; }
+#haloGauge #rfHalo[data-aero="soon"] .rf-aeroglow { opacity: .45; }
+#haloGauge #rfHalo[data-aero="ready"] { --rf-aero-glow: #3de08f; }
+#haloGauge #rfHalo[data-aero="ready"] .rf-aeroglow { opacity: .5; }
+#haloGauge #rfHalo[data-aero="on"] { --rf-aero-glow: #2dff94; }
+#haloGauge #rfHalo[data-aero="on"] .rf-aeroglow { opacity: 1; animation: rfBreath .55s ease-in-out infinite alternate; }
 #haloGauge #rfHalo[data-aero="on"] .rf-aerobox text { fill: #c8ffe2; }
-#haloGauge #rfHalo[data-aero="on"] .rf-aero { stroke: #5dffad; stroke-width: 2; stroke-dasharray: 6 3; animation: rfFlow .4s linear infinite; }
+#haloGauge #rfHalo[data-aero="on"] .rf-aero { stroke: #5dffad; stroke-width: 2.6; stroke-dasharray: 6 3; animation: rfFlow .4s linear infinite; }
 /* overtake mode: magenta pill, and the dial ring and the halo arc pulse */
 #haloGauge #rfHalo #haloOvertakePill[data-state="on"] rect { --glow: #d65bff; fill: #b52cf0; stroke: #f3c6ff;
   animation: rfGlow .5s ease-in-out infinite alternate; }
 #haloGauge #rfHalo #haloOvertakePill[data-state="on"] text { fill: #fff; font-weight: 900; }
 #haloGauge #rfHalo[data-ot="on"] .ring { --glow: #d65bff; stroke: #d65bff; stroke-width: 2.4; stroke-opacity: 1;
   animation: rfGlow .5s ease-in-out infinite alternate; }
-#haloGauge #rfHalo[data-ot="on"] .rf-arc { --glow: #d65bff; stroke: #e597ff; stroke-width: 2.2; opacity: 1;
+#haloGauge #rfHalo[data-ot="on"] .rf-arc { --glow: #d65bff; stroke: url(#rfArcOtX); stroke-width: 2.2; opacity: 1;
   animation: rfGlow .5s ease-in-out infinite alternate; }
+#haloGauge #rfHalo .rf-o0 { stop-color: #e597ff; stop-opacity: 0; }
+#haloGauge #rfHalo .rf-o1 { stop-color: #e597ff; stop-opacity: 1; }
 /* boost: cyan pill, the ((( BOOST ))) marks ripple outwards and the battery glows; the ring glows cyan
    unless overtake mode (magenta) is on at the same time */
 #haloGauge #rfHalo #haloBoostPill[data-state="on"] rect { --glow: #3ec5ff; fill: #1fb6ff; stroke: #d4f3ff;
@@ -209,5 +260,5 @@ body.has-team-logos .row .team { padding: .4rem .1rem; }
 #haloGauge #rfHalo[data-boost="on"] #haloErsFill { --glow: #3ec5ff; animation: rfGlow .55s ease-in-out infinite alternate; }
 #haloGauge #rfHalo[data-boost="on"]:not([data-ot="on"]) .ring { --glow: #3ec5ff; stroke: #3ec5ff; stroke-width: 2.2; stroke-opacity: 1;
   animation: rfGlow .55s ease-in-out infinite alternate; }
-#haloGauge #rfHalo .gear { font-size: 13px; font-weight: 700; fill: #d6e2ec; filter: none; }
-#haloGauge #rfHalo .gear.active { font-size: 16px; font-weight: 900; fill: #fff; filter: drop-shadow(0 0 2px #8fe0ff); }
+#haloGauge #rfHalo .gear { font-size: 15.5px; font-weight: 700; fill: #dde7f0; filter: none; }
+#haloGauge #rfHalo .gear.active { font-size: 19px; font-weight: 900; fill: #fff; filter: drop-shadow(0 0 2px #8fe0ff); }

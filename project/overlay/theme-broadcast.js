@@ -153,8 +153,30 @@
     const TOP = -31, BOTTOM = 40;
     // RECHARGE (left) / DEPLOY (right): a band of even width hugging the dial (its inner edge follows the dial,
     // 3 off it), rounded ends, letters stacked upright down its middle
-    const FRAME_W = 29;
+    const FRAME_W = 22;
     const dialEdge = (y) => halfW(70, 63, y);
+    // brake (left) / throttle (right): a column of 11 level bars outside the frame, filled from the bottom. The
+    // overlay colours group.children[i] by value * children.length, so the 12 upstream bars are replaced by 11
+    // paths with the same class and data-active-color.
+    const BARS = { top: TOP + 7, bottom: BOTTOM - 1, n: 11, fill: 0.62 };
+    // inner edge follows the frame (4 off it); the outer edge is part of an ellipse around the dial, so the two
+    // columns and the glass behind them curve round the dial like wings
+    const COL = { a: 115, b: 90, yc: (BARS.top + BARS.bottom) / 2 };
+    const colInner = (y, pad) => dialEdge(y) + FRAME_W + 4 - pad;
+    const colOuter = (y, pad) => halfW(COL.a, COL.b, y - COL.yc) + pad;
+    // one soft glass lens behind the dial, the RECHARGE / DEPLOY frames and both bar columns: much wider than tall,
+    // its rim fades out (radial gradient #rfLens), and its lower curve wraps under the dial and the labels, so the
+    // dial and its gauges read as one piece without a hard outline
+    add('ellipse', { class: 'rf-lens', cx: CX, cy: CY + 8, rx: 142, ry: 66 });
+    // brake / throttle: a translucent frame round each bar column (2 off the RECHARGE / DEPLOY frame on the inside,
+    // following the column's curved outer edge on the outside), so the gauges read as their own area on the glass
+    for (const s of [-1, 1]) {
+      const t = BARS.top - 5, b = BARS.bottom + 5, ys = [];
+      for (let y = t; y < b; y += 6) ys.push(y);
+      ys.push(b);
+      const outer = ys.map((y) => [colOuter(y, 5), y]), inner = ys.map((y) => [colInner(y, 2), y]).reverse();
+      add('path', { class: 'rf-colframe', d: roundPoly(outer.concat(inner).map(([x, y]) => [CX + s * x, CY + y]), 7) });
+    }
     const crescent = (s, x0, w, top, bottom) => {
       const ys = [];
       for (let y = top; y < bottom; y += 6) ys.push(y);
@@ -167,25 +189,18 @@
       const y = TOP + 6 + (BOTTOM - TOP - 12) * (i / (all.length - 1));
       add('text', { class: 'rf-vlbl', x: f1(CX + s * (dialEdge(y) + FRAME_W / 2)), y: f1(CY + y), 'text-anchor': 'middle', 'dominant-baseline': 'central' }, ch);
     });
-    for (const [s, txt] of [[-1, 'RECHARGE'], [1, 'DEPLOY']]) {
+    for (const [s, txt, cls] of [[-1, 'RECHARGE', 'rf-recharge'], [1, 'DEPLOY', 'rf-deploy']]) {
+      const side = add('g', { class: 'rf-ersside ' + cls });
+      const outer = into;
+      into = side;
       add('path', { class: 'rf-frame', d: crescent(s, 0, FRAME_W, TOP, BOTTOM) });
       stack(s, txt);
-    }
-    // brake (left) / throttle (right): a column of 11 level bars outside the frame, filled from the bottom, on a
-    // dark plate. The overlay colours group.children[i] by value * children.length, so the 12 upstream bars are
-    // replaced by 11 paths with the same class and data-active-color.
-    const BARS = { top: TOP + 7, bottom: BOTTOM - 1, n: 11, fill: 0.62 };
-    // inner edge follows the frame (4 off it), outer edge almost upright, leaning out a little towards the bottom
-    const colInner = (y, pad) => dialEdge(y) + FRAME_W + 4 - pad;
-    const colOuter = (y, pad) => 126 + pad + 3 * (y - BARS.top) / (BARS.bottom - BARS.top);
-    for (const s of [-1, 1]) {
-      const t = BARS.top - 4, b = BARS.bottom + 4;
-      add('path', { class: 'rf-barplate', d: roundPoly([[colOuter(t, 3), t], [colInner(t, 2), t], [colInner(b, 2), b], [colOuter(b, 3), b]]
-        .map(([x, y]) => [CX + s * x, CY + y]), 4) });
+      into = outer;
     }
     // labels under the bar columns, level, as on the broadcast
-    label('rf-tag', f1(CX - 107), f1(CY + 53), 0, 'BRAKE');
-    label('rf-tag g', f1(CX + 107), f1(CY + 53), 0, 'THROTTLE');
+    const colMid = (colInner(BARS.bottom, 0) + colOuter(BARS.bottom, 0)) / 2;
+    label('rf-tag', f1(CX - colMid), f1(CY + 53), 0, 'BRAKE');
+    label('rf-tag g', f1(CX + colMid), f1(CY + 53), 0, 'THROTTLE');
     const placeBars = (group, side) => {
       const old = [...group.children];
       const cls = (old[0] && old[0].getAttribute('class')) || 'seg-off', color = (old[0] && old[0].dataset.activeColor) || '';
@@ -202,8 +217,10 @@
     };
     if (keep.brakeBars) placeBars(keep.brakeBars, -1);
     if (keep.thrBars) placeBars(keep.thrBars, 1);
-    // centre dial + battery
-    add('ellipse', { class: 'plate', cx: CX, cy: CY, rx: 67, ry: 60 });
+    // centre dial + battery: a glass disc (radial gradient #rfDialGlass, defined with the glass below), a soft outer
+    // glow and a thin bright ring
+    add('ellipse', { class: 'rf-dialglow', cx: CX, cy: CY, rx: 69, ry: 62 });
+    add('ellipse', { class: 'plate rf-dial', cx: CX, cy: CY, rx: 67, ry: 60 });
     add('ellipse', { class: 'ring', cx: CX, cy: CY, rx: 62, ry: 55 });
     put(keep.kmLbl, 705.5, 331, 0, 'rf-lbl sm', 'middle');
     put(keep.km, 704, 352, 0, 'rf-big', 'middle');
@@ -243,15 +260,18 @@
     }
     into.appendChild(ers);
     into = layer;
-    // ---- side sections along the game's halo (layer frame), as on the broadcast: next to the brake column TURN and
-    // then the positions (car ahead, viewed car), next to the throttle column ACTIVE AERO and then the gears over
-    // the RPM bar. Each section is a band that follows the halo's top edge, and every text in it is turned to the
-    // edge's slope where it sits (names run along the curve itself).
-    // Halo top edge traced on the in-game TV Pod screenshot (layer units, x 394..1046), smoothed as a polynomial
-    // in u = (x - 720) / 100 (max deviation 1.2).
-    const HALO_EDGE = [439.469, 1.526, 6.963, -0.115, -0.362, 0.022, 0.031];
-    const edgeY = (x) => { const u = (x - 720) / 100; return HALO_EDGE.reduce((sum, c, i) => sum + c * u ** i, 0); };
-    const edgeSlope = (x) => { const u = (x - 720) / 100; return HALO_EDGE.reduce((sum, c, i) => sum + (i ? i * c * u ** (i - 1) : 0), 0) / 100; };
+    // ---- along the game's halo (layer frame), as on the broadcast: next to the brake column TURN and then the
+    // positions (car ahead, viewed car), next to the throttle column ACTIVE AERO and then the gears over the RPM bar.
+    // All of it sits on one glass surface that follows the halo's top edge (no boxes), and every text is turned to
+    // the edge's slope where it sits (names run along the curve itself).
+    // Halo top edge traced on the in-game TV Pod screenshot (layer units, x 394..1046) and fitted with ONE ellipse:
+    // the halo is a hoop seen in perspective (max deviation 2.5 from the trace). Being a single ellipse, the edge bends
+    // evenly from the top all the way down both legs, so the glass, the names and the gears follow one unbroken line
+    // (the former polynomial flattened at the shoulders and ran on straight past the trace, which showed as kinks).
+    const HALO = { xc: 705.86, yc: 625.87, a: 421.39, b: 185.42 };
+    const edgeU = (x) => Math.max(-0.995, Math.min(0.995, (x - HALO.xc) / HALO.a));
+    const edgeY = (x) => HALO.yc - HALO.b * Math.sqrt(1 - edgeU(x) ** 2);
+    const edgeSlope = (x) => { const u = edgeU(x); return HALO.b * u / (HALO.a * Math.sqrt(1 - u * u)); };
     // point v units under the edge at x (along the edge's normal) and the edge's angle there in degrees
     const along = (x, v) => {
       const m = edgeSlope(x), l = Math.hypot(1, m);
@@ -296,21 +316,60 @@
       const q = along(x, v);
       return add('g', { transform: 'translate(' + f1(q.x) + ' ' + f1(q.y) + ') rotate(' + q.a.toFixed(1) + ')' });
     };
-    const divider = (x, v0, v1) => {
-      const a = along(x, v0), b = along(x, v1);
-      add('path', { class: 'rf-divider', d: 'M' + f1(a.x) + ' ' + f1(a.y) + ' L' + f1(b.x) + ' ' + f1(b.y) });
-    };
-    // band depth under the edge: its top lines up with the bar columns' top, its bottom with their bottom
+    // where the side information sits under the edge (TURN / ACTIVE AERO centred at VMID)
     const V0 = 30, V1 = 92, VMID = (V0 + V1) / 2;
-    // inner ends stand upright, 7 off the bar columns (cluster frame -> layer: + HX)
+    // the side information starts 7 off the curved bar columns (cluster frame -> layer: + HX)
     const colEdge = colOuter(BARS.top, 3) + 7;
-    const L_IN = CX + HX - colEdge, R_IN = CX + HX + colEdge, L_OUT = 400, R_OUT = 1044;
+    const L_IN = CX + HX - colEdge, R_IN = CX + HX + colEdge, L_OUT = 326, R_OUT = 1112;
+
+    // ---- the glass: ONE smooth translucent surface over the whole halo, from the names on the left leg to the gears
+    // on the right leg, behind the dial. No boxes or dividers: the information sits straight on it. Lighter along
+    // its top edge, darker towards the bottom and fading out at both ends, so it reads as the halo's curved top.
+    const RIB = { top: 22, bottom: 100 };
+    const defs = mk('defs', {});
+    const grad = (id, x1, x2, stops) => {
+      const g = mk('linearGradient', { id, gradientUnits: 'userSpaceOnUse', x1: f1(x1), y1: 0, x2: f1(x2), y2: 0 });
+      stops.forEach(([o, cls]) => g.appendChild(mk('stop', { offset: o, class: cls })));
+      defs.appendChild(g);
+    };
+    const lens = mk('radialGradient', { id: 'rfLens' });
+    [[0, 'rf-n0'], [0.7, 'rf-n1'], [0.86, 'rf-n2'], [1, 'rf-n3']].forEach(([o, c]) => lens.appendChild(mk('stop', { offset: o, class: c })));
+    defs.appendChild(lens);
+    // soft edges for glows (the viewed car's team colour)
+    const soft = mk('filter', { id: 'rfSoft', x: '-20%', y: '-60%', width: '140%', height: '220%' });
+    soft.appendChild(mk('feGaussianBlur', { stdDeviation: 2.6 }));
+    defs.appendChild(soft);
+    const dialGlass = mk('radialGradient', { id: 'rfDialGlass', cx: 0.5, cy: 0.42, r: 0.62 });
+    dialGlass.append(mk('stop', { offset: 0, class: 'rf-d0' }), mk('stop', { offset: 0.72, class: 'rf-d1' }),
+      mk('stop', { offset: 1, class: 'rf-d2' }));
+    defs.appendChild(dialGlass);
+    // the thin white arc over the halo fades out at its ends too
+    const arcFade = mk('linearGradient', { id: 'rfArcX', gradientUnits: 'userSpaceOnUse', x1: ARC[0][0], y1: 0, x2: ARC[ARC.length - 1][0], y2: 0 });
+    [[0, 'rf-a0'], [0.2, 'rf-a1'], [0.8, 'rf-a1'], [1, 'rf-a0']].forEach(([o, c]) => arcFade.appendChild(mk('stop', { offset: o, class: c })));
+    defs.appendChild(arcFade);
+    const arcOt = arcFade.cloneNode(true);                    // same fade in the overtake colour
+    arcOt.id = 'rfArcOtX';
+    [...arcOt.children].forEach((s) => s.setAttribute('class', s.getAttribute('class').replace('rf-a', 'rf-o')));
+    defs.appendChild(arcOt);
+    grad('rfFadeX', L_OUT, R_OUT, [[0, 'rf-s0'], [0.07, 'rf-s1'], [0.93, 'rf-s1'], [1, 'rf-s0']]);
+    grad('rfLineX', L_OUT, R_OUT, [[0, 'rf-l0'], [0.14, 'rf-l1'], [0.86, 'rf-l1'], [1, 'rf-l0']]);
+    const mask = mk('mask', { id: 'rfRibMask', maskUnits: 'userSpaceOnUse', x: -200, y: 0, width: 1700, height: 900 });
+    mask.appendChild(mk('rect', { x: -200, y: 0, width: 1700, height: 900, fill: 'url(#rfFadeX)' }));
+    defs.appendChild(mask);
+    const glass = mk('g', { class: 'rf-glass', mask: 'url(#rfRibMask)' });
+    const glassBand = (cls, v0, v1) => glass.appendChild(mk('path', { class: cls, d: band(L_OUT, R_OUT, v0, v1, false) }));
+    const fineCurve = (a, b, v) => smooth(spaced(a, b, v, 33).map((q) => [+f1(q.x), +f1(q.y)]));
+    glassBand('rf-rib', RIB.top, RIB.bottom);                 // body
+    glassBand('rf-rib-hi', RIB.top, RIB.top + 15);            // light on the upper curve
+    glassBand('rf-rib-lo', RIB.bottom - 24, RIB.bottom);      // shade towards the bottom
+    glass.appendChild(mk('path', { class: 'rf-rib-edge', d: fineCurve(L_OUT, R_OUT, RIB.top) }));
+    layer.insertBefore(glass, layer.firstChild);              // behind the dial cluster
+    layer.insertBefore(defs, layer.firstChild);
 
     // left: TURN, then the positions
-    add('path', { class: 'rf-panel', d: band(L_IN, L_OUT, V0, V1, true) });
-    const L_DIV = 521;
-    divider(L_DIV, V0 + 9, V1 - 9);
-    const turnBox = cell((xAt(L_IN, VMID) + L_DIV) / 2, VMID);
+    const L_DIV = 512;
+    const TURN_OUT = 16, AERO_OUT = 12;   // extra distance from the brake / throttle frames
+    const turnBox = cell((xAt(L_IN, VMID) + L_DIV) / 2 - TURN_OUT, VMID);
     inBox(turnBox, keep.turn, 0, -9, 'rf-turn');
     const turnLbl = mk('text', { class: 'rf-lbl rf-paneltxt', x: 0, y: 14, 'text-anchor': 'middle', 'dominant-baseline': 'central' }, 'TURN');
     turnBox.appendChild(turnLbl);
@@ -329,10 +388,15 @@
       keep.turn.setAttribute('y', on ? 5 : -9);
       turnLbl.setAttribute('y', on ? 22 : 14);
     }, ['data-dir']);
-    // positions: car ahead (dim) above, the viewed car below in a band outlined in its team colour (--rf-team);
-    // both written along the curve, squeezed only if a long name would not fit
+    // positions: car ahead (dim) above, the viewed car below; both written along the curve, squeezed only if a long
+    // name would not fit. The viewed car is marked by a soft glow of its team colour (--rf-team) behind the name and
+    // a thin underline, both fading out at the ends - no box.
     const N_IN = L_DIV - 6, N_OUT = L_OUT + 3;
-    const meBand = add('path', { class: 'rf-band', d: band(N_IN, N_OUT, 62, 88, false) });
+    grad('rfTeamX', N_OUT, N_IN, [[0, 'rf-t0'], [0.22, 'rf-t1'], [0.78, 'rf-t1'], [1, 'rf-t0']]);
+    grad('rfTeamLineX', N_OUT, N_IN, [[0, 'rf-u0'], [0.18, 'rf-u1'], [0.82, 'rf-u1'], [1, 'rf-u0']]);
+    const meBand = add('g', { class: 'rf-me' });
+    meBand.appendChild(mk('path', { class: 'rf-me-glow', d: band(N_IN, N_OUT, 63, 93, false) }));
+    meBand.appendChild(mk('path', { class: 'rf-me-line', d: fineCurve(N_OUT + 6, N_IN - 2, 93) }));
     let guides = 0;
     const nameLine = (v, cls, box) => {
       const id = 'rfName' + (guides++), a = N_OUT + 5, b = N_IN - 5;
@@ -351,7 +415,7 @@
           tp.removeAttribute('textLength');
           tp.removeAttribute('lengthAdjust');
           // the halo is display:none until shown, where text has no length yet: estimate from the letters
-          const fs = cls.includes('me') ? 15 : 13, len = t.getComputedTextLength() || (p.length + n.length + 1) * fs * 0.72;
+          const fs = cls.includes('me') ? 16.5 : 14, len = t.getComputedTextLength() || (p.length + n.length + 1) * fs * 0.72;
           if (len > room) { tp.setAttribute('textLength', f1(room)); tp.setAttribute('lengthAdjust', 'spacingAndGlyphs'); }
         }
         if (box) box.style.display = n ? '' : 'none';
@@ -362,17 +426,19 @@
     const mine = nameLine(80.5, 'rf-name me', meBand);
 
     // right: ACTIVE AERO, then the gears over the RPM bar
-    add('path', { class: 'rf-panel', d: band(R_IN, R_OUT, V0, V1, true) });
-    const R_DIV = 906;
-    // the AERO cell lights up while active aero / DRS is available or open (CSS on .rf-aeropanel)
-    add('path', { class: 'rf-aerocell rf-aeropanel', d: band(R_IN + 3, R_DIV - 3, V0 + 3, V1 - 3, true) });
-    divider(R_DIV, V0 + 9, V1 - 9);
-    const aeroBox = cell((xAt(R_IN, VMID) + R_DIV) / 2, VMID);
+    const R_DIV = 916;
+    const aeroBox = cell((xAt(R_IN, VMID) + R_DIV) / 2 + AERO_OUT, VMID);
     aeroBox.classList.add('rf-aerobox');
-    inBox(aeroBox, keep.aero1, -2, -13, 'rf-lbl rf-paneltxt');
-    inBox(aeroBox, keep.aero2, -2, -2, 'rf-lbl rf-paneltxt');
+    // no box: while active aero / DRS is coming, available or open, a soft glow lights the glass behind it
+    // (its colour --rf-aero-glow is set per state in the CSS)
+    const aeroGlow = mk('radialGradient', { id: 'rfAeroGlow' });
+    aeroGlow.append(mk('stop', { offset: 0, class: 'rf-ag1' }), mk('stop', { offset: 1, class: 'rf-ag0' }));
+    defs.appendChild(aeroGlow);
+    aeroBox.appendChild(mk('ellipse', { class: 'rf-aeroglow', cx: -4, cy: 2, rx: 44, ry: 32 }));
+    inBox(aeroBox, keep.aero1, -2, -15, 'rf-lbl rf-paneltxt');
+    inBox(aeroBox, keep.aero2, -2, -1.5, 'rf-lbl rf-paneltxt');
     // two short level marks under the label, the lower one a little shorter, both left-aligned
-    const aeroLines = [[-16, 6, 11], [-16, 0, 18]].map(([a, b, y]) => {
+    const aeroLines = [[-19, 9, 12], [-19, 1, 19.5]].map(([a, b, y]) => {
       const q = mk('path', { class: 'rf-aero', d: 'M' + a + ' ' + y + ' L' + b + ' ' + y });
       aeroBox.appendChild(q);
       return q;
@@ -409,7 +475,7 @@
       });
       layer.appendChild(keep.gears);
     }
-    onEdge('rf-lbl', 1004, 38, 'GEARS');
+    onEdge('rf-lbl', 1074, 37, 'GEARS');
     onEdge('rf-lbl', (G_IN + G_OUT) / 2, 80, 'RPM x1000');
     const TEAM_COLOR = { 0: '#27f4d2', 1: '#e8002d', 2: '#3671c6', 3: '#64c4ff', 4: '#229971', 5: '#ff87bc', 6: '#6692ff',
       7: '#b6babd', 8: '#ff8000', 9: '#52e252', 229: '#52e252', 230: '#c8ccd0' };
@@ -425,6 +491,23 @@
     };
     new MutationObserver(syncOffset).observe(halo, { attributes: true, attributeFilter: ['style'] });
     syncOffset();
+    // RECHARGE / DEPLOY light up with what the battery is doing: the ERS store rising (harvesting under braking /
+    // lifting) lights RECHARGE, falling (deploying) lights DEPLOY. Sampled from the state stream (every 0.4 s); a
+    // change slower than ERS_RATE is noise, and a state holds 0.7 s so it does not flicker between samples.
+    const ERS_RATE = 15000;   // J/s
+    let ersPrev = null, ersDir = 'off', ersUntil = 0;
+    const ersFlow = (store, now) => {
+      if (!Number.isFinite(store)) return;
+      if (ersPrev && now > ersPrev.t) {
+        const rate = (store - ersPrev.v) / ((now - ersPrev.t) / 1000);
+        if (rate > ERS_RATE) { ersDir = 'recharge'; ersUntil = now + 700; }
+        else if (rate < -ERS_RATE) { ersDir = 'deploy'; ersUntil = now + 700; }
+      }
+      ersPrev = { v: store, t: now };
+      const st = now < ersUntil ? ersDir : 'off';
+      if (layer.getAttribute('data-ers') !== st) layer.setAttribute('data-ers', st);
+    };
+    layer.setAttribute('data-ers', 'off');
     // names: the overlay's own state stream (pos + surname of the viewed car and the car ahead)
     try {
       let last = 0;
@@ -443,6 +526,7 @@
         const tc = teamColor(me);
         if (tc && layer.style.getPropertyValue('--rf-team') !== tc) layer.style.setProperty('--rf-team', tc);
         if (s.car) setRpmMax(s.car.maxRpm);
+        if (s.ers) ersFlow(s.ers.store, now);
       };
     } catch (_) { /* no names: fine */ }
   })();
