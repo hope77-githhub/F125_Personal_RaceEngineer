@@ -4,8 +4,9 @@
 >
 > 🇰🇷 한국어 안내: [README_ko.md](README_ko.md)
 
-![TV overlay over F1 25: timing tower, lap cards, fastest-lap banner and the halo HUD](project/docs/images/00_tv_overlay.webp)
-<sub>TV overlay drawn over the game: timing tower, live lap cards, fastest-lap banner, lap/delta panel and the halo HUD (speed, gear, pedals, ERS, turn number).</sub>
+[![Demo: a real Silverstone FP1 run with the TV overlay, halo HUD and engineer radio](project/docs/images/demo_preview.webp)](https://hope77-githhub.github.io/hope77.io/#/projects?id=log-entry-f1)
+
+<sub>A 12 s clip from the demo: a real Silverstone FP1 run in F1 25. The timing tower, sector cards, lap delta and halo HUD (speed, gear, turn number) move with the telemetry. **Full video (1 min 40 s, with the engineer radio, sound on):** click the clip to watch it on the [project page](https://hope77-githhub.github.io/hope77.io/#/projects?id=log-entry-f1), or download [f1_demo_silverstone.mp4](project/docs/videos/f1_demo_silverstone.mp4) (26 MB).</sub>
 
 ## ✨ What it does
 * **Live dashboard** — reads the game's UDP telemetry (port `20777`, 60 Hz): lap and sector times, tyre wear and temperatures, setup, and a turn-by-turn table (entry/apex/exit speed, gear, pedals, braking point, G) against the car ahead and the leader.
@@ -75,11 +76,21 @@ The game sends UDP to one port only, so the app receives on 20777 and forwards e
 
 ## 📸 Screenshots
 
-| Session setup & replay | Lap archive & corner telemetry |
+**TV overlay and halo HUD**: the broadcast graphics on their own, drawn transparently over the game. Timing tower (laps, interval, tyre), fastest-lap banner, sector card, and the halo HUD (speed, gear, RPM, brake / throttle, battery, overtake, active aero, turn T15), all driven by the game's telemetry.
+
+![TV overlay and halo HUD](project/docs/images/05_tv_overlay_hud.webp)
+
+| Session setup & replay | Lap archive, setup & team radio |
 | :---: | :---: |
-| ![Session Configuration](project/docs/images/01_session_configuration.png) | ![Lap History and Setup](project/docs/images/02_lap_history_and_setup.png) |
+| ![Session Configuration](project/docs/images/01_session_configuration.png) | ![Lap Archive, Setup and Team Radio](project/docs/images/06_team_radio_setup_board.png) |
+| Live game (UDP 20777) or a recorded replay; Korean / English, km/h or mph, engineer voice, radio (TTS) and TV overlay. | Lap times and the gap to your best, the chosen lap's corner cards (entry / apex / exit), car setup and wear on all four tyres. The team radio panel shows the last call with its numbers and the buttons to ask the engineer. |
 | **Turn-by-turn matrix** | **Circuit map & sectors** |
-| ![Corner Analysis Matrix](project/docs/images/03_corner_analysis_matrix.png) | ![Circuit Map and Sectors](project/docs/images/04_circuit_map_and_sectors.png) |
+| ![Turn-by-Turn Matrix](project/docs/images/07_corner_analysis_silverstone.png) | ![Circuit Map and Sectors](project/docs/images/08_circuit_map_sectors.png) |
+| Every Silverstone corner by name (Abbey, Farm, Village …): entry / apex / exit speed, gear, throttle / brake, braking point, peak lateral G and time against the car ahead, lap by lap. | Turn numbers T1–T18 on the racing line; click a turn to open its entry / apex / exit record. Official sector times for every lap and the sector gaps to a rival. |
+
+**Practice setup analysis**: your best lap against the practice reference car (the fastest other car). Top speed and slow / medium / fast corner speeds, and a keep / change verdict with the value to try for tyre pressures, wings and balance.
+
+![Practice Setup Analysis](project/docs/images/09_practice_setup_analysis.png)
 
 ## 🎙️ Engineer voice (GPT-SoVITS few-shot fine-tuning)
 The voice is **[GPT-SoVITS](https://github.com/RVC-Boss/GPT-SoVITS) v2ProPlus**, fine-tuned on **3 min 36 s** of the target voice. Every line is generated in advance, so the game never shares the GPU with a TTS model; the app only picks and plays the right file.

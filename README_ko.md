@@ -4,8 +4,9 @@
 >
 > 🇺🇸 English: [README.md](README.md)
 
-![F1 25 위에 띄운 TV 오버레이: 타이밍 타워, 랩 카드, 패스티스트 랩 배너, 할로 HUD](project/docs/images/00_tv_overlay.webp)
-<sub>게임 화면 위에 띄운 TV 오버레이: 타이밍 타워, 실시간 랩 카드, 패스티스트 랩 배너, 랩·델타 패널, 할로 HUD(속도, 기어, 페달, ERS, 코너 번호).</sub>
+[![데모: 실버스톤 프랙티스 1 실제 주행, TV 오버레이와 할로 HUD, 엔지니어 무전](project/docs/images/demo_preview.webp)](https://hope77-githhub.github.io/hope77.io/#/projects?id=log-entry-f1)
+
+<sub>데모 영상 중 12초: F1 25 실버스톤 프랙티스 1 실제 주행이에요. 순위표, 섹터 카드, 랩 델타, 할로 HUD(속도, 기어, 코너 번호)가 텔레메트리에 맞춰 실시간으로 움직여요. **전체 영상(1분 40초, 엔지니어 무전 포함, 소리를 켜고 보세요):** 클립을 누르면 [프로젝트 페이지](https://hope77-githhub.github.io/hope77.io/#/projects?id=log-entry-f1)에서 볼 수 있고, [f1_demo_silverstone.mp4](project/docs/videos/f1_demo_silverstone.mp4)(26 MB)로 받을 수도 있어요.</sub>
 
 ## ✨ 주요 기능
 * **실시간 대시보드** — 게임의 UDP 텔레메트리(포트 `20777`, 60Hz)를 받아 랩·섹터 기록, 타이어 마모·온도, 셋업, 코너별 표(진입·에이펙스·탈출 속도, 기어, 페달, 브레이킹 지점, G)를 보여 주고 앞차·선두와 비교해요.
@@ -75,11 +76,21 @@ python project/run_app.py
 
 ## 📸 스크린샷
 
-| 세션 설정 · 리플레이 | 랩 기록 · 코너 텔레메트리 |
+**TV 중계 오버레이 · 할로 HUD**: 게임 화면 위에 투명하게 겹쳐 그리는 중계 그래픽만 따로 본 모습이에요. 왼쪽 순위표(랩 수·간격·타이어), 패스티스트 랩 배너, 오른쪽 섹터 카드, 가운데 할로 HUD(속도·기어·RPM·브레이크/스로틀·배터리·오버테이크·액티브 에어로·코너 번호 T15)가 모두 게임이 보내는 텔레메트리로 움직여요.
+
+![TV 중계 오버레이와 할로 HUD](project/docs/images/05_tv_overlay_hud.webp)
+
+| 세션 설정 · 리플레이 | 랩 기록 · 차량 셋업 · 팀 라디오 |
 | :---: | :---: |
-| ![세션 설정](project/docs/images/01_session_configuration.png) | ![랩 기록과 셋업](project/docs/images/02_lap_history_and_setup.png) |
+| ![세션 설정](project/docs/images/01_session_configuration.png) | ![랩 기록, 차량 셋업, 팀 라디오](project/docs/images/06_team_radio_setup_board.png) |
+| 실시간 게임 연결(UDP 20777)과 녹화 주행 리플레이 중 선택하고, 한·영 전환, 단위(km/h·mph), 엔지니어 목소리, 무전(TTS)·TV 오버레이를 켜고 끄는 시작 화면이에요. | 랩별 기록과 베스트 랩 대비 차이, 고른 랩의 코너별 카드(진입·정점·탈출), 차량 셋업 값과 4개 타이어 마모율을 보여 줘요. 팀 라디오 패널에는 방금 나간 무전과 근거 숫자, 엔지니어에게 질문하는 버튼이 있어요. |
 | **코너별 분석 표** | **서킷 맵 · 섹터** |
-| ![코너 분석 표](project/docs/images/03_corner_analysis_matrix.png) | ![서킷 맵과 섹터](project/docs/images/04_circuit_map_and_sectors.png) |
+| ![코너별 분석 표](project/docs/images/07_corner_analysis_silverstone.png) | ![서킷 맵과 섹터](project/docs/images/08_circuit_map_sectors.png) |
+| 실버스톤의 모든 코너를 실제 이름(Abbey, Farm, Village …)과 함께 진입·정점·탈출 속도, 기어, 스로틀·브레이크, 제동 지점, 최대 횡G, 앞차 대비 시간 차이로 정리하고, 랩을 바꿔 가며 비교해요. | 주행 라인 위에 코너 번호(T1~T18)를 찍고, 코너를 누르면 그 코너의 진입·정점·탈출 기록이 열려요. 랩별 공식 섹터 기록과 경쟁 차 대비 섹터별 시간 차이도 보여 줘요. |
+
+**프랙티스 셋업 분석**: 내 베스트 랩을 프랙티스 기준 차(다른 차 최고 기록)와 비교해 최고 속도와 저·중·고속 코너 속도 차이를 보여 주고, 타이어 공기압·윙·밸런스를 항목별로 "유지 / 변경 추천"으로 판정해 바꿀 값을 제안해요.
+
+![프랙티스 셋업 분석](project/docs/images/09_practice_setup_analysis.png)
 
 ## 🎙️ 엔지니어 음성 (GPT-SoVITS 퓨샷 파인튜닝)
 엔지니어 목소리는 **[GPT-SoVITS](https://github.com/RVC-Boss/GPT-SoVITS) v2ProPlus**를 목표 음성 **3분 36초**로 파인튜닝해서 만들었어요. 모든 문장을 미리 생성해 두기 때문에 게임과 TTS 모델이 GPU를 나눠 쓰지 않고, 앱은 맞는 파일을 골라 재생만 해요.
