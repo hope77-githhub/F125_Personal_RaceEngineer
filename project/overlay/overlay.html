@@ -161,7 +161,7 @@
     background: #ffd23f; border: .1rem solid #111; cursor: nwse-resize; border-radius: .15rem; }
   body.edit .hudtag, body.edit .rz { display: block; }
 
-  #lapCard { position: absolute; right: 1.6rem; top: 3.4vh; display: none;   /* race only: top right */
+  #lapCard { position: absolute; right: 1.6rem; top: 3.4vh; display: none;   /* race and practice: top right */
     transform: scale(var(--lap-scale, 1)); transform-origin: top right;
     filter: drop-shadow(.1rem .15rem .3rem #000a); }
   /* VSC/SC delta: shown only when the lap-data packet carries a valid delta. */
@@ -379,7 +379,7 @@
   cutBand.id = 'cutBand'; cutBand.textContent = 'Elimination Zone';
   tower.appendChild(cutBand);
 
-  // broadcast-style lap card (used by the 3 quali cards and by my race lap card)
+  // broadcast-style lap card (used by the 3 quali cards and by my race / practice lap card)
   function makeCard(parent) {
     const d = document.createElement('div');
     d.className = 'qc hide';
@@ -568,7 +568,7 @@
     return result(c.lastLap, c.bestLap, s.best?.lap);
   }
 
-  // my lap card: the same format, only for the player's car, in a race.
+  // my lap card: the same format, only for the player's car, in a race or a practice session.
   // Only the player's own times: sector deltas against their own best lap, and the right-hand column
   // shows their best lap (never another driver's name or time).
   function renderLapCard(s, list, cut, timed) {
@@ -691,7 +691,9 @@
 
     // practice/quali (types 1-14 and time trial): sorted by best time. Race: by position.
     const timed = ui.mode === 'quali' || (ui.mode !== 'race' && ((s.sessionType >= 1 && s.sessionType <= 14) || s.sessionType === 18));
-    el.lapCard.style.display = ui.lap && (!timed || edit) ? 'block' : 'none';   // race: only the player's card
+    // practice (FP1-3, one-shot practice): like a race, only the player's own lap card at the top right
+    const practice = ui.mode !== 'quali' && ui.mode !== 'race' && s.sessionType >= 1 && s.sessionType <= 4;
+    el.lapCard.style.display = ui.lap && (!timed || practice || edit) ? 'block' : 'none';   // race / practice: only the player's card
     root.classList.toggle('timed', timed);
     el.brandEvent.textContent = s.isSprintRace ? 'SPRINT' : timed ? 'FIA Formula 1\nWorld Championship' : 'RACE';
     const limit = s.numActive > 0 ? s.numActive : s.cars.length;
@@ -748,7 +750,7 @@
     const showBand = timed && cut > 0 && list.length > cut;
     cutBand.classList.toggle('on', showBand);
     if (showBand && rows[cut].el.previousElementSibling !== cutBand) tower.insertBefore(cutBand, rows[cut].el);
-    renderCards(s, list, limit, cut, timed && ui.cards, edit);
+    renderCards(s, list, limit, cut, timed && !practice && ui.cards, edit);   // qualifying / time trial only
     renderLapCard(s, list, cut, timed);
     renderFlags(s, ui.flags, edit);
     renderFastest(s, ui.fastest, edit);

@@ -33,10 +33,10 @@ or show-desktop it takes the top again within half a second, without ever taking
   `FIA Formula 1 World Championship` otherwise; practice and qualifying show the session (`FP1`, `Q2`, …) and the time
   left, plus the elimination-zone line in Q1/Q2.
 - **Lap cards**
-  - *Practice / qualifying:* up to 3 cards at the **top centre** — your car first, then cars on a flying lap. Each
+  - *Qualifying (and time trial):* up to 3 cards at the **bottom centre** — your car first, then cars on a flying lap. Each
     shows the live lap time, the reference time and driver, a 5-second delta when a sector closes, and S1/S2/S3 bars
     (green = personal best, purple = session best, yellow = slower).
-  - *Race:* one card at the top right with **only your own times** — live lap time, sector delta against your own
+  - *Practice and race:* one card at the top right with **only your own times** — live lap time, sector delta against your own
     best lap, `BEST LAP`, and sector colours. S3 is worked out when you cross the line (last lap − S1 − S2) and the
     closed lap stays on screen for 5 s.
 - **Halo HUD** (fitted to F1 25's TV Pod camera: the arc traces the car's halo, the dial hangs under its top bar,
@@ -58,8 +58,8 @@ Open `http://127.0.0.1:8090/control` (standalone: port `8080`). Every HUD can be
 |---|---|
 | `Ctrl+Alt+H`, `Ctrl+Shift+H` or `Ctrl+Alt+F10` | Whole HUD |
 | `Ctrl+Alt+T` | Timing tower |
-| `Ctrl+Alt+K` | Lap cards (practice / qualifying) |
-| `Ctrl+Alt+L` | My lap card (race) |
+| `Ctrl+Alt+K` | Lap cards (qualifying) |
+| `Ctrl+Alt+L` | My lap card (practice / race) |
 | `Ctrl+Alt+G` | Halo |
 | `Ctrl+Alt+O` | Onboard card |
 | `Ctrl+Alt+F` | Tower alerts and VSC/SC delta |
@@ -150,7 +150,7 @@ stays at exactly zero for over a second can hide it even if it is still required
 | Nothing on screen | TV switch ON, a session started, UDP telemetry on with the right IP/port/format, whole HUD on (`Ctrl+Alt+H`) |
 | Shows in a browser but not over the game | Game in Windowed (Fullscreen); the overlay window is installed and running |
 | Halo misaligned | `/control` → pick the team and adjust, or edit mode |
-| Race lap card missing | It only shows in races; check `Ctrl+Alt+L` and the button in `/control` |
+| My lap card missing | It shows in practice and races (not qualifying); check `Ctrl+Alt+L` and the button in `/control` |
 | A hotkey does nothing | Another program took it: use the second hotkey or the button in `/control` |
 
 ## Licence and artwork

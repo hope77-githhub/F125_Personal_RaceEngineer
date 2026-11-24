@@ -5,6 +5,7 @@
 // Usage:
 //   node server.js            listens to the game's telemetry (UDP 20777)
 //   node server.js --demo     simulated data, to check the look without the game
+//                              (--demo --quali: qualifying, --demo --practice: FP1; a race otherwise)
 //   node server.js --debug    prints the size of every received packet
 //
 // 2026 layout checked against real dumps; 2025 keeps the previous layout.
@@ -21,7 +22,8 @@ const turns = createTurnTracker(path.join(__dirname, 'curvas'));
 const UDP_PORT = Number(process.env.UDP_PORT || 20777);
 const HTTP_PORT = Number(process.env.HTTP_PORT || 8080);
 const DEMO = process.argv.includes('--demo');
-const QUALI = process.argv.includes('--quali');   // only with --demo: simulates qualifying
+const PRACTICE = process.argv.includes('--practice');   // only with --demo: simulates a practice session (FP1)
+const QUALI = process.argv.includes('--quali') || PRACTICE;   // only with --demo: a timed session (qualifying)
 const DEBUG = process.argv.includes('--debug');
 const NO_OPEN = process.argv.includes('--no-open') || process.env.NO_OPEN === '1';
 const DUMP = process.argv.includes('--dump');     // saves 1 packet of each type to ./dump
@@ -449,8 +451,8 @@ function startDemo() {
   state.player = 0;
   state.connected = true;
   state.numActive = names.length;
-  state.sessionType = QUALI ? 6 : 15;   // 6 = Q2, 15 = race
-  state.weekendSessions = QUALI ? [5, 6, 7, 15] : [5, 6, 7, 15];
+  state.sessionType = PRACTICE ? 1 : QUALI ? 6 : 15;   // 1 = FP1, 6 = Q2, 15 = race
+  state.weekendSessions = PRACTICE ? [1, 2, 3, 5, 6, 7, 15] : [5, 6, 7, 15];
   state.isSprintRace = false;
   state.totalLaps = 57;
   state.format = 2026;
@@ -477,7 +479,7 @@ function startDemo() {
       c.gapFront = p === 0 ? 0 : Math.round(((dist[order[p - 1]] - dist[idx]) / v) * 1000);
       c.gapLeader = p === 0 ? 0 : Math.round(((dist[order[0]] - dist[idx]) / v) * 1000);
       const demoLap = Math.max(1, Math.floor(dist[idx] / LAP) + 1);
-      if (!QUALI && demoLap > c.lap && c.lap > 0) {
+      if ((!QUALI || PRACTICE) && demoLap > c.lap && c.lap > 0) {   // a closed lap (race and practice lap card)
         c.lastSectors = [c.s1, c.s2, 91234 + idx * 137 - c.s1 - c.s2];
         c.completedLapNum = c.lap;
       }
